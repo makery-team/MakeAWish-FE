@@ -1,98 +1,205 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, SafeAreaView, Platform, StatusBar as RNStatusBar } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { Header } from '@/components/header';
+import { AISearchBar } from '@/components/ai-search-bar';
+import { RecommendationTags } from '@/components/recommendation-tags';
+import { CakeGrid } from '@/components/cake-grid';
+import { MapView } from '@/components/map-view';
+import { ShopDetail } from '@/components/shop-detail';
+import { EditorView } from '@/components/editor-view';
+import { FloatingMapButton } from '@/components/floating-map-button';
+import { BottomNavigation } from '@/components/bottom-navigation';
+import { OrderStatus } from '@/components/order-status';
+import { FavoritesView } from '@/components/favorites-view';
+import { ReviewsView } from '@/components/reviews-view';
+
+import { useNavigation } from '@/hooks/use-navigation';
+import { useOrders } from '@/hooks/use-orders';
+import { useFavorites } from '@/hooks/use-favorites';
+import { useReviews } from '@/hooks/use-reviews';
+import { useInquiry } from '@/hooks/use-inquiry';
+import { useFilter } from '@/hooks/use-filter';
+
+import { shouldShowHeader, shouldShowBottomNav, shouldShowMapButton, getActiveTab } from '@/utils/helpers';
+import type { OrderData } from '@/types';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  // Custom hooks for state management
+  const navigation = useNavigation();
+  const { orders, addOrder } = useOrders();
+  const { favorites, toggleFavorite, removeFavorite } = useFavorites();
+  const { reviews, deleteReview } = useReviews();
+  const { inquiryMode, startInquiry, completeInquiry, conversationHistory } = useInquiry();
+  const { selectedCategory, handleTagSelect } = useFilter();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  // Handler for cake inquiry from grid
+  const handleCakeInquiry = (image: string, shopName: string) => {
+    startInquiry({
+      image,
+      shopName,
+      design: '디자인 상세 선택',
+    });
+  };
+
+  // Handler for inquiry from editor
+  const handleEditorInquiry = () => {
+    if (navigation.selectedCake) {
+      startInquiry({
+        image: navigation.selectedCake.image,
+        shopName: navigation.selectedCake.shopName,
+        design: conversationHistory.design || '에디터에서 수정된 디자인',
+      });
+    }
+  };
+
+  // Handler for completing inquiry
+  const handleInquiryComplete = (orderData?: OrderData) => {
+    completeInquiry();
+
+    if (orderData) {
+      addOrder(orderData);
+      navigation.navigateToView('orders');
+    }
+  };
+
+  // Handler for navigation from MyPage
+  const handleNavigateToOrdersFromMyPage = () => {
+    navigation.navigateToView('orders');
+  };
+
+  const handleNavigateToFavorites = () => {
+    navigation.navigateToView('favorites');
+  };
+
+  const handleNavigateToReviews = () => {
+    navigation.navigateToView('reviews');
+  };
+
+  return (
+    <View style={styles.container}>
+      <StatusBar style="auto" />
+      
+      {/* Header */}
+      {shouldShowHeader(navigation.viewMode) && (
+        <Header
+          onNavigateToOrders={handleNavigateToOrdersFromMyPage}
+          onNavigateToFavorites={handleNavigateToFavorites}
+          onNavigateToReviews={handleNavigateToReviews}
+        />
+      )}
+
+      {/* Content Area */}
+      <View style={styles.content}>
+        {/* AI Recommendation Tags */}
+        {navigation.viewMode === 'list' && (
+          <View style={styles.tagsContainer}>
+            <RecommendationTags onTagSelect={handleTagSelect} />
+          </View>
+        )}
+
+        {/* Main Content Views */}
+        {navigation.viewMode === 'list' && (
+          <View style={styles.viewContainer}>
+            <CakeGrid
+              onCakeSelect={navigation.handleCakeSelect}
+              onCakeInquiry={handleCakeInquiry}
+              selectedCategory={selectedCategory}
+              favorites={favorites}
+              onToggleFavorite={toggleFavorite}
+            />
+          </View>
+        )}
+
+        {navigation.viewMode === 'map' && (
+          <View style={styles.mapContainer}>
+            <MapView onShopSelect={navigation.handleShopSelect} />
+          </View>
+        )}
+
+        {navigation.viewMode === 'detail' && navigation.selectedShopId && (
+          <ShopDetail
+            shopId={navigation.selectedShopId}
+            onBack={navigation.handleBackToMap}
+            onCakeSelect={navigation.handleCakeSelect}
+            onCakeInquiry={handleCakeInquiry}
+          />
+        )}
+
+        {navigation.viewMode === 'editor' && navigation.selectedCake && (
+          <EditorView
+            image={navigation.selectedCake.image}
+            shopName={navigation.selectedCake.shopName}
+            onBack={navigation.selectedShopId ? navigation.handleBackToDetail : navigation.handleBackToList}
+            onInquiry={handleEditorInquiry}
+          />
+        )}
+
+        {navigation.viewMode === 'orders' && (
+          <OrderStatus
+            orders={orders}
+            onBack={navigation.handleBackToHome}
+          />
+        )}
+
+        {navigation.viewMode === 'favorites' && (
+          <FavoritesView
+            favorites={favorites}
+            onBack={navigation.handleBackToHome}
+            onCakeSelect={navigation.handleCakeSelect}
+            onRemoveFavorite={removeFavorite}
+          />
+        )}
+
+        {navigation.viewMode === 'reviews' && (
+          <ReviewsView
+            reviews={reviews}
+            onBack={navigation.handleBackToHome}
+            onDeleteReview={deleteReview}
+          />
+        )}
+      </View>
+
+      {/* Floating Action Button */}
+      {shouldShowMapButton(navigation.viewMode) && (
+        <FloatingMapButton
+          viewMode={navigation.viewMode}
+          onToggle={navigation.handleToggleView}
+        />
+      )}
+
+      {/* AI Search Bar - Bottom Sheet */}
+      <AISearchBar
+        onCakeSelect={navigation.handleCakeSelect}
+        inquiryMode={inquiryMode || undefined}
+        onInquiryComplete={handleInquiryComplete}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight : 0,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  content: {
+    flex: 1,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  tagsContainer: {
+    marginTop: 16,
+  },
+  viewContainer: {
+    flex: 1,
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 220, // Increased to account for BottomNav + Collapsed AISearchBar
+  },
+  mapContainer: {
+    flex: 1,
+    marginTop: 16,
+    paddingBottom: 220, // Increased to account for BottomNav + Collapsed AISearchBar
   },
 });
