@@ -8,9 +8,11 @@ import {
   Dimensions,
   Pressable,
 } from 'react-native';
-import { Bell, User, X } from 'lucide-react-native';
+import { Bell, User, X, Map as MapIcon, List as ListIcon } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { MyPage } from './my-page';
+import { theme } from '@/constants/theme';
 
 const { width: WINDOW_WIDTH } = Dimensions.get('window');
 
@@ -36,12 +38,16 @@ interface HeaderProps {
   onNavigateToOrders?: () => void;
   onNavigateToFavorites?: () => void;
   onNavigateToReviews?: () => void;
+  viewMode?: 'list' | 'map';
+  onToggleView?: () => void;
 }
 
 export function Header({
   onNavigateToOrders,
   onNavigateToFavorites,
   onNavigateToReviews,
+  viewMode = 'list',
+  onToggleView,
 }: HeaderProps) {
   const insets = useSafeAreaInsets();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -51,8 +57,29 @@ export function Header({
   return (
     <View style={[styles.wrapper, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        {/* Logo */}
-        <Text style={styles.logo}>Make a Wish</Text>
+        {/* Logo & Toggle Container */}
+        <View style={styles.leftSection}>
+          <Text style={styles.logo}>Make a Wish</Text>
+          
+          {/* View Mode Toggle */}
+          <TouchableOpacity 
+            style={styles.viewToggle} 
+            onPress={onToggleView}
+            activeOpacity={0.8}
+          >
+            {viewMode === 'list' ? (
+              <View style={styles.toggleItem}>
+                <MapIcon size={16} color={theme.colors.primary} />
+                <Text style={styles.toggleText}>지도</Text>
+              </View>
+            ) : (
+              <View style={styles.toggleItem}>
+                <ListIcon size={16} color={theme.colors.primary} />
+                <Text style={styles.toggleText}>리스트</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
 
         {/* Right Icons */}
         <View style={styles.rightIcons}>
@@ -60,8 +87,9 @@ export function Header({
             <TouchableOpacity
               onPress={() => setIsNotificationOpen(!isNotificationOpen)}
               style={styles.iconButton}
+              activeOpacity={0.7}
             >
-              <Bell size={24} color="#374151" />
+              <Bell size={24} color={theme.colors.text} />
               {unreadCount > 0 && <View style={styles.unreadBadge} />}
             </TouchableOpacity>
 
@@ -72,11 +100,15 @@ export function Header({
                   style={styles.backdrop}
                   onPress={() => setIsNotificationOpen(false)}
                 />
-                <View style={styles.notificationPanel}>
+                <Animated.View 
+                  entering={FadeIn.duration(200)}
+                  exiting={FadeOut.duration(200)}
+                  style={styles.notificationPanel}
+                >
                   <View style={styles.notificationHeader}>
                     <Text style={styles.notificationHeaderTitle}>알림</Text>
                     <TouchableOpacity onPress={() => setIsNotificationOpen(false)}>
-                      <X size={18} color="#4B5563" />
+                      <X size={18} color={theme.colors.gray} />
                     </TouchableOpacity>
                   </View>
 
@@ -115,7 +147,7 @@ export function Header({
                       <Text style={styles.footerText}>모든 알림 읽음 처리</Text>
                     </TouchableOpacity>
                   )}
-                </View>
+                </Animated.View>
               </>
             )}
           </View>
@@ -123,8 +155,9 @@ export function Header({
           <TouchableOpacity
             onPress={() => setIsMyPageOpen(true)}
             style={styles.iconButton}
+            activeOpacity={0.7}
           >
-            <User size={24} color="#374151" />
+            <User size={24} color={theme.colors.text} />
           </TouchableOpacity>
         </View>
       </View>
@@ -144,102 +177,133 @@ export function Header({
 const styles = StyleSheet.create({
   wrapper: {
     backgroundColor: '#fff',
-    zIndex: 50,
+    zIndex: 999,
+    position: 'relative',
   },
   header: {
-    height: 56,
-    paddingHorizontal: 16,
+    height: 64,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   logo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFB6C1', // Fallback since gradient text is complex
+    fontSize: 20,
+    fontWeight: '900',
+    color: theme.colors.primary,
+    letterSpacing: -0.5,
+  },
+  viewToggle: {
+    backgroundColor: '#FFF0F5',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FFE4E1',
+  },
+  toggleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  toggleText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: theme.colors.primary,
   },
   rightIcons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
   },
   iconWrapper: {
     position: 'relative',
   },
   iconButton: {
-    padding: 4,
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
   },
   unreadBadge: {
     position: 'absolute',
-    top: 2,
-    right: 2,
-    width: 8,
-    height: 8,
-    backgroundColor: '#FFB6C1',
-    borderRadius: 4,
-    borderWidth: 1.5,
+    top: 8,
+    right: 8,
+    width: 10,
+    height: 10,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 5,
+    borderWidth: 2,
     borderColor: '#fff',
   },
   backdrop: {
     position: 'absolute',
-    top: -1000,
-    left: -1000,
-    right: -1000,
-    bottom: -1000,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    zIndex: 40,
+    top: 0,
+    left: -WINDOW_WIDTH,
+    right: -WINDOW_WIDTH,
+    height: 1000,
+    zIndex: 90,
   },
   notificationPanel: {
     position: 'absolute',
-    top: 44,
-    right: 0,
-    width: WINDOW_WIDTH - 32,
+    top: 70,
+    right: -40,
+    width: WINDOW_WIDTH - 40,
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-    zIndex: 50,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+    zIndex: 100,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
   },
   notificationHeader: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFF5F7',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#FFF9FB',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   notificationHeaderTitle: {
-    fontWeight: 'bold',
-    color: '#1F2937',
+    fontSize: 16,
+    fontWeight: '800',
+    color: theme.colors.text,
   },
   notificationList: {
-    maxHeight: 300,
+    maxHeight: 320,
   },
   notificationItem: {
-    padding: 16,
+    padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
   unreadNotification: {
-    backgroundColor: '#FFF5F7',
+    backgroundColor: '#FFF9FB',
   },
   notificationItemHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   notificationTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#1F2937',
+    fontSize: 15,
+    fontWeight: '700',
+    color: theme.colors.text,
   },
   notificationTime: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: theme.colors.gray,
   },
   notificationMessage: {
     fontSize: 14,
@@ -247,21 +311,21 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   emptyNotifications: {
-    padding: 32,
+    padding: 40,
     alignItems: 'center',
   },
   emptyText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: theme.colors.gray,
   },
   notificationFooter: {
-    padding: 12,
+    padding: 16,
     backgroundColor: '#F9FAFB',
     alignItems: 'center',
   },
   footerText: {
     fontSize: 13,
-    color: '#FF69B4',
-    fontWeight: '500',
+    color: theme.colors.primary,
+    fontWeight: '700',
   },
 });

@@ -1,112 +1,188 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { Search as SearchIcon, Filter, TrendingUp, Clock } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { theme } from '@/constants/theme';
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+export default function SearchScreen() {
+  const insets = useSafeAreaInsets();
 
-export default function TabTwoScreen() {
+  const recentSearches = ['티아라 케이크', '레터링 케이크', '성수동 케이크'];
+  const trendingCategories = ['#Y2K감성', '#커스텀케이크', '#기념일선물', '#당일픽업', '#비건케이크'];
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Search Header */}
+      <View style={styles.header}>
+        <View style={styles.searchBar}>
+          <SearchIcon size={20} color={theme.colors.gray} />
+          <TextInput 
+            placeholder="케이크, 가게 또는 키워드 검색" 
+            style={styles.input}
+            placeholderTextColor="#9CA3AF"
+          />
+          <TouchableOpacity>
+            <Filter size={20} color={theme.colors.primary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Recent Searches */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleRow}>
+              <Clock size={16} color={theme.colors.gray} />
+              <Text style={styles.sectionTitle}>최근 검색어</Text>
+            </View>
+            <TouchableOpacity>
+              <Text style={styles.clearBtn}>모두 지우기</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.tagCloud}>
+            {recentSearches.map((search, i) => (
+              <TouchableOpacity key={i} style={styles.recentTag}>
+                <Text style={styles.recentTagText}>{search}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Trending Categories */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleRow}>
+              <TrendingUp size={16} color={theme.colors.primary} />
+              <Text style={styles.sectionTitle}>지금 뜨는 키워드</Text>
+            </View>
+          </View>
+          <View style={styles.tagCloud}>
+            {trendingCategories.map((category, i) => (
+              <TouchableOpacity key={i} style={styles.trendingTag}>
+                <Text style={styles.trendingTagText}>{category}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Categories Grid (Mock) */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>카테고리별 탐색</Text>
+          <View style={styles.categoryGrid}>
+            {['🎂 생일', '💘 기념일', '💐 꽃/플라워', '🎀 리본', '🎨 드로잉', '🐰 캐릭터'].map((cat, i) => (
+              <TouchableOpacity key={i} style={styles.categoryItem}>
+                <Text style={styles.categoryText}>{cat}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
   },
-  titleContainer: {
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  searchBar: {
     flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    gap: 12,
+    borderWidth: 1.5,
+    borderColor: '#F3F4F6',
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  content: {
+    flex: 1,
+  },
+  section: {
+    padding: 20,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: theme.colors.text,
+  },
+  clearBtn: {
+    fontSize: 12,
+    color: theme.colors.gray,
+    fontWeight: '600',
+  },
+  tagCloud: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
+  },
+  recentTag: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+  },
+  recentTagText: {
+    fontSize: 13,
+    color: '#4B5563',
+    fontWeight: '600',
+  },
+  trendingTag: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: '#FFF5F7',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FFE4E6',
+  },
+  trendingTagText: {
+    fontSize: 13,
+    color: theme.colors.primary,
+    fontWeight: '700',
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 16,
+  },
+  categoryItem: {
+    width: '48%',
+    backgroundColor: '#F9FAFB',
+    padding: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: theme.colors.text,
   },
 });

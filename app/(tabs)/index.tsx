@@ -1,57 +1,55 @@
-import React from 'react';
-import { View, StyleSheet, SafeAreaView, Platform, StatusBar as RNStatusBar } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React from "react";
+import {
+  Platform,
+  StatusBar as RNStatusBar,
+  StyleSheet,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Header } from '@/components/header';
-import { AISearchBar } from '@/components/ai-search-bar';
-import { RecommendationTags } from '@/components/recommendation-tags';
-import { CakeGrid } from '@/components/cake-grid';
-import { MapView } from '@/components/map-view';
-import { ShopDetail } from '@/components/shop-detail';
-import { EditorView } from '@/components/editor-view';
-import { FloatingMapButton } from '@/components/floating-map-button';
-import { BottomNavigation } from '@/components/bottom-navigation';
-import { OrderStatus } from '@/components/order-status';
-import { FavoritesView } from '@/components/favorites-view';
-import { ReviewsView } from '@/components/reviews-view';
+import { AISearchBar } from "@/components/ai-search-bar";
+import { CakeGrid } from "@/components/cake-grid";
+import { Header } from "@/components/header";
+import { MapView } from "@/components/map-view";
+import { RecommendationTags } from "@/components/recommendation-tags";
 
-import { useNavigation } from '@/hooks/use-navigation';
-import { useOrders } from '@/hooks/use-orders';
-import { useFavorites } from '@/hooks/use-favorites';
-import { useReviews } from '@/hooks/use-reviews';
-import { useInquiry } from '@/hooks/use-inquiry';
-import { useFilter } from '@/hooks/use-filter';
+import { useFavorites } from "@/hooks/use-favorites";
+import { useFilter } from "@/hooks/use-filter";
+import { useInquiry } from "@/hooks/use-inquiry";
+import { useNavigation } from "@/hooks/use-navigation";
+import { useOrders } from "@/hooks/use-orders";
 
-import { shouldShowHeader, shouldShowBottomNav, shouldShowMapButton, getActiveTab } from '@/utils/helpers';
-import type { OrderData } from '@/types';
+import type { OrderData } from "@/types";
 
 export default function HomeScreen() {
-  // Custom hooks for state management
+  const router = useRouter();
   const navigation = useNavigation();
-  const { orders, addOrder } = useOrders();
-  const { favorites, toggleFavorite, removeFavorite } = useFavorites();
-  const { reviews, deleteReview } = useReviews();
-  const { inquiryMode, startInquiry, completeInquiry, conversationHistory } = useInquiry();
+  const { addOrder } = useOrders();
+  const { favorites, toggleFavorite } = useFavorites();
+  const { inquiryMode, startInquiry, completeInquiry } = useInquiry();
   const { selectedCategory, handleTagSelect } = useFilter();
+
+  const insets = useSafeAreaInsets();
+  const tabBarHeightFromNavigator = useBottomTabBarHeight();
+  const tabBarHeight =
+    tabBarHeightFromNavigator > 0
+      ? tabBarHeightFromNavigator
+      : insets.bottom + 60;
+
+  // COLLAPSED_BAR_HEIGHT from AISearchBar is 60.
+  // We add some buffer for the collapsed sheet above the tab bar.
+  const dynamicPaddingBottom = tabBarHeight + 60 + 20;
 
   // Handler for cake inquiry from grid
   const handleCakeInquiry = (image: string, shopName: string) => {
     startInquiry({
       image,
       shopName,
-      design: '디자인 상세 선택',
+      design: "디자인 상세 선택",
     });
-  };
-
-  // Handler for inquiry from editor
-  const handleEditorInquiry = () => {
-    if (navigation.selectedCake) {
-      startInquiry({
-        image: navigation.selectedCake.image,
-        shopName: navigation.selectedCake.shopName,
-        design: conversationHistory.design || '에디터에서 수정된 디자인',
-      });
-    }
   };
 
   // Handler for completing inquiry
@@ -60,118 +58,79 @@ export default function HomeScreen() {
 
     if (orderData) {
       addOrder(orderData);
-      navigation.navigateToView('orders');
+      router.push("/orders");
     }
   };
 
-  // Handler for navigation from MyPage
-  const handleNavigateToOrdersFromMyPage = () => {
-    navigation.navigateToView('orders');
-  };
-
-  const handleNavigateToFavorites = () => {
-    navigation.navigateToView('favorites');
-  };
-
-  const handleNavigateToReviews = () => {
-    navigation.navigateToView('reviews');
-  };
+  const handleNavigateToOrders = () => router.push("/orders");
+  const handleNavigateToFavorites = () => router.push("/favorites");
+  const handleNavigateToReviews = () => router.push("/reviews");
 
   return (
     <View style={styles.container}>
       <StatusBar style="auto" />
-      
+
       {/* Header */}
-      {shouldShowHeader(navigation.viewMode) && (
-        <Header
-          onNavigateToOrders={handleNavigateToOrdersFromMyPage}
-          onNavigateToFavorites={handleNavigateToFavorites}
-          onNavigateToReviews={handleNavigateToReviews}
-        />
-      )}
+      <Header
+        onNavigateToOrders={handleNavigateToOrders}
+        onNavigateToFavorites={handleNavigateToFavorites}
+        onNavigateToReviews={handleNavigateToReviews}
+        viewMode={navigation.viewMode}
+        onToggleView={navigation.handleToggleView}
+      />
 
       {/* Content Area */}
       <View style={styles.content}>
         {/* AI Recommendation Tags */}
-        {navigation.viewMode === 'list' && (
+        {navigation.viewMode === "list" && (
           <View style={styles.tagsContainer}>
             <RecommendationTags onTagSelect={handleTagSelect} />
           </View>
         )}
 
-        {/* Main Content Views */}
-        {navigation.viewMode === 'list' && (
+        {/* Main Content Views - Only List and Map remain here */}
+        {navigation.viewMode === "list" && (
           <View style={styles.viewContainer}>
             <CakeGrid
-              onCakeSelect={navigation.handleCakeSelect}
+              onCakeSelect={(image, shopName) => {
+                router.push({
+                  pathname: "/editor/[id]",
+                  params: { id: "grid", image, shopName },
+                });
+              }}
               onCakeInquiry={handleCakeInquiry}
               selectedCategory={selectedCategory}
               favorites={favorites}
               onToggleFavorite={toggleFavorite}
+              contentContainerStyle={{ paddingBottom: dynamicPaddingBottom }}
             />
           </View>
         )}
 
-        {navigation.viewMode === 'map' && (
-          <View style={styles.mapContainer}>
-            <MapView onShopSelect={navigation.handleShopSelect} />
+        {navigation.viewMode === "map" && (
+          <View
+            style={[
+              styles.mapContainer,
+              { paddingBottom: dynamicPaddingBottom },
+            ]}
+          >
+            <MapView
+              onShopSelect={(shopId) => {
+                router.push(`/shop/${shopId}`);
+              }}
+            />
           </View>
-        )}
-
-        {navigation.viewMode === 'detail' && navigation.selectedShopId && (
-          <ShopDetail
-            shopId={navigation.selectedShopId}
-            onBack={navigation.handleBackToMap}
-            onCakeSelect={navigation.handleCakeSelect}
-            onCakeInquiry={handleCakeInquiry}
-          />
-        )}
-
-        {navigation.viewMode === 'editor' && navigation.selectedCake && (
-          <EditorView
-            image={navigation.selectedCake.image}
-            shopName={navigation.selectedCake.shopName}
-            onBack={navigation.selectedShopId ? navigation.handleBackToDetail : navigation.handleBackToList}
-            onInquiry={handleEditorInquiry}
-          />
-        )}
-
-        {navigation.viewMode === 'orders' && (
-          <OrderStatus
-            orders={orders}
-            onBack={navigation.handleBackToHome}
-          />
-        )}
-
-        {navigation.viewMode === 'favorites' && (
-          <FavoritesView
-            favorites={favorites}
-            onBack={navigation.handleBackToHome}
-            onCakeSelect={navigation.handleCakeSelect}
-            onRemoveFavorite={removeFavorite}
-          />
-        )}
-
-        {navigation.viewMode === 'reviews' && (
-          <ReviewsView
-            reviews={reviews}
-            onBack={navigation.handleBackToHome}
-            onDeleteReview={deleteReview}
-          />
         )}
       </View>
 
-      {/* Floating Action Button */}
-      {shouldShowMapButton(navigation.viewMode) && (
-        <FloatingMapButton
-          viewMode={navigation.viewMode}
-          onToggle={navigation.handleToggleView}
-        />
-      )}
-
       {/* AI Search Bar - Bottom Sheet */}
       <AISearchBar
-        onCakeSelect={navigation.handleCakeSelect}
+        onCakeSelect={(image: string, shopName: string) => {
+          router.push({
+            pathname: "/editor/[id]",
+            params: { id: "ai", image, shopName },
+          });
+        }}
         inquiryMode={inquiryMode || undefined}
         onInquiryComplete={handleInquiryComplete}
       />
@@ -182,8 +141,8 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight : 0,
+    backgroundColor: "#FFFFFF",
+    paddingTop: Platform.OS === "android" ? RNStatusBar.currentHeight : 0,
   },
   content: {
     flex: 1,
@@ -195,11 +154,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: 16,
     paddingHorizontal: 16,
-    paddingBottom: 220, // Increased to account for BottomNav + Collapsed AISearchBar
   },
   mapContainer: {
     flex: 1,
     marginTop: 16,
-    paddingBottom: 220, // Increased to account for BottomNav + Collapsed AISearchBar
   },
 });

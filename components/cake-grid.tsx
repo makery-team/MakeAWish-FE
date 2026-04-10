@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View, ViewStyle } from 'react-native';
 import { CakeCard } from './cake-card';
 import { CAKE_DATA } from '@/constants/mock-data';
 import type { FavoriteCake } from '@/types';
@@ -15,6 +15,7 @@ interface CakeGridProps {
     shopName: string,
     tag?: string
   ) => void;
+  contentContainerStyle?: ViewStyle;
 }
 
 export function CakeGrid({
@@ -23,6 +24,7 @@ export function CakeGrid({
   selectedCategory,
   favorites = [],
   onToggleFavorite,
+  contentContainerStyle,
 }: CakeGridProps) {
   const filteredCakes =
     selectedCategory && selectedCategory !== 'all'
@@ -35,7 +37,7 @@ export function CakeGrid({
       keyExtractor={(item) => item.id.toString()}
       numColumns={2}
       columnWrapperStyle={styles.columnWrapper}
-      contentContainerStyle={styles.contentContainer}
+      contentContainerStyle={[styles.contentContainer, contentContainerStyle]}
       renderItem={({ item: cake }) => {
         const isFavorited = favorites.some((fav) => fav.id === `cake-${cake.id}`);
         return (
@@ -61,7 +63,7 @@ export function CakeGrid({
 const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 100, // Space for floating button
+    paddingBottom: 20,
   },
   columnWrapper: {
     justifyContent: 'space-between',

@@ -7,6 +7,7 @@ import {
   ScrollView,
   Modal,
   SafeAreaView,
+  Platform,
 } from 'react-native';
 import {
   X,
@@ -17,7 +18,9 @@ import {
   Settings,
   LogOut,
   LucideIcon,
+  User as UserIcon,
 } from 'lucide-react-native';
+import { theme } from '@/constants/theme';
 
 interface MyPageProps {
   isOpen: boolean;
@@ -50,8 +53,8 @@ export function MyPage({
       icon: Package,
       title: '나의 주문내역',
       description: '주문 중인 케이크와 이전 주문내역 확인',
-      color: '#FF69B4',
-      bgColor: '#FFE4E1',
+      color: theme.colors.primary,
+      bgColor: '#FFF0F5',
       onClick: () => {
         onNavigateToOrders();
         onClose();
@@ -63,7 +66,7 @@ export function MyPage({
       title: '찜한 케이크',
       description: '찜한 케이크를 모아보세요',
       color: '#FF85C0',
-      bgColor: '#FFF0F5',
+      bgColor: '#FFF5F7',
       onClick: () => {
         onNavigateToFavorites();
         onClose();
@@ -74,8 +77,8 @@ export function MyPage({
       icon: Star,
       title: '작성한 리뷰',
       description: '구매하신 케이크 리뷰 관리',
-      color: '#87CEEB',
-      bgColor: '#E6F3FF',
+      color: theme.colors.secondary,
+      bgColor: '#F0F9FF',
       onClick: () => {
         onNavigateToReviews();
         onClose();
@@ -86,10 +89,9 @@ export function MyPage({
       icon: Settings,
       title: '설정',
       description: '내 정보 및 알림 설정',
-      color: '#9CA3AF',
-      bgColor: '#F3F4F6',
+      color: theme.colors.gray,
+      bgColor: '#F9FAFB',
       onClick: () => {
-        // Handle settings
         onClose();
       },
     },
@@ -99,30 +101,37 @@ export function MyPage({
     <Modal
       visible={isOpen}
       animationType="slide"
-      transparent={false}
+      presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>마이페이지</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <X size={24} color="#374151" />
+          <TouchableOpacity onPress={onClose} style={styles.closeButton} activeOpacity={0.7}>
+            <X size={24} color={theme.colors.text} />
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.content}>
+        <ScrollView 
+          style={styles.content} 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
           {/* User Profile */}
           <View style={styles.profileSection}>
             <View style={styles.profileContent}>
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>J</Text>
+                <UserIcon size={32} color="#fff" />
               </View>
               <View>
                 <Text style={styles.userName}>Jane Doe</Text>
                 <Text style={styles.userEmail}>jane.doe@email.com</Text>
               </View>
             </View>
+            <TouchableOpacity style={styles.editProfileBtn}>
+              <Text style={styles.editProfileText}>프로필 수정</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Menu Items */}
@@ -134,6 +143,7 @@ export function MyPage({
                   key={item.id}
                   onPress={item.onClick}
                   style={styles.menuItem}
+                  activeOpacity={0.6}
                 >
                   <View style={[styles.menuIconContainer, { backgroundColor: item.bgColor }]}>
                     <Icon size={24} color={item.color} />
@@ -142,7 +152,7 @@ export function MyPage({
                     <Text style={styles.menuTitle}>{item.title}</Text>
                     <Text style={styles.menuDescription}>{item.description}</Text>
                   </View>
-                  <ChevronRight size={20} color="#9CA3AF" />
+                  <ChevronRight size={20} color="#D1D5DB" />
                 </TouchableOpacity>
               );
             })}
@@ -150,13 +160,14 @@ export function MyPage({
 
           {/* Logout Button */}
           <View style={styles.footer}>
-            <TouchableOpacity style={styles.logoutButton}>
-              <LogOut size={20} color="#6B7280" />
+            <TouchableOpacity style={styles.logoutButton} activeOpacity={0.7}>
+              <LogOut size={20} color={theme.colors.gray} />
               <Text style={styles.logoutText}>로그아웃</Text>
             </TouchableOpacity>
+            <Text style={styles.versionText}>버전 1.0.0 (build 20260406)</Text>
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
@@ -171,26 +182,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingVertical: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1F2937',
+    fontWeight: '900',
+    color: theme.colors.text,
   },
   closeButton: {
-    padding: 4,
+    padding: 8,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
   },
   content: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 40,
+  },
   profileSection: {
     paddingHorizontal: 24,
-    paddingVertical: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    paddingVertical: 32,
+    backgroundColor: '#FFF9FB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   profileContent: {
     flexDirection: 'row',
@@ -198,43 +216,56 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#FFB6C1',
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  avatarText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   userName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 2,
+    fontSize: 20,
+    fontWeight: '800',
+    color: theme.colors.text,
+    marginBottom: 4,
   },
   userEmail: {
     fontSize: 14,
-    color: '#6B7280',
+    color: theme.colors.gray,
+  },
+  editProfileBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  editProfileText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: theme.colors.text,
   },
   menuList: {
-    paddingVertical: 16,
+    paddingVertical: 20,
   },
   menuItem: {
     width: '100%',
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingVertical: 18,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
   },
   menuIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -242,34 +273,38 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontSize: 17,
+    fontWeight: '700',
+    color: theme.colors.text,
   },
   menuDescription: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 2,
+    fontSize: 13,
+    color: theme.colors.gray,
+    marginTop: 4,
   },
   footer: {
     paddingHorizontal: 24,
-    paddingVertical: 24,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    paddingVertical: 32,
+    alignItems: 'center',
+    gap: 16,
   },
   logoutButton: {
     width: '100%',
-    paddingVertical: 12,
+    paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 10,
     backgroundColor: '#F9FAFB',
-    borderRadius: 12,
+    borderRadius: 16,
   },
   logoutText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#4B5563',
+    fontSize: 15,
+    fontWeight: '700',
+    color: theme.colors.gray,
+  },
+  versionText: {
+    fontSize: 12,
+    color: '#D1D5DB',
   },
 });

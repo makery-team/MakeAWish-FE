@@ -6,6 +6,8 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
+import { theme } from '@/constants/theme';
+import Animated, { Layout } from 'react-native-reanimated';
 
 const tags = [
   { id: 1, label: '#ForYou(AI추천)', category: 'all' },
@@ -63,34 +65,34 @@ export function RecommendationTags({ onTagSelect }: RecommendationTagsProps) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 8,
+    paddingVertical: 12,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    gap: 8,
+    paddingHorizontal: 20,
+    gap: 10,
   },
   tag: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 24,
+    borderWidth: 1.5,
   },
   selectedTag: {
-    backgroundColor: '#FFE4E1',
-    borderColor: '#FFE4E1',
+    backgroundColor: '#FFF0F5',
+    borderColor: theme.colors.primary,
   },
   unselectedTag: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F9FAFB',
     borderColor: '#F3F4F6',
   },
   tagText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   selectedTagText: {
-    color: '#FF69B4',
+    color: theme.colors.primary,
   },
   unselectedTagText: {
-    color: '#4B5563',
+    color: theme.colors.gray,
   },
 });
