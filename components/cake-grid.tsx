@@ -39,7 +39,7 @@ export function CakeGrid({
       columnWrapperStyle={styles.columnWrapper}
       contentContainerStyle={[styles.contentContainer, contentContainerStyle]}
       renderItem={({ item: cake }) => {
-        const isFavorited = favorites.some((fav) => fav.id === `cake-${cake.id}`);
+        const isFavorited = favorites.some((fav) => fav.id === cake.id.toString());
         return (
           <CakeCard
             id={cake.id}
