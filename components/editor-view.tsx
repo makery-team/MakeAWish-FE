@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,13 +7,12 @@ import {
   Dimensions,
   SafeAreaView,
   TextInput,
-  ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { ArrowLeft, Brush, Eraser, Undo, Redo, Sparkles } from 'lucide-react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedProps, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -39,24 +38,34 @@ export function EditorView({ image, shopName, onBack, onInquiry }: EditorViewPro
   const [redoPaths, setRedoPaths] = useState<DrawingPath[]>([]);
   const [currentPath, setCurrentPath] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const currentPathRef = useRef<string>('');
 
   const containerHeight = SCREEN_WIDTH; // Square aspect ratio for editor
 
   const panGesture = Gesture.Pan()
+    .runOnJS(true)
     .onStart((event) => {
       const newPath = `M ${event.x} ${event.y}`;
+      currentPathRef.current = newPath;
       setCurrentPath(newPath);
     })
     .onUpdate((event) => {
-      setCurrentPath((prev) => `${prev} L ${event.x} ${event.y}`);
+      const nextPath = `${currentPathRef.current} L ${event.x} ${event.y}`;
+      currentPathRef.current = nextPath;
+      setCurrentPath(nextPath);
     })
     .onEnd(() => {
+      if (!currentPathRef.current.trim()) {
+        return;
+      }
+
       const newPath: DrawingPath = {
-        path: currentPath,
+        path: currentPathRef.current,
         color: activeTool === 'brush' ? 'rgba(255, 105, 180, 0.4)' : 'rgba(255, 255, 255, 1)',
         width: brushSize,
       };
       setPaths((prev) => [...prev, newPath]);
+      currentPathRef.current = '';
       setCurrentPath('');
       setRedoPaths([]);
     });
