@@ -26,18 +26,24 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { INITIAL_AI_MESSAGE } from "@/constants/mock-data";
 import { theme } from "@/constants/theme";
-import type { ChatMode, Message } from "@/types";
+import type { ChatMode, InquiryMode, Message, OrderData } from "@/types";
 import { ImageSlider } from "./image-slider";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
-const COLLAPSED_BAR_HEIGHT = 64;
+export const COLLAPSED_BAR_HEIGHT = 64;
 const SHEET_HEIGHT = SCREEN_HEIGHT * 0.9;
+
+interface AISearchBarProps {
+  onCakeSelect?: (image: string, shopName: string) => void;
+  inquiryMode?: InquiryMode | null;
+  onInquiryComplete?: (orderData?: OrderData) => void;
+}
 
 export function AISearchBar({
   onCakeSelect,
   inquiryMode,
   onInquiryComplete,
-}: any) {
+}: AISearchBarProps) {
   const insets = useSafeAreaInsets();
   const keyboard = useAnimatedKeyboard();
   const tabBarHeightFromNavigator = useBottomTabBarHeight();
@@ -283,7 +289,18 @@ export function AISearchBar({
                       </Text>
                       {item.images && (
                         <View style={{ marginTop: 8 }}>
-                          <ImageSlider images={item.images} />
+                          <ImageSlider
+                            images={item.images}
+                            onCakeSelect={onCakeSelect}
+                            onInquiry={(image) => {
+                              onInquiryComplete?.({
+                                cakeImage: image,
+                                shopName: inquiryMode?.shopName,
+                              });
+                              resetChat();
+                            }}
+                            onMinimize={resetChat}
+                          />
                         </View>
                       )}
                     </View>

@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AISearchBar } from "@/components/ai-search-bar";
+import { AISearchBar, COLLAPSED_BAR_HEIGHT } from "@/components/ai-search-bar";
 import { CakeGrid } from "@/components/cake-grid";
 import { Header } from "@/components/header";
 import { MapView } from "@/components/map-view";
@@ -39,9 +39,8 @@ export default function HomeScreen() {
       ? tabBarHeightFromNavigator
       : insets.bottom + 60;
 
-  // COLLAPSED_BAR_HEIGHT from AISearchBar is 60.
-  // We add some buffer for the collapsed sheet above the tab bar.
-  const dynamicPaddingBottom = tabBarHeight + 60 + 20;
+  // Use the exported constant from AISearchBar to keep values in sync.
+  const dynamicPaddingBottom = tabBarHeight + COLLAPSED_BAR_HEIGHT + 20;
 
   // Handler for cake inquiry from grid
   const handleCakeInquiry = (image: string, shopName: string) => {
