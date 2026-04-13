@@ -1,98 +1,161 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React from "react";
+import {
+  Platform,
+  StatusBar as RNStatusBar,
+  StyleSheet,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { AISearchBar, COLLAPSED_BAR_HEIGHT } from "@/components/ai-search-bar";
+import { CakeGrid } from "@/components/cake-grid";
+import { Header } from "@/components/header";
+import { MapView } from "@/components/map-view";
+import { RecommendationTags } from "@/components/recommendation-tags";
+
+import { useFavorites } from "@/hooks/use-favorites";
+import { useFilter } from "@/hooks/use-filter";
+import { useInquiry } from "@/hooks/use-inquiry";
+import { useNavigation } from "@/hooks/use-navigation";
+import { useOrders } from "@/hooks/use-orders";
+
+import type { OrderData } from "@/types";
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const router = useRouter();
+  const navigation = useNavigation();
+  const { addOrder } = useOrders();
+  const { favorites, toggleFavorite } = useFavorites();
+  const { inquiryMode, startInquiry, completeInquiry } = useInquiry();
+  const { selectedCategory, handleTagSelect } = useFilter();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const insets = useSafeAreaInsets();
+  const tabBarHeightFromNavigator = useBottomTabBarHeight();
+  const tabBarHeight =
+    tabBarHeightFromNavigator > 0
+      ? tabBarHeightFromNavigator
+      : insets.bottom + 60;
+
+  // Use the exported constant from AISearchBar to keep values in sync.
+  const dynamicPaddingBottom = tabBarHeight + COLLAPSED_BAR_HEIGHT + 20;
+
+  // Handler for cake inquiry from grid
+  const handleCakeInquiry = (image: string, shopName: string) => {
+    startInquiry({
+      image,
+      shopName,
+      design: "디자인 상세 선택",
+    });
+  };
+
+  // Handler for completing inquiry
+  const handleInquiryComplete = (orderData?: OrderData) => {
+    completeInquiry();
+
+    if (orderData) {
+      addOrder(orderData);
+      router.push("/orders");
+    }
+  };
+
+  const handleNavigateToOrders = () => router.push("/orders");
+  const handleNavigateToFavorites = () => router.push("/favorites");
+  const handleNavigateToReviews = () => router.push("/reviews");
+
+  return (
+    <View style={styles.container}>
+      <StatusBar style="auto" />
+
+      {/* Header */}
+      <Header
+        onNavigateToOrders={handleNavigateToOrders}
+        onNavigateToFavorites={handleNavigateToFavorites}
+        onNavigateToReviews={handleNavigateToReviews}
+        viewMode={navigation.viewMode}
+        onToggleView={navigation.handleToggleView}
+      />
+
+      {/* Content Area */}
+      <View style={styles.content}>
+        {/* AI Recommendation Tags */}
+        {navigation.viewMode === "list" && (
+          <View style={styles.tagsContainer}>
+            <RecommendationTags onTagSelect={handleTagSelect} />
+          </View>
+        )}
+
+        {/* Main Content Views - Only List and Map remain here */}
+        {navigation.viewMode === "list" && (
+          <View style={styles.viewContainer}>
+            <CakeGrid
+              onCakeSelect={(image, shopName) => {
+                router.push({
+                  pathname: "/editor/[id]",
+                  params: { id: "grid", image, shopName },
+                });
+              }}
+              onCakeInquiry={handleCakeInquiry}
+              selectedCategory={selectedCategory}
+              favorites={favorites}
+              onToggleFavorite={toggleFavorite}
+              contentContainerStyle={{ paddingBottom: dynamicPaddingBottom }}
+            />
+          </View>
+        )}
+
+        {navigation.viewMode === "map" && (
+          <View
+            style={[
+              styles.mapContainer,
+              { paddingBottom: dynamicPaddingBottom },
+            ]}
+          >
+            <MapView
+              onShopSelect={(shopId) => {
+                router.push(`/shop/${shopId}`);
+              }}
+            />
+          </View>
+        )}
+      </View>
+
+      {/* AI Search Bar - Bottom Sheet */}
+      <AISearchBar
+        onCakeSelect={(image: string, shopName: string) => {
+          router.push({
+            pathname: "/editor/[id]",
+            params: { id: "ai", image, shopName },
+          });
+        }}
+        inquiryMode={inquiryMode || undefined}
+        onInquiryComplete={handleInquiryComplete}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    paddingTop: Platform.OS === "android" ? RNStatusBar.currentHeight : 0,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  content: {
+    flex: 1,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  tagsContainer: {
+    marginTop: 16,
+  },
+  viewContainer: {
+    flex: 1,
+    marginTop: 16,
+    paddingHorizontal: 16,
+  },
+  mapContainer: {
+    flex: 1,
+    marginTop: 16,
   },
 });
