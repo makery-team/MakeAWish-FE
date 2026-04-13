@@ -8,10 +8,14 @@ import {
   Sparkles,
   Undo,
 } from "lucide-react-native";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -58,7 +62,9 @@ export function EditorView({
   const [redoPaths, setRedoPaths] = useState<DrawingPath[]>([]);
   const [currentPath, setCurrentPath] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const currentPathRef = useRef<string>("");
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const containerHeight = SCREEN_WIDTH; // Square aspect ratio for editor
 
@@ -111,6 +117,7 @@ export function EditorView({
 
   const handleGenerate = () => {
     if (!command.trim()) return;
+    Keyboard.dismiss();
     setIsGenerating(true);
     setTimeout(() => {
       setIsGenerating(false);
@@ -124,191 +131,230 @@ export function EditorView({
     ],
   }));
 
+  useEffect(() => {
+    const showSub = Keyboard.addListener("keyboardDidShow", () => {
+      setIsKeyboardVisible(true);
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    });
+
+    const hideSub = Keyboard.addListener("keyboardDidHide", () => {
+      setIsKeyboardVisible(false);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <ArrowLeft size={24} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>AI 이미지 편집</Text>
-          <TouchableOpacity style={styles.saveButton}>
-            <Text style={styles.saveButtonText}>완료</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.content}>
-          {/* Canvas Area */}
-          <View style={styles.canvasContainer}>
-            <Image
-              source={{ uri: image }}
-              style={[styles.baseImage, { height: containerHeight }]}
-              contentFit="cover"
-            />
-
-            <GestureDetector gesture={panGesture}>
-              <View style={[styles.svgOverlay, { height: containerHeight }]}>
-                <Svg style={StyleSheet.absoluteFill}>
-                  {paths.map((p, i) => (
-                    <Path
-                      key={i}
-                      d={p.path}
-                      stroke={p.color}
-                      strokeWidth={p.width}
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  ))}
-                  {currentPath ? (
-                    <Path
-                      d={currentPath}
-                      stroke={
-                        activeTool === "brush"
-                          ? "rgba(255, 105, 180, 0.4)"
-                          : "rgba(255, 255, 255, 1)"
-                      }
-                      strokeWidth={brushSize}
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  ) : null}
-                </Svg>
-              </View>
-            </GestureDetector>
-
-            {!isGenerating && paths.length === 0 && (
-              <View style={styles.hintBadge}>
-                <Text style={styles.hintText}>수정할 부분을 칠해주세요</Text>
-              </View>
-            )}
-
-            {isGenerating && (
-              <View style={styles.loadingOverlay}>
-                <Animated.View style={sparklesStyle}>
-                  <Sparkles size={48} color={theme.colors.primary} />
-                </Animated.View>
-                <Text style={styles.loadingTitle}>이미지 생성 중...</Text>
-                <Text style={styles.loadingSubtitle}>
-                  AI가 예쁜 디자인을 만들고 있어요
-                </Text>
-              </View>
-            )}
+        <KeyboardAvoidingView
+          style={styles.safeArea}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onBack} style={styles.backButton}>
+              <ArrowLeft size={24} color="#333" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>AI 이미지 편집</Text>
+            <TouchableOpacity style={styles.saveButton}>
+              <Text style={styles.saveButtonText}>완료</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Toolbar */}
-          <View style={styles.toolbar}>
-            <TouchableOpacity
-              onPress={() => setActiveTool("brush")}
-              style={[
-                styles.toolButton,
-                activeTool === "brush" && styles.toolButtonActive,
-              ]}
-            >
-              <Brush
-                size={20}
-                color={activeTool === "brush" ? theme.colors.primary : "#666"}
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.content}
+            contentContainerStyle={styles.contentContainer}
+            keyboardShouldPersistTaps="handled"
+            scrollEnabled={isKeyboardVisible}
+          >
+            {/* Canvas Area */}
+            <View style={styles.canvasContainer}>
+              <Image
+                source={{ uri: image }}
+                style={[styles.baseImage, { height: containerHeight }]}
+                contentFit="cover"
               />
-            </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => setActiveTool("eraser")}
-              style={[
-                styles.toolButton,
-                activeTool === "eraser" && styles.toolButtonActive,
-              ]}
-            >
-              <Eraser
-                size={20}
-                color={activeTool === "eraser" ? theme.colors.primary : "#666"}
-              />
-            </TouchableOpacity>
+              <GestureDetector gesture={panGesture}>
+                <View style={[styles.svgOverlay, { height: containerHeight }]}>
+                  <Svg style={StyleSheet.absoluteFill}>
+                    {paths.map((p, i) => (
+                      <Path
+                        key={i}
+                        d={p.path}
+                        stroke={p.color}
+                        strokeWidth={p.width}
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    ))}
+                    {currentPath ? (
+                      <Path
+                        d={currentPath}
+                        stroke={
+                          activeTool === "brush"
+                            ? "rgba(255, 105, 180, 0.4)"
+                            : "rgba(255, 255, 255, 1)"
+                        }
+                        strokeWidth={brushSize}
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    ) : null}
+                  </Svg>
+                </View>
+              </GestureDetector>
 
-            <View style={styles.divider} />
+              {!isGenerating && paths.length === 0 && (
+                <View style={styles.hintBadge}>
+                  <Text style={styles.hintText}>수정할 부분을 칠해주세요</Text>
+                </View>
+              )}
 
-            <View style={styles.brushSizeControl}>
-              <Text style={styles.sizeLabel}>크기</Text>
-              <View style={styles.sizeTrack}>
-                {[10, 20, 30, 40].map((size) => (
-                  <TouchableOpacity
-                    key={size}
-                    onPress={() => setBrushSize(size)}
-                    style={[
-                      styles.sizeDot,
-                      brushSize === size && styles.sizeDotActive,
-                      {
-                        width: size / 2 + 4,
-                        height: size / 2 + 4,
-                        borderRadius: (size / 2 + 4) / 2,
-                      },
-                    ]}
-                  />
-                ))}
-              </View>
+              {isGenerating && (
+                <View style={styles.loadingOverlay}>
+                  <Animated.View style={sparklesStyle}>
+                    <Sparkles size={48} color={theme.colors.primary} />
+                  </Animated.View>
+                  <Text style={styles.loadingTitle}>이미지 생성 중...</Text>
+                  <Text style={styles.loadingSubtitle}>
+                    AI가 예쁜 디자인을 만들고 있어요
+                  </Text>
+                </View>
+              )}
             </View>
 
-            <View style={styles.divider} />
+            {/* Toolbar */}
+            <View style={styles.toolbar}>
+              <TouchableOpacity
+                onPress={() => setActiveTool("brush")}
+                style={[
+                  styles.toolButton,
+                  activeTool === "brush" && styles.toolButtonActive,
+                ]}
+              >
+                <Brush
+                  size={20}
+                  color={activeTool === "brush" ? theme.colors.primary : "#666"}
+                />
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={handleUndo}
-              disabled={paths.length === 0}
-              style={[
-                styles.toolButton,
-                paths.length === 0 && styles.toolButtonDisabled,
-              ]}
-            >
-              <Undo size={20} color={paths.length === 0 ? "#CCC" : "#666"} />
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setActiveTool("eraser")}
+                style={[
+                  styles.toolButton,
+                  activeTool === "eraser" && styles.toolButtonActive,
+                ]}
+              >
+                <Eraser
+                  size={20}
+                  color={
+                    activeTool === "eraser" ? theme.colors.primary : "#666"
+                  }
+                />
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={handleRedo}
-              disabled={redoPaths.length === 0}
-              style={[
-                styles.toolButton,
-                redoPaths.length === 0 && styles.toolButtonDisabled,
-              ]}
-            >
-              <Redo
-                size={20}
-                color={redoPaths.length === 0 ? "#CCC" : "#666"}
+              <View style={styles.divider} />
+
+              <View style={styles.brushSizeControl}>
+                <Text style={styles.sizeLabel}>크기</Text>
+                <View style={styles.sizeTrack}>
+                  {[10, 20, 30, 40].map((size) => (
+                    <TouchableOpacity
+                      key={size}
+                      onPress={() => setBrushSize(size)}
+                      style={[
+                        styles.sizeDot,
+                        brushSize === size && styles.sizeDotActive,
+                        {
+                          width: size / 2 + 4,
+                          height: size / 2 + 4,
+                          borderRadius: (size / 2 + 4) / 2,
+                        },
+                      ]}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.divider} />
+
+              <TouchableOpacity
+                onPress={handleUndo}
+                disabled={paths.length === 0}
+                style={[
+                  styles.toolButton,
+                  paths.length === 0 && styles.toolButtonDisabled,
+                ]}
+              >
+                <Undo size={20} color={paths.length === 0 ? "#CCC" : "#666"} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleRedo}
+                disabled={redoPaths.length === 0}
+                style={[
+                  styles.toolButton,
+                  redoPaths.length === 0 && styles.toolButtonDisabled,
+                ]}
+              >
+                <Redo
+                  size={20}
+                  color={redoPaths.length === 0 ? "#CCC" : "#666"}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* AI Command Panel */}
+            <View style={styles.aiPanel}>
+              <Text style={styles.panelTitle}>AI 요청사항</Text>
+              <TextInput
+                value={command}
+                onChangeText={setCommand}
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                  }, 100);
+                }}
+                placeholder="예: 곰돌이 캐릭터를 추가해줘, 분홍색 리본을 달아줘"
+                style={styles.textInput}
+                multiline
+                numberOfLines={3}
               />
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                onPress={handleGenerate}
+                disabled={isGenerating || !command.trim()}
+                style={[
+                  styles.generateButton,
+                  (isGenerating || !command.trim()) &&
+                    styles.generateButtonDisabled,
+                ]}
+              >
+                <Sparkles size={20} color="white" />
+                <Text style={styles.generateButtonText}>
+                  {isGenerating ? "생성 중..." : "이미지 생성하기"}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-          {/* AI Command Panel */}
-          <View style={styles.aiPanel}>
-            <Text style={styles.panelTitle}>AI 요청사항</Text>
-            <TextInput
-              value={command}
-              onChangeText={setCommand}
-              placeholder="예: 곰돌이 캐릭터를 추가해줘, 분홍색 리본을 달아줘"
-              style={styles.textInput}
-              multiline
-              numberOfLines={3}
-            />
-            <TouchableOpacity
-              onPress={handleGenerate}
-              disabled={isGenerating || !command.trim()}
-              style={[
-                styles.generateButton,
-                (isGenerating || !command.trim()) &&
-                  styles.generateButtonDisabled,
-              ]}
-            >
-              <Sparkles size={20} color="white" />
-              <Text style={styles.generateButtonText}>
-                {isGenerating ? "생성 중..." : "이미지 생성하기"}
+            {/* CTA */}
+            <TouchableOpacity onPress={onInquiry} style={styles.ctaButton}>
+              <Text style={styles.ctaButtonText}>
+                수정된 디자인으로 상담하기
               </Text>
             </TouchableOpacity>
-          </View>
-
-          {/* CTA */}
-          <TouchableOpacity onPress={onInquiry} style={styles.ctaButton}>
-            <Text style={styles.ctaButtonText}>수정된 디자인으로 상담하기</Text>
-          </TouchableOpacity>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </GestureHandlerRootView>
   );
@@ -350,6 +396,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentContainer: {
+    flexGrow: 1,
     padding: 16,
   },
   canvasContainer: {
