@@ -1,21 +1,36 @@
-import React, { useState, useRef } from 'react';
+import { theme } from "@/constants/theme";
+import { Image } from "expo-image";
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
+  ArrowLeft,
+  Brush,
+  Eraser,
+  Redo,
+  Sparkles,
+  Undo,
+} from "lucide-react-native";
+import React, { useRef, useState } from "react";
+import {
   Dimensions,
   SafeAreaView,
+  StyleSheet,
+  Text,
   TextInput,
-} from 'react-native';
-import { Image } from 'expo-image';
-import { ArrowLeft, Brush, Eraser, Undo, Redo, Sparkles } from 'lucide-react-native';
-import Svg, { Path } from 'react-native-svg';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
-import { theme } from '@/constants/theme';
+  TouchableOpacity,
+  View,
+} from "react-native";
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
+import Animated, {
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
+import Svg, { Path } from "react-native-svg";
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 interface EditorViewProps {
   image: string;
@@ -30,15 +45,20 @@ interface DrawingPath {
   width: number;
 }
 
-export function EditorView({ image, shopName, onBack, onInquiry }: EditorViewProps) {
+export function EditorView({
+  image,
+  shopName,
+  onBack,
+  onInquiry,
+}: EditorViewProps) {
   const [brushSize, setBrushSize] = useState(20);
-  const [activeTool, setActiveTool] = useState<'brush' | 'eraser'>('brush');
-  const [command, setCommand] = useState('');
+  const [activeTool, setActiveTool] = useState<"brush" | "eraser">("brush");
+  const [command, setCommand] = useState("");
   const [paths, setPaths] = useState<DrawingPath[]>([]);
   const [redoPaths, setRedoPaths] = useState<DrawingPath[]>([]);
-  const [currentPath, setCurrentPath] = useState<string>('');
+  const [currentPath, setCurrentPath] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const currentPathRef = useRef<string>('');
+  const currentPathRef = useRef<string>("");
 
   const containerHeight = SCREEN_WIDTH; // Square aspect ratio for editor
 
@@ -61,12 +81,15 @@ export function EditorView({ image, shopName, onBack, onInquiry }: EditorViewPro
 
       const newPath: DrawingPath = {
         path: currentPathRef.current,
-        color: activeTool === 'brush' ? 'rgba(255, 105, 180, 0.4)' : 'rgba(255, 255, 255, 1)',
+        color:
+          activeTool === "brush"
+            ? "rgba(255, 105, 180, 0.4)"
+            : "rgba(255, 255, 255, 1)",
         width: brushSize,
       };
       setPaths((prev) => [...prev, newPath]);
-      currentPathRef.current = '';
-      setCurrentPath('');
+      currentPathRef.current = "";
+      setCurrentPath("");
       setRedoPaths([]);
     });
 
@@ -96,7 +119,9 @@ export function EditorView({ image, shopName, onBack, onInquiry }: EditorViewPro
 
   const sparklesStyle = useAnimatedStyle(() => ({
     opacity: withRepeat(withTiming(0.4, { duration: 1000 }), -1, true),
-    transform: [{ scale: withRepeat(withTiming(1.1, { duration: 1000 }), -1, true) }],
+    transform: [
+      { scale: withRepeat(withTiming(1.1, { duration: 1000 }), -1, true) },
+    ],
   }));
 
   return (
@@ -121,7 +146,7 @@ export function EditorView({ image, shopName, onBack, onInquiry }: EditorViewPro
               style={[styles.baseImage, { height: containerHeight }]}
               contentFit="cover"
             />
-            
+
             <GestureDetector gesture={panGesture}>
               <View style={[styles.svgOverlay, { height: containerHeight }]}>
                 <Svg style={StyleSheet.absoluteFill}>
@@ -139,7 +164,11 @@ export function EditorView({ image, shopName, onBack, onInquiry }: EditorViewPro
                   {currentPath ? (
                     <Path
                       d={currentPath}
-                      stroke={activeTool === 'brush' ? 'rgba(255, 105, 180, 0.4)' : 'rgba(255, 255, 255, 1)'}
+                      stroke={
+                        activeTool === "brush"
+                          ? "rgba(255, 105, 180, 0.4)"
+                          : "rgba(255, 255, 255, 1)"
+                      }
                       strokeWidth={brushSize}
                       fill="none"
                       strokeLinecap="round"
@@ -162,7 +191,9 @@ export function EditorView({ image, shopName, onBack, onInquiry }: EditorViewPro
                   <Sparkles size={48} color={theme.colors.primary} />
                 </Animated.View>
                 <Text style={styles.loadingTitle}>이미지 생성 중...</Text>
-                <Text style={styles.loadingSubtitle}>AI가 예쁜 디자인을 만들고 있어요</Text>
+                <Text style={styles.loadingSubtitle}>
+                  AI가 예쁜 디자인을 만들고 있어요
+                </Text>
               </View>
             )}
           </View>
@@ -170,17 +201,29 @@ export function EditorView({ image, shopName, onBack, onInquiry }: EditorViewPro
           {/* Toolbar */}
           <View style={styles.toolbar}>
             <TouchableOpacity
-              onPress={() => setActiveTool('brush')}
-              style={[styles.toolButton, activeTool === 'brush' && styles.toolButtonActive]}
+              onPress={() => setActiveTool("brush")}
+              style={[
+                styles.toolButton,
+                activeTool === "brush" && styles.toolButtonActive,
+              ]}
             >
-              <Brush size={20} color={activeTool === 'brush' ? theme.colors.primary : '#666'} />
+              <Brush
+                size={20}
+                color={activeTool === "brush" ? theme.colors.primary : "#666"}
+              />
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => setActiveTool('eraser')}
-              style={[styles.toolButton, activeTool === 'eraser' && styles.toolButtonActive]}
+              onPress={() => setActiveTool("eraser")}
+              style={[
+                styles.toolButton,
+                activeTool === "eraser" && styles.toolButtonActive,
+              ]}
             >
-              <Eraser size={20} color={activeTool === 'eraser' ? theme.colors.primary : '#666'} />
+              <Eraser
+                size={20}
+                color={activeTool === "eraser" ? theme.colors.primary : "#666"}
+              />
             </TouchableOpacity>
 
             <View style={styles.divider} />
@@ -192,7 +235,15 @@ export function EditorView({ image, shopName, onBack, onInquiry }: EditorViewPro
                   <TouchableOpacity
                     key={size}
                     onPress={() => setBrushSize(size)}
-                    style={[styles.sizeDot, brushSize === size && styles.sizeDotActive, { width: size/2 + 4, height: size/2 + 4, borderRadius: (size/2 + 4)/2 }]}
+                    style={[
+                      styles.sizeDot,
+                      brushSize === size && styles.sizeDotActive,
+                      {
+                        width: size / 2 + 4,
+                        height: size / 2 + 4,
+                        borderRadius: (size / 2 + 4) / 2,
+                      },
+                    ]}
                   />
                 ))}
               </View>
@@ -203,17 +254,26 @@ export function EditorView({ image, shopName, onBack, onInquiry }: EditorViewPro
             <TouchableOpacity
               onPress={handleUndo}
               disabled={paths.length === 0}
-              style={[styles.toolButton, paths.length === 0 && styles.toolButtonDisabled]}
+              style={[
+                styles.toolButton,
+                paths.length === 0 && styles.toolButtonDisabled,
+              ]}
             >
-              <Undo size={20} color={paths.length === 0 ? '#CCC' : '#666'} />
+              <Undo size={20} color={paths.length === 0 ? "#CCC" : "#666"} />
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={handleRedo}
               disabled={redoPaths.length === 0}
-              style={[styles.toolButton, redoPaths.length === 0 && styles.toolButtonDisabled]}
+              style={[
+                styles.toolButton,
+                redoPaths.length === 0 && styles.toolButtonDisabled,
+              ]}
             >
-              <Redo size={20} color={redoPaths.length === 0 ? '#CCC' : '#666'} />
+              <Redo
+                size={20}
+                color={redoPaths.length === 0 ? "#CCC" : "#666"}
+              />
             </TouchableOpacity>
           </View>
 
@@ -231,11 +291,15 @@ export function EditorView({ image, shopName, onBack, onInquiry }: EditorViewPro
             <TouchableOpacity
               onPress={handleGenerate}
               disabled={isGenerating || !command.trim()}
-              style={[styles.generateButton, (isGenerating || !command.trim()) && styles.generateButtonDisabled]}
+              style={[
+                styles.generateButton,
+                (isGenerating || !command.trim()) &&
+                  styles.generateButtonDisabled,
+              ]}
             >
               <Sparkles size={20} color="white" />
               <Text style={styles.generateButtonText}>
-                {isGenerating ? '생성 중...' : '이미지 생성하기'}
+                {isGenerating ? "생성 중..." : "이미지 생성하기"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -253,27 +317,27 @@ export function EditorView({ image, shopName, onBack, onInquiry }: EditorViewPro
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
   safeArea: {
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: "#F0F0F0",
   },
   backButton: {
     padding: 8,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
   },
   saveButton: {
     paddingHorizontal: 16,
@@ -281,7 +345,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: theme.colors.primary,
   },
   content: {
@@ -289,63 +353,63 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   canvasContainer: {
-    width: '100%',
-    backgroundColor: '#F8F8F8',
+    width: "100%",
+    backgroundColor: "#F8F8F8",
     borderRadius: 20,
-    overflow: 'hidden',
-    position: 'relative',
+    overflow: "hidden",
+    position: "relative",
   },
   baseImage: {
-    width: '100%',
+    width: "100%",
   },
   svgOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
   hintBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: 16,
     right: 16,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: "rgba(255,255,255,0.9)",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   hintText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#666',
+    fontWeight: "600",
+    color: "#666",
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(255,255,255,0.8)",
+    alignItems: "center",
+    justifyContent: "center",
     zIndex: 10,
   },
   loadingTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
     marginTop: 16,
   },
   loadingSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginTop: 4,
   },
   toolbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'white',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "white",
     borderRadius: 30,
     padding: 8,
     marginTop: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -355,11 +419,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   toolButtonActive: {
-    backgroundColor: '#FFF0F5',
+    backgroundColor: "#FFF0F5",
   },
   toolButtonDisabled: {
     opacity: 0.5,
@@ -367,26 +431,26 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 24,
-    backgroundColor: '#EEE',
+    backgroundColor: "#EEE",
     marginHorizontal: 8,
   },
   brushSizeControl: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     paddingHorizontal: 8,
   },
   sizeLabel: {
     fontSize: 12,
-    color: '#888',
+    color: "#888",
   },
   sizeTrack: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   sizeDot: {
-    backgroundColor: '#DDD',
+    backgroundColor: "#DDD",
   },
   sizeDotActive: {
     backgroundColor: theme.colors.primary,
@@ -396,24 +460,24 @@ const styles = StyleSheet.create({
   },
   panelTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: '#F8F8F8',
+    backgroundColor: "#F8F8F8",
     borderRadius: 16,
     padding: 16,
     fontSize: 14,
-    color: '#333',
+    color: "#333",
     borderWidth: 1,
-    borderColor: '#EEE',
-    textAlignVertical: 'top',
+    borderColor: "#EEE",
+    textAlignVertical: "top",
   },
   generateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: theme.colors.primary,
     borderRadius: 25,
     paddingVertical: 12,
@@ -425,20 +489,20 @@ const styles = StyleSheet.create({
   },
   generateButtonText: {
     fontSize: 15,
-    fontWeight: '700',
-    color: 'white',
+    fontWeight: "700",
+    color: "white",
   },
   ctaButton: {
-    backgroundColor: '#333',
+    backgroundColor: "#333",
     borderRadius: 25,
     paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 'auto',
+    alignItems: "center",
+    marginTop: "auto",
     marginBottom: 16,
   },
   ctaButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: 'white',
+    fontWeight: "700",
+    color: "white",
   },
 });
