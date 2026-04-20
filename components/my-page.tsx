@@ -6,8 +6,6 @@ import {
   StyleSheet,
   ScrollView,
   Modal,
-  SafeAreaView,
-  Platform,
 } from 'react-native';
 import {
   X,
@@ -21,6 +19,7 @@ import {
   User as UserIcon,
 } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
+import { useAuth } from '@/hooks/use-auth';
 
 interface MyPageProps {
   isOpen: boolean;
@@ -47,6 +46,13 @@ export function MyPage({
   onNavigateToFavorites,
   onNavigateToReviews,
 }: MyPageProps) {
+  const { user, signOut } = useAuth();
+  
+  const handleLogout = () => {
+    signOut();
+    onClose();
+  };
+
   const menuItems: MenuItem[] = [
     {
       id: 'orders',
@@ -122,11 +128,15 @@ export function MyPage({
           <View style={styles.profileSection}>
             <View style={styles.profileContent}>
               <View style={styles.avatar}>
-                <UserIcon size={32} color="#fff" />
+                {user?.profileImage ? (
+                  <Text>Image</Text>
+                ) : (
+                  <UserIcon size={32} color="#fff" />
+                )}
               </View>
               <View>
-                <Text style={styles.userName}>Jane Doe</Text>
-                <Text style={styles.userEmail}>jane.doe@email.com</Text>
+                <Text style={styles.userName}>{user?.nickname || 'GUEST'}</Text>
+                <Text style={styles.userEmail}>{user?.email || '로그인이 필요합니다'}</Text>
               </View>
             </View>
             <TouchableOpacity style={styles.editProfileBtn}>
@@ -160,7 +170,11 @@ export function MyPage({
 
           {/* Logout Button */}
           <View style={styles.footer}>
-            <TouchableOpacity style={styles.logoutButton} activeOpacity={0.7}>
+            <TouchableOpacity 
+              style={styles.logoutButton} 
+              activeOpacity={0.7}
+              onPress={handleLogout}
+            >
               <LogOut size={20} color={theme.colors.gray} />
               <Text style={styles.logoutText}>로그아웃</Text>
             </TouchableOpacity>
