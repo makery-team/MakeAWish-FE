@@ -1,6 +1,5 @@
 # 📋 [MakeAWish-FE] 기술 실사 및 이식 상세 보고서 (A to Z)
 
-
 ---
 
 ## 1. 초기 환경 설정 (Environment Setup)
@@ -110,3 +109,23 @@
 
 ---
 *최종 업데이트: 2026. 04. 10.*
+
+---
+
+## 5. Google 로그인 설정 (Expo AuthSession)
+
+로그인 화면은 실제 Google OAuth 흐름을 사용하도록 구성되어 있습니다.
+
+- 프로젝트 루트에 `.env` 파일을 만들고 아래 값을 채웁니다.
+
+```bash
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=...
+EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=...
+EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=...
+```
+
+- Google Cloud Console에서 플랫폼별 OAuth Client ID를 발급합니다.
+- Expo 스킴은 `makeawishfe`를 사용합니다(`app.json` 기준).
+- 개발 중에는 `npx expo start` 재시작 후 로그인 버튼을 테스트합니다.
+
+참고: 버튼 스타일은 Google 브랜딩 형태(40px 높이, 흰 배경, 테두리, 좌측 G 아이콘)를 따르되, 정책 변경 대응을 위해 주기적인 검토가 필요합니다.
