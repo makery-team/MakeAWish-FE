@@ -129,7 +129,10 @@ export function MyPage({
             <View style={styles.profileContent}>
               <View style={styles.avatar}>
                 {user?.profileImage ? (
-                  <Text>Image</Text>
+                  <View style={styles.avatarImageWrapper}>
+                    {/* Placeholder for profile image */}
+                    <UserIcon size={32} color="#fff" />
+                  </View>
                 ) : (
                   <UserIcon size={32} color="#fff" />
                 )}

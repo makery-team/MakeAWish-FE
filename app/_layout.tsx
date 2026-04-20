@@ -43,6 +43,10 @@ function RootLayoutNav() {
     }
   }, [user, isLoading, segments, router]);
 
+  if (isLoading) {
+    return null; // Or a splash screen component
+  }
+
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>

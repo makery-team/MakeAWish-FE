@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView } from 'react-na
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/use-auth';
 import { theme } from '@/constants/theme';
-import { Chrome as Google } from 'lucide-react-native';
+import { Globe as Google } from 'lucide-react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
