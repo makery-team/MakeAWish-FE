@@ -186,6 +186,26 @@ export default function LoginScreen() {
   }, [response, router, signIn]);
 
   const handleGoogleLogin = async () => {
+    // [MOCK LOGIN FOR PROTOTYPE]
+    // Since we are in the prototyping phase, we bypass the real Google OAuth
+    // to avoid 404 errors with dummy Client IDs.
+    setIsGoogleLoading(true);
+    
+    setTimeout(() => {
+      signIn({
+        id: 'mock-user-123',
+        email: 'test@example.com',
+        nickname: '지니테스터',
+        phoneNumber: '',
+        language: '',
+        profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+      });
+      setIsGoogleLoading(false);
+      router.replace('/(auth)/signup');
+    }, 1000);
+
+    /* 
+    // REAL OAUTH LOGIC (Disable for now)
     if (!request) {
       Alert.alert('설정 필요', 'Google Client ID가 설정되지 않았거나 인증 요청이 아직 준비되지 않았습니다.');
       return;
@@ -195,9 +215,9 @@ export default function LoginScreen() {
     try {
       await promptAsync();
     } finally {
-      // response effect에서 성공/실패 상태를 마무리하므로, 취소 케이스만 대비해 false 처리
       setIsGoogleLoading(false);
     }
+    */
   };
 
   return (
