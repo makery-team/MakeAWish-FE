@@ -7,6 +7,7 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
+import { Image } from 'expo-image';
 import {
   X,
   ChevronRight,
@@ -129,10 +130,12 @@ export function MyPage({
             <View style={styles.profileContent}>
               <View style={styles.avatar}>
                 {user?.profileImage ? (
-                  <View style={styles.avatarImageWrapper}>
-                    {/* Placeholder for profile image */}
-                    <UserIcon size={32} color="#fff" />
-                  </View>
+                  <Image
+                    source={{ uri: user.profileImage }}
+                    style={styles.avatarImage}
+                    contentFit="cover"
+                    transition={200}
+                  />
                 ) : (
                   <UserIcon size={32} color="#fff" />
                 )}
@@ -244,6 +247,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   userName: {
     fontSize: 20,
