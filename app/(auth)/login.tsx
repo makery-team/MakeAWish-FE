@@ -58,6 +58,8 @@ const GoogleGLogo = ({ size = 18 }: { size?: number }) => (
   </Svg>
 );
 
+const IS_MOCK = true; // 개발 및 테스트를 위해 true로 설정. 실제 API 적용 시 false로 변경.
+
 const Particle = ({
   delay,
   startPos,
@@ -104,7 +106,7 @@ const Particle = ({
       -1,
       false,
     );
-  }, [delay, opacity, scale, translateY]);
+  }, [delay]); // useSharedValue는 안정적인 참조이므로 의존성 배열에서 제외
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }, { scale: scale.value }],
@@ -218,15 +220,23 @@ export default function LoginScreen() {
         }
 
         const profile: GoogleUserInfo = await userResponse.json();
-        signIn({
+        const userData = {
           id: profile.id || profile.email,
           email: profile.email,
           nickname: profile.name ?? "",
           phoneNumber: "",
           language: "",
           profileImage: profile.picture,
-        });
-        router.replace("/(auth)/signup");
+        };
+        
+        signIn(userData);
+        
+        // 기존 사용자(닉네임과 전화번호가 있는 경우)는 바로 메인으로, 신규 사용자는 정보 입력창으로 이동
+        if (userData.nickname && userData.phoneNumber) {
+          router.replace("/(tabs)");
+        } else {
+          router.replace("/(auth)/signup");
+        }
       } catch {
         Alert.alert(
           "로그인 실패",
@@ -241,23 +251,43 @@ export default function LoginScreen() {
   }, [response, router, signIn]);
 
   const handleGoogleLogin = async () => {
-    setIsGoogleLoading(true);
+    if (IS_MOCK) {
+      setIsGoogleLoading(true);
+      // 모의 로그인 흐름
+      setTimeout(() => {
+        const mockUser = {
+          id: "mock-user-123",
+          email: "test@example.com",
+          nickname: "지니테스터",
+          phoneNumber: "010-1234-5678",
+          language: "ko",
+          profileImage: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
+        };
+        signIn(mockUser);
+        setIsGoogleLoading(false);
+        
+        // 모의 데이터에서도 기존 사용자 체크 로직 시뮬레이션
+        if (mockUser.nickname && mockUser.phoneNumber) {
+          router.replace("/(tabs)");
+        } else {
+          router.replace("/(auth)/signup");
+        }
+      }, 1000);
+      return;
+    }
 
-    setTimeout(() => {
-      signIn({
-        id: "mock-user-123",
-        email: "test@example.com",
-        nickname: "지니테스터",
-        phoneNumber: "",
-        language: "",
-        profileImage: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-      });
-      setIsGoogleLoading(false);
-      router.replace("/(auth)/signup");
-    }, 1000);
+    // 실제 Google OAuth 흐름 호출
+    if (request) {
+      try {
+        await request.promptAsync();
+      } catch (error) {
+        Alert.alert("로그인 오류", "Google 로그인을 시작할 수 없습니다.");
+        console.error(error);
+      }
+    }
   };
 
-  const isGoogleDisabled = isGoogleLoading || !request;
+  const isGoogleDisabled = isGoogleLoading || (!IS_MOCK && !request);
 
   return (
     <View style={styles.container}>
