@@ -8,7 +8,8 @@ import {
   SafeAreaView, 
   KeyboardAvoidingView, 
   Platform, 
-  ScrollView 
+  ScrollView,
+  Alert 
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/use-auth';
@@ -32,7 +33,7 @@ export default function SignupScreen() {
 
   const handleComplete = () => {
     if (!nickname || !phoneNumber) {
-      alert('모든 필드를 입력해주세요.');
+      Alert.alert('입력 오류', '모든 필드를 입력해주세요.');
       return;
     }
 
