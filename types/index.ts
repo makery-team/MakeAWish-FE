@@ -101,3 +101,13 @@ export interface OrderData {
   pickupTime?: string;
   lettering?: string;
 }
+
+// User interface for authentication
+export interface User {
+  id: string;
+  email: string;
+  nickname: string;
+  phoneNumber: string;
+  language: string;
+  profileImage?: string;
+}

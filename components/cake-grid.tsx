@@ -1,8 +1,8 @@
-import React from 'react';
-import { FlatList, StyleSheet, View, ViewStyle } from 'react-native';
-import { CakeCard } from './cake-card';
-import { CAKE_DATA } from '@/constants/mock-data';
-import type { FavoriteCake } from '@/types';
+import { CAKE_DATA } from "@/constants/mock-data";
+import type { FavoriteCake } from "@/types";
+import React from "react";
+import { FlatList, StyleSheet, ViewStyle } from "react-native";
+import { CakeCard } from "./cake-card";
 
 interface CakeGridProps {
   onCakeSelect?: (image: string, shopName: string) => void;
@@ -13,7 +13,7 @@ interface CakeGridProps {
     cakeId: number,
     image: string,
     shopName: string,
-    tag?: string
+    tag?: string,
   ) => void;
   contentContainerStyle?: ViewStyle;
 }
@@ -27,7 +27,7 @@ export function CakeGrid({
   contentContainerStyle,
 }: CakeGridProps) {
   const filteredCakes =
-    selectedCategory && selectedCategory !== 'all'
+    selectedCategory && selectedCategory !== "all"
       ? CAKE_DATA.filter((cake) => cake.categories.includes(selectedCategory))
       : CAKE_DATA;
 
@@ -39,7 +39,9 @@ export function CakeGrid({
       columnWrapperStyle={styles.columnWrapper}
       contentContainerStyle={[styles.contentContainer, contentContainerStyle]}
       renderItem={({ item: cake }) => {
-        const isFavorited = favorites.some((fav) => fav.id === cake.id.toString());
+        const isFavorited = favorites.some(
+          (fav) => fav.id === cake.id.toString(),
+        );
         return (
           <CakeCard
             id={cake.id}
@@ -48,7 +50,6 @@ export function CakeGrid({
             likes={cake.likes}
             rating={cake.rating}
             tag={cake.tag}
-            onSelect={onCakeSelect}
             onInquiry={onCakeInquiry}
             isFavorited={isFavorited}
             onToggleFavorite={onToggleFavorite}
@@ -62,10 +63,9 @@ export function CakeGrid({
 
 const styles = StyleSheet.create({
   contentContainer: {
-    paddingHorizontal: 16,
     paddingBottom: 20,
   },
   columnWrapper: {
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
 });
