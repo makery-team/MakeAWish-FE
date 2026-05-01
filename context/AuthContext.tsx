@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  signIn: (userData: Partial<User>) => void;
-  signOut: () => void;
-  updateUser: (data: Partial<User>) => void;
+  signIn: (userData: Pick<User, 'id' | 'email'> & Partial<User>) => Promise<void>;
+  signOut: () => Promise<void>;
+  updateUser: (data: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,24 +17,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate checking for stored auth session
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    const loadUser = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem('user');
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      } catch (error) {
+        console.error('Failed to load user session:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadUser();
   }, []);
 
-  const signIn = (userData: Partial<User>) => {
-    // In a real app, this would involve OAuth and backend verification
-    setUser(userData as User);
+  const signIn = async (userData: Pick<User, 'id' | 'email'> & Partial<User>) => {
+    const newUser: User = {
+      nickname: '',
+      phoneNumber: '',
+      language: 'ko',
+      ...userData
+    } as User;
+    
+    setUser(newUser);
+    try {
+      await AsyncStorage.setItem('user', JSON.stringify(newUser));
+    } catch (error) {
+      console.error('Failed to save user session:', error);
+    }
   };
 
-  const signOut = () => {
+  const signOut = async () => {
     setUser(null);
+    try {
+      await AsyncStorage.removeItem('user');
+    } catch (error) {
+      console.error('Failed to remove user session:', error);
+    }
   };
 
-  const updateUser = (data: Partial<User>) => {
+  const updateUser = async (data: Partial<User>) => {
     if (user) {
-      setUser({ ...user, ...data });
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      try {
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      } catch (error) {
+        console.error('Failed to update user session:', error);
+      }
     }
   };
 
