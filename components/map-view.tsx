@@ -1,25 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-  ScrollView,
-} from 'react-native';
-import { Heart, Star, Navigation, MapPin } from 'lucide-react-native';
-import { Image } from 'expo-image';
-import Svg, { Line, Rect, G } from 'react-native-svg';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
 import { SAMPLE_CAKE_IMAGES } from '@/constants/mock-data';
 import { theme } from '@/constants/theme';
+import { Image } from 'expo-image';
+import { Heart, MapPin, Navigation, Star } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import Svg, { G, Line, Rect } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAP_HEIGHT = SCREEN_HEIGHT - 200;
@@ -61,13 +60,13 @@ const cakeShops = [
   {
     id: 4,
     name: 'FlowerCake Garden',
-    top: 0.70,
+    top: 0.7,
     left: 0.65,
     rating: 4.8,
     likes: 389,
     specialty: '플라워 케이크',
     image: SAMPLE_CAKE_IMAGES[3],
-    address: '서초구 반포동',
+    address: '남양주 반포동',
   },
 ];
 
@@ -85,7 +84,7 @@ export function MapView({ onShopSelect }: MapViewProps) {
         {/* Background Grid & Roads */}
         <Svg style={StyleSheet.absoluteFill}>
           <Rect x="0" y="0" width="100%" height="100%" fill="#F0F9FF" />
-          
+
           {/* Roads */}
           <G stroke="#CBD5E1" strokeWidth="4">
             <Line x1="0" y1="40%" x2="100%" y2="40%" />
@@ -108,7 +107,9 @@ export function MapView({ onShopSelect }: MapViewProps) {
             key={shop.id}
             shop={shop}
             isSelected={selectedShop === shop.id}
-            onPress={() => setSelectedShop(selectedShop === shop.id ? null : shop.id)}
+            onPress={() =>
+              setSelectedShop(selectedShop === shop.id ? null : shop.id)
+            }
             onSelect={onShopSelect}
           />
         ))}
@@ -139,10 +140,10 @@ function Marker({ shop, isSelected, onPress, onSelect }: any) {
     bounce.value = withRepeat(
       withSequence(
         withTiming(-5, { duration: 1000 }),
-        withTiming(0, { duration: 1000 })
+        withTiming(0, { duration: 1000 }),
       ),
       -1,
-      true
+      true,
     );
   }, []);
 
@@ -175,10 +176,14 @@ function Marker({ shop, isSelected, onPress, onSelect }: any) {
             <Text style={styles.shopName}>@{shop.name}</Text>
             <Text style={styles.shopAddress}>{shop.address}</Text>
             <Text style={styles.shopSpecialty}>{shop.specialty}</Text>
-            
+
             <View style={styles.statsRow}>
               <View style={styles.stat}>
-                <Heart size={14} color={theme.colors.primary} fill={theme.colors.primary} />
+                <Heart
+                  size={14}
+                  color={theme.colors.primary}
+                  fill={theme.colors.primary}
+                />
                 <Text style={styles.statText}>{shop.likes}</Text>
               </View>
               <View style={styles.stat}>
