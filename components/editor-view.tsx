@@ -1,4 +1,6 @@
 import { theme } from "@/constants/theme";
+import { aiService } from "@/services/ai";
+import { captureViewToBase64, uriToBase64 } from "@/utils/image-utils";
 import { Image } from "expo-image";
 import {
   ArrowLeft,
@@ -10,6 +12,7 @@ import {
 } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Dimensions,
   Keyboard,
   KeyboardAvoidingView,
@@ -40,7 +43,7 @@ interface EditorViewProps {
   image: string;
   shopName: string;
   onBack: () => void;
-  onInquiry?: () => void;
+  onInquiry?: (editedImage?: string) => void;
 }
 
 interface DrawingPath {
@@ -55,6 +58,7 @@ export function EditorView({
   onBack,
   onInquiry,
 }: EditorViewProps) {
+  const [currentImage, setCurrentImage] = useState(image);
   const [brushSize, setBrushSize] = useState(20);
   const [activeTool, setActiveTool] = useState<"brush" | "eraser">("brush");
   const [command, setCommand] = useState("");
@@ -63,10 +67,12 @@ export function EditorView({
   const [currentPath, setCurrentPath] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  
   const currentPathRef = useRef<string>("");
   const scrollViewRef = useRef<ScrollView>(null);
+  const svgContainerRef = useRef<View>(null);
 
-  const containerHeight = SCREEN_WIDTH; // Square aspect ratio for editor
+  const containerHeight = SCREEN_WIDTH;
 
   const panGesture = Gesture.Pan()
     .runOnJS(true)
@@ -89,8 +95,8 @@ export function EditorView({
         path: currentPathRef.current,
         color:
           activeTool === "brush"
-            ? "rgba(255, 105, 180, 0.4)"
-            : "rgba(255, 255, 255, 1)",
+            ? "white" // AI 서버 마스크용 (흰색이 칠해진 영역)
+            : "black", // 지우개는 검은색으로 (마스크 제외 영역)
         width: brushSize,
       };
       setPaths((prev) => [...prev, newPath]);
@@ -115,13 +121,41 @@ export function EditorView({
     }
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!command.trim()) return;
+    if (paths.length === 0) {
+      Alert.alert("알림", "수정할 영역을 먼저 칠해주세요.");
+      return;
+    }
+
     Keyboard.dismiss();
     setIsGenerating(true);
-    setTimeout(() => {
+
+    try {
+      // 1. 원본 이미지 Base64 변환
+      const imageB64 = await uriToBase64(currentImage);
+      
+      // 2. 마스크 이미지 캡처 (SVG 영역)
+      const maskB64 = await captureViewToBase64(svgContainerRef);
+
+      // 3. AI API 호출
+      const response = await aiService.inpaint({
+        image_b64: imageB64,
+        mask_b64: maskB64,
+        prompt: command,
+      });
+
+      // 4. 결과 적용
+      setCurrentImage(response.result_image);
+      setPaths([]); // 편집 완료 후 경로 초기화
+      setCommand("");
+      Alert.alert("성공", "디자인이 수정되었습니다!");
+    } catch (error) {
+      console.error("Generation failed:", error);
+      Alert.alert("오류", "이미지 생성에 실패했습니다. 다시 시도해주세요.");
+    } finally {
       setIsGenerating(false);
-    }, 3000);
+    }
   };
 
   const sparklesStyle = useAnimatedStyle(() => ({
@@ -163,7 +197,10 @@ export function EditorView({
               <ArrowLeft size={24} color="#333" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>AI 이미지 편집</Text>
-            <TouchableOpacity style={styles.saveButton}>
+            <TouchableOpacity 
+              style={styles.saveButton}
+              onPress={() => onInquiry?.(currentImage)}
+            >
               <Text style={styles.saveButtonText}>완료</Text>
             </TouchableOpacity>
           </View>
@@ -178,13 +215,17 @@ export function EditorView({
             {/* Canvas Area */}
             <View style={styles.canvasContainer}>
               <Image
-                source={{ uri: image }}
+                source={{ uri: currentImage }}
                 style={[styles.baseImage, { height: containerHeight }]}
                 contentFit="cover"
               />
 
               <GestureDetector gesture={panGesture}>
-                <View style={[styles.svgOverlay, { height: containerHeight }]}>
+                <View 
+                  ref={svgContainerRef}
+                  style={[styles.svgOverlay, { height: containerHeight, backgroundColor: 'black' }]}
+                  collapsable={false}
+                >
                   <Svg style={StyleSheet.absoluteFill}>
                     {paths.map((p, i) => (
                       <Path
@@ -200,11 +241,7 @@ export function EditorView({
                     {currentPath ? (
                       <Path
                         d={currentPath}
-                        stroke={
-                          activeTool === "brush"
-                            ? "rgba(255, 105, 180, 0.4)"
-                            : "rgba(255, 255, 255, 1)"
-                        }
+                        stroke={activeTool === "brush" ? "white" : "black"}
                         strokeWidth={brushSize}
                         fill="none"
                         strokeLinecap="round"
@@ -348,7 +385,10 @@ export function EditorView({
             </View>
 
             {/* CTA */}
-            <TouchableOpacity onPress={onInquiry} style={styles.ctaButton}>
+            <TouchableOpacity 
+              onPress={() => onInquiry?.(currentImage)} 
+              style={styles.ctaButton}
+            >
               <Text style={styles.ctaButtonText}>
                 수정된 디자인으로 상담하기
               </Text>

@@ -28,11 +28,11 @@ export default function EditorScreen() {
     }
   };
 
-  const handleInquiry = () => {
+  const handleInquiry = (editedImage?: string) => {
     if (!safeImage || !safeShopName) return;
 
     startInquiry({
-      image: safeImage,
+      image: editedImage || safeImage,
       shopName: safeShopName,
       design: conversationHistory.design || "에디터에서 수정된 디자인",
     });

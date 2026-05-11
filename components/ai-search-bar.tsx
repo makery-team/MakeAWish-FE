@@ -2,6 +2,7 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { ChevronRight, Send, Sparkles, X } from "lucide-react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Keyboard,
@@ -24,9 +25,11 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { INITIAL_AI_MESSAGE } from "@/constants/mock-data";
+import { CAKE_DATA, INITIAL_AI_MESSAGE } from "@/constants/mock-data";
 import { theme } from "@/constants/theme";
-import type { ChatMode, InquiryMode, Message, OrderData } from "@/types";
+import { useInquiry } from "@/hooks/use-inquiry";
+import { aiService } from "@/services/ai";
+import type { AIChatMessage, ChatMode, InquiryMode, Message, OrderData } from "@/types";
 import { ImageSlider } from "./image-slider";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -46,6 +49,7 @@ export function AISearchBar({
 }: AISearchBarProps) {
   const insets = useSafeAreaInsets();
   const keyboard = useAnimatedKeyboard();
+  const { conversationHistory, updateConversation, resetConversation } = useInquiry();
   const tabBarHeightFromNavigator = useBottomTabBarHeight();
   const tabBarHeight =
     tabBarHeightFromNavigator > 0
@@ -63,6 +67,7 @@ export function AISearchBar({
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<Message[]>([INITIAL_AI_MESSAGE]);
   const [chatMode, setChatMode] = useState<ChatMode>("search");
+  const [isAiTyping, setIsAiTyping] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   const translateY = useSharedValue(CLOSED_Y);
@@ -81,7 +86,6 @@ export function AISearchBar({
       context.value = translateY.value;
     })
     .onUpdate((event) => {
-      // Clamp values strictly to prevent out-of-bounds crashes
       translateY.value = Math.max(
         FULL_Y,
         Math.min(CLOSED_Y, event.translationY + context.value),
@@ -112,7 +116,6 @@ export function AISearchBar({
     });
 
   const rSheetStyle = useAnimatedStyle(() => {
-    // Manually handle keyboard to avoid KeyboardAvoidingView conflicts
     const kHeight = keyboard.height.value;
     return {
       transform: [
@@ -168,6 +171,7 @@ export function AISearchBar({
       setMessages([INITIAL_AI_MESSAGE]);
       setChatMode("search");
       setInputValue("");
+      resetConversation();
     }, 300);
   };
 
@@ -175,28 +179,107 @@ export function AISearchBar({
     if (inquiryMode?.active) {
       setChatMode("inquiry");
       handleOpen("full");
+      
+      // 상담 시작 시 이미지 정보를 대화 맥락에 추가
+      updateConversation({
+        selectedCakeImage: inquiryMode.image,
+        shopName: inquiryMode.shopName,
+      });
     }
-  }, [handleOpen, inquiryMode]);
+  }, [handleOpen, inquiryMode, updateConversation]);
 
-  const handleSend = () => {
-    if (!inputValue.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      { type: "user", text: inputValue } as Message,
-    ]);
-    const currentInput = inputValue;
+  const handleSend = async (overrideValue?: string) => {
+    const textToSend = overrideValue || inputValue;
+    if (!textToSend.trim()) return;
+
+    // 1. 사용자 메시지 추가
+    const newUserMsg: Message = { type: "user", text: textToSend };
+    setMessages((prev) => [...prev, newUserMsg]);
     setInputValue("");
+    setIsAiTyping(true);
 
-    setTimeout(() => {
+    try {
+      // 2. AI 서버용 대화 이력 구성
+      const history: AIChatMessage[] = messages.map(m => ({
+        role: m.type === "user" ? "user" : "assistant",
+        content: m.text
+      }));
+
+      // 3. AI API 호출
+      const response = await aiService.chat({
+        messages: history,
+        current_message: textToSend,
+        schema_json: chatMode === "inquiry" ? conversationHistory : undefined
+      });
+
+      // 4. 슬롯 정보 업데이트 (Inquiry 모드인 경우)
+      if (chatMode === "inquiry" && response.data?.extracted_slots) {
+        updateConversation(response.data.extracted_slots);
+      }
+
+      // 5. 추천 케이크 필터링 (시뮬레이션: Backend DB 검색 대체)
+      let recommendedImages: string[] | undefined = undefined;
+
+      // actionType이 PORTFOLIO_LIST이거나, 응답에 tags가 포함된 경우 검색 시도
+      if (response.actionType === 'PORTFOLIO_LIST' || (response.data?.tags && response.data.tags.length > 0)) {
+        const tags = response.data?.tags || [];
+
+        // CAKE_DATA에서 태그 매칭 시도
+        const filteredCakes = CAKE_DATA.filter(cake => {
+          // 카테고리 매칭 (y2k, minimal 등)
+          const categoryMatch = cake.categories.some(cat => 
+            tags.some(tag => tag.toLowerCase().includes(cat.toLowerCase()) || cat.toLowerCase().includes(tag.toLowerCase()))
+          );
+
+          // 태그 텍스트 매칭 (빈티지 감성 등)
+          const textMatch = tags.some(tag => 
+            cake.tag.includes(tag) || tag.includes(cake.tag)
+          );
+
+          return categoryMatch || textMatch;
+        });
+
+        if (filteredCakes.length > 0) {
+          recommendedImages = filteredCakes.map(c => c.image);
+        } else if (response.actionType === 'PORTFOLIO_LIST') {
+          // 검색 결과가 없는데 PORTFOLIO_LIST인 경우 기본 데이터 일부 노출 (Fallback)
+          recommendedImages = CAKE_DATA.slice(0, 3).map(c => c.image);
+        }
+      }
+
+      // 6. AI 응답 메시지 추가
+      const newAiMsg: Message = {
+        type: "ai",
+        text: response.message,
+        options: response.data?.options || response.data?.tags,
+        images: recommendedImages,
+      };
+
+      setMessages((prev) => [...prev, newAiMsg]);
+
+      // 7. 상담 완료 처리 (상태가 COMPLETED인 경우)
+      if (response.data?.status === "COMPLETED") {
+        setTimeout(() => {
+          onInquiryComplete?.({
+            cakeImage: conversationHistory.selectedCakeImage || "",
+            shopName: conversationHistory.shopName,
+            ...response.data?.extracted_slots
+          });
+          resetChat();
+        }, 1500);
+      }
+    } catch (error) {
+      console.error("Chat API error:", error);
       setMessages((prev) => [
         ...prev,
-        {
-          type: "ai",
-          text: `"${currentInput}"에 대해 확인했습니다. 더 궁금하신 점이 있나요?`,
-        } as Message,
+        { type: "ai", text: "죄송합니다. 서버 통신 중 오류가 발생했습니다." } as Message,
       ]);
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 600);
+    } finally {
+      setIsAiTyping(false);
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
   };
 
   return (
@@ -207,13 +290,11 @@ export function AISearchBar({
       />
       <GestureDetector gesture={gesture}>
         <Animated.View style={[styles.sheet, rSheetStyle]}>
-          {/* Drag handle is always at the top of the sheet */}
           <View style={styles.dragHandleArea}>
             <View style={styles.dragHandle} />
           </View>
 
           <View style={styles.container}>
-            {/* Collapsed View: Visible only when near CLOSED_Y */}
             <Animated.View
               style={[styles.collapsedWrapper, rCollapsedStyle]}
               pointerEvents={sheetState === "closed" ? "auto" : "none"}
@@ -235,7 +316,6 @@ export function AISearchBar({
               </TouchableOpacity>
             </Animated.View>
 
-            {/* Full Content: Visible when opened */}
             <Animated.View
               style={[styles.fullContent, rFullContentStyle]}
               pointerEvents={sheetState !== "closed" ? "auto" : "none"}
@@ -287,6 +367,22 @@ export function AISearchBar({
                       >
                         {item.text}
                       </Text>
+                      
+                      {/* Options or Tags */}
+                      {item.options && (
+                        <View style={styles.optionsContainer}>
+                          {item.options.map((opt, idx) => (
+                            <TouchableOpacity
+                              key={idx}
+                              style={styles.optionChip}
+                              onPress={() => handleSend(opt)}
+                            >
+                              <Text style={styles.optionText}>{opt}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+
                       {item.images && (
                         <View style={{ marginTop: 8 }}>
                           <ImageSlider
@@ -307,9 +403,18 @@ export function AISearchBar({
                   </View>
                 )}
                 keyExtractor={(_, i) => i.toString()}
-                contentContainerStyle={styles.chatList}
+                style={{ flex: 1 }}
+                contentContainerStyle={[styles.chatList, { paddingBottom: 100 }]}
                 onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
                 keyboardShouldPersistTaps="handled"
+                ListFooterComponent={
+                  isAiTyping ? (
+                    <View style={styles.typingIndicator}>
+                      <ActivityIndicator size="small" color={theme.colors.primary} />
+                      <Text style={styles.typingText}>AI가 생각 중...</Text>
+                    </View>
+                  ) : null
+                }
               />
 
               <View
@@ -327,10 +432,10 @@ export function AISearchBar({
                     placeholder="원하는 디자인을 설명해주세요"
                     value={inputValue}
                     onChangeText={setInputValue}
-                    onSubmitEditing={handleSend}
+                    onSubmitEditing={() => handleSend()}
                     autoFocus={false}
                   />
-                  <TouchableOpacity onPress={handleSend} style={styles.sendBtn}>
+                  <TouchableOpacity onPress={() => handleSend()} style={styles.sendBtn}>
                     <Send size={18} color="white" />
                   </TouchableOpacity>
                 </View>
@@ -438,6 +543,37 @@ const styles = StyleSheet.create({
   msgText: { fontSize: 15, lineHeight: 22 },
   userText: { color: "white", fontWeight: "500" },
   aiText: { color: "#374151" },
+
+  optionsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 12,
+  },
+  optionChip: {
+    backgroundColor: "white",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+  },
+  optionText: {
+    fontSize: 13,
+    color: theme.colors.primary,
+    fontWeight: "600",
+  },
+  typingIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    gap: 8,
+    marginBottom: 20,
+  },
+  typingText: {
+    fontSize: 13,
+    color: "#9CA3AF",
+  },
 
   inputArea: {
     paddingHorizontal: 20,
