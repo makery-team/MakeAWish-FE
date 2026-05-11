@@ -63,6 +63,7 @@ export interface Message {
   images?: string[];
   options?: string[];
   messageId?: string;
+  viewMode?: 'slider' | 'grid'; // Added for image display options
 }
 
 // Conversation state for AI chat
