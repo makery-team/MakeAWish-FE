@@ -6,7 +6,7 @@ import {
 } from '@/types/ai';
 
 // TODO: 환경 변수에서 가져오도록 설정 (현재는 로컬 AI 서버 주소 기본값 사용)
-const AI_SERVER_URL = process.env.EXPO_PUBLIC_AI_SERVER_URL || 'http://localhost:8000';
+const AI_SERVER_URL = process.env.EXPO_PUBLIC_AI_SERVER_URL || 'https://makeawish-ai.onrender.com';
 
 /**
  * AI 서버와 채팅 통신을 처리하는 서비스
