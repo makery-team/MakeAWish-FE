@@ -9,9 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.makeawish.app"
     },
     "android": {
+      "package": "com.makeawish.app",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -27,6 +30,13 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "@mj-studio/react-native-naver-map",
+        {
+          "naverMapAndroidClientId": "laezvz9irj",
+          "naverMapIosClientId": "laezvz9irj"
+        }
+      ],
       [
         "expo-splash-screen",
         {

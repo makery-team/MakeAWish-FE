@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,11 @@ import {
   Share,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { ArrowLeft, Heart, Star, MapPin, Clock, Phone, Share2 } from 'lucide-react-native';
+import { ArrowLeft, Star, MapPin, Clock, Phone, Share2, MessageCircle } from 'lucide-react-native';
 import { SAMPLE_CAKE_IMAGES } from '@/constants/mock-data';
 import { theme } from '@/constants/theme';
+
+const CHIPS = ['검색한 메뉴', '인기 메뉴', '레터링 케이크', '도시락 케이크', '당일 픽업 가능', '3단 케이크'];
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -67,6 +69,7 @@ interface ShopDetailProps {
 }
 
 export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: ShopDetailProps) {
+  const [activeChip, setActiveChip] = useState('검색한 메뉴');
   const shop = (shopData as any)[shopId] || shopData[1];
 
   const handleShare = async () => {
@@ -145,7 +148,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} stickyHeaderIndices={[1]}>
         {/* Shop Profile */}
         <View style={styles.shopInfo}>
           <View style={styles.shopHeader}>
@@ -186,40 +189,53 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
             </View>
           </View>
 
-          <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.secondaryButton]}
-              onPress={() => onCakeInquiry?.(shop.gallery[0], shop.name)}
-            >
-              <Text style={[styles.actionButtonText, styles.secondaryButtonText]}>문의하기</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.primaryButton]}
-              onPress={() => onCakeInquiry?.(shop.gallery[0], shop.name)}
-            >
-              <Text style={[styles.actionButtonText, styles.primaryButtonText]}>예약하기</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.chatButton}
+            onPress={() => onCakeInquiry?.(shop.gallery[0], shop.name)}
+          >
+            <MessageCircle size={18} color="white" />
+            <Text style={styles.chatButtonText}>1:1로 사장님께 채팅 문의하기</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Chip Bar - sticky */}
+        <View style={styles.chipBarWrapper}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipBar}
+          >
+            {CHIPS.map((chip) => (
+              <TouchableOpacity
+                key={chip}
+                style={[styles.chip, activeChip === chip && styles.chipActive]}
+                onPress={() => setActiveChip(chip)}
+              >
+                <Text style={[styles.chipText, activeChip === chip && styles.chipTextActive]}>
+                  {chip}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
         {/* Gallery */}
         <View style={styles.gallerySection}>
-          <Text style={styles.sectionTitle}>추천 케이크 디자인</Text>
+          <Text style={styles.sectionTitle}>{activeChip}</Text>
           {renderGallery()}
         </View>
-
-        {/* Tags */}
-        <View style={styles.tagsSection}>
-          <Text style={styles.tagsTitle}>추천 키워드</Text>
-          <View style={styles.tagsContainer}>
-            {['AI 주문', '레터링 무료', '당일 픽업', '캐릭터 전문', '비건 가능'].map((tag, i) => (
-              <View key={i} style={styles.tag}>
-                <Text style={styles.tagText}>{tag}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
       </ScrollView>
+
+      {/* AI Assistant Bar */}
+      <View style={styles.aiBar}>
+        <View style={styles.aiAvatar}>
+          <Text style={styles.aiAvatarText}>지니</Text>
+        </View>
+        <View>
+          <Text style={styles.aiName}>지니 AI 어시스턴트</Text>
+          <Text style={styles.aiDesc}>원하는 케이크를 찾아드려요</Text>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -416,5 +432,83 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 12,
     color: '#666',
+  },
+  chatButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: theme.colors.primary,
+    height: 52,
+    borderRadius: 16,
+    marginTop: 24,
+  },
+  chatButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: 'white',
+  },
+  chipBarWrapper: {
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  chipBar: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+    flexDirection: 'row',
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+  },
+  chipActive: {
+    backgroundColor: '#111',
+    borderColor: '#111',
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#444',
+  },
+  chipTextActive: {
+    color: 'white',
+  },
+  aiBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    backgroundColor: 'white',
+  },
+  aiAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aiAvatarText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'white',
+  },
+  aiName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#333',
+  },
+  aiDesc: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 1,
   },
 });

@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { Home, Search, ShoppingBag, User } from 'lucide-react-native';
+import { Home, Map, Search, ShoppingBag, User } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
 
 export default function TabLayout() {
@@ -48,7 +48,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Search size={24} color={color} />,
         }}
       />
-      {/* 나중에 실제 파일(orders.tsx 등)을 생성하면 여기에 추가 가능합니다. */}
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: 'Map',
+          tabBarIcon: ({ color }) => <Map size={24} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }
