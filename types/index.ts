@@ -1,3 +1,5 @@
+export * from './ai';
+
 // View modes for the application
 export type ViewMode = 'list' | 'map' | 'detail' | 'editor' | 'orders' | 'favorites' | 'reviews';
 
@@ -61,6 +63,7 @@ export interface Message {
   images?: string[];
   options?: string[];
   messageId?: string;
+  viewMode?: 'slider' | 'grid'; // Added for image display options
 }
 
 // Conversation state for AI chat
