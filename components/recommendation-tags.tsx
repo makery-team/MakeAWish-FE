@@ -10,11 +10,11 @@ import { theme } from '@/constants/theme';
 import Animated, { Layout } from 'react-native-reanimated';
 
 const tags = [
-  { id: 1, label: '#ForYou(AI추천)', category: 'all' },
-  { id: 2, label: '#Y2K감성', category: 'y2k' },
-  { id: 3, label: '#동물모양', category: 'animal' },
-  { id: 4, label: '#심플/미니멀', category: 'minimal' },
-  { id: 6, label: '#화려한', category: 'colorful' },
+  { id: 1, label: '#전체', category: 'all' },
+  { id: 2, label: '#생일', category: '생일' },
+  { id: 3, label: '#기념일', category: '기념일' },
+  { id: 4, label: '#리본', category: '리본' },
+  { id: 5, label: '#캐릭터', category: '캐릭터' },
 ];
 
 interface RecommendationTagsProps {
