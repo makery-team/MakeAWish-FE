@@ -1,13 +1,13 @@
-import { CAKE_DATA } from "@/constants/mock-data";
-import type { FavoriteCake } from "@/types";
+import type { FavoriteCake, FeedItem } from "@/types";
 import React from "react";
 import { FlatList, StyleSheet, ViewStyle } from "react-native";
 import { CakeCard } from "./cake-card";
 
 interface CakeGridProps {
+  cakes?: FeedItem[];
   onCakeSelect?: (image: string, shopName: string) => void;
   onCakeInquiry?: (image: string, shopName: string) => void;
-  selectedCategory?: string;
+  selectedCategory?: string; // Kept for compatibility if needed, but API handles filtering
   favorites?: FavoriteCake[];
   onToggleFavorite?: (
     cakeId: number,
@@ -16,40 +16,42 @@ interface CakeGridProps {
     tag?: string,
   ) => void;
   contentContainerStyle?: ViewStyle;
+  onEndReached?: () => void;
 }
 
 export function CakeGrid({
+  cakes = [],
   onCakeSelect,
   onCakeInquiry,
   selectedCategory,
   favorites = [],
   onToggleFavorite,
   contentContainerStyle,
+  onEndReached,
 }: CakeGridProps) {
-  const filteredCakes =
-    selectedCategory && selectedCategory !== "all"
-      ? CAKE_DATA.filter((cake) => cake.categories.includes(selectedCategory))
-      : CAKE_DATA;
-
   return (
     <FlatList
-      data={filteredCakes}
+      data={cakes}
       keyExtractor={(item) => item.id.toString()}
       numColumns={2}
       columnWrapperStyle={styles.columnWrapper}
       contentContainerStyle={[styles.contentContainer, contentContainerStyle]}
+      onEndReached={onEndReached}
+      onEndReachedThreshold={0.5}
       renderItem={({ item: cake }) => {
         const isFavorited = favorites.some(
           (fav) => fav.id === cake.id.toString(),
         );
+        const primaryTag = cake.tags && cake.tags.length > 0 ? cake.tags[0] : undefined;
+        
         return (
           <CakeCard
             id={cake.id}
-            image={cake.image}
-            shopName={cake.shopName}
-            likes={cake.likes}
-            rating={cake.rating}
-            tag={cake.tag}
+            image={cake.imageUrl}
+            shopName={cake.storeName}
+            likes={cake.likeCount}
+            rating={0} // API response doesn't include rating currently
+            tag={primaryTag}
             onInquiry={onCakeInquiry}
             isFavorited={isFavorited}
             onToggleFavorite={onToggleFavorite}

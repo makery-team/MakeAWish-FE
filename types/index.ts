@@ -114,3 +114,34 @@ export interface User {
   language: string;
   profileImage?: string;
 }
+
+// --- API Response Types ---
+
+export interface FeedItem {
+  id: number;
+  imageUrl: string;
+  storeName: string;
+  tags: string[];
+  likeCount: number;
+  isInpaintingAllowed: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  content: T[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+    sort: any[];
+    offset: number;
+    unpaged: boolean;
+    paged: boolean;
+  };
+  size: number;
+  number: number;
+  sort: any[];
+  numberOfElements: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}
+

@@ -1,7 +1,7 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Platform,
   StatusBar as RNStatusBar,
@@ -22,7 +22,8 @@ import { useInquiry } from "@/hooks/use-inquiry";
 import { useNavigation } from "@/hooks/use-navigation";
 import { useOrders } from "@/hooks/use-orders";
 
-import type { OrderData } from "@/types";
+import type { OrderData, FeedItem } from "@/types";
+import { feedService } from "@/services/feed";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -31,6 +32,46 @@ export default function HomeScreen() {
   const { favorites, toggleFavorite } = useFavorites();
   const { inquiryMode, startInquiry, completeInquiry } = useInquiry();
   const { selectedCategory, handleTagSelect } = useFilter();
+
+  const [cakes, setCakes] = useState<FeedItem[]>([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const fetchFeeds = async (pageNum: number, isRefresh: boolean = false) => {
+    if (loading || (!hasMore && !isRefresh)) return;
+    
+    try {
+      setLoading(true);
+      // 'all' 태그는 전체 검색을 의미하므로 빈 배열로 변환
+      const tags = selectedCategory && selectedCategory !== 'all' ? [selectedCategory] : [];
+      const response = await feedService.getFeeds(tags, pageNum, 12);
+      
+      if (isRefresh) {
+        setCakes(response.content);
+      } else {
+        setCakes(prev => [...prev, ...response.content]);
+      }
+      
+      setHasMore(!response.last);
+      setPage(response.number);
+    } catch (error) {
+      console.error('Failed to load feeds:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 카테고리(태그)가 변경될 때마다 0페이지부터 다시 로드
+  useEffect(() => {
+    fetchFeeds(0, true);
+  }, [selectedCategory]);
+
+  const handleLoadMore = () => {
+    if (hasMore && !loading) {
+      fetchFeeds(page + 1);
+    }
+  };
 
   const insets = useSafeAreaInsets();
   const tabBarHeightFromNavigator = useBottomTabBarHeight();
@@ -91,6 +132,8 @@ export default function HomeScreen() {
         {navigation.viewMode === "list" && (
           <View style={styles.viewContainer}>
             <CakeGrid
+              cakes={cakes}
+              onEndReached={handleLoadMore}
               onCakeSelect={(image, shopName) => {
                 router.push({
                   pathname: "/editor/[id]",
