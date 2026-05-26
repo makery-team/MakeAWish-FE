@@ -1,5 +1,6 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { ChevronRight, LayoutGrid, List, Send, Sparkles, X } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -251,10 +252,25 @@ export function AISearchBar({
         )}
         {item.actionType === 'CONFIRM_SLOTS' && item.slots && (
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>주문 내역 확인</Text>
-            {Object.entries(item.slots).map(([key, val]) => (
-              <Text key={key} style={styles.summaryRow}>• {key}: {String(val)}</Text>
-            ))}
+            <Text style={styles.summaryTitle}>입력하신 내용을 확인해주세요:</Text>
+            <View style={styles.slotsList}>
+              {Object.entries(item.slots).map(([key, val]) => {
+                let emoji = '📌';
+                if (key.includes('픽업') || key.includes('날짜')) emoji = '📅';
+                else if (key.includes('레터링') || key.includes('문구')) emoji = '✍️';
+                else if (key.includes('맛') || key.includes('사이즈')) emoji = '🎂';
+                else if (key.includes('알러지')) emoji = '⚠️';
+                else if (key.includes('요청')) emoji = '📝';
+                return <Text key={key} style={styles.summaryRow}>{emoji} {key}: {String(val)}</Text>;
+              })}
+            </View>
+            <Text style={styles.summaryConfirmText}>이대로 매장에 견적 문의를 보내드릴까요?</Text>
+            <TouchableOpacity style={styles.confirmBtnPrimary} onPress={() => handleSend("네, 이대로 문의할게요!")}>
+              <Text style={styles.confirmBtnTextPrimary}>이대로 문의하기!</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.confirmBtnSecondary} onPress={() => handleSend("내용 수정할게요")}>
+              <Text style={styles.confirmBtnTextSecondary}>내용 수정하기</Text>
+            </TouchableOpacity>
           </View>
         )}
         {item.actionType === 'ORDER_SUMMARY' && item.totalPrice && (
@@ -349,16 +365,24 @@ export function AISearchBar({
               />
 
               <View style={[styles.inputArea, { paddingBottom: tabBarHeight + (Platform.OS === "ios" ? 8 : 16) }]}>
-                <View style={styles.inputContainer}>
+                <LinearGradient
+                  colors={['#FFE6EE', '#E6F4F1']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.inputContainerGradient}
+                >
                   <TextInput
                     style={styles.input}
-                    placeholder="원하는 디자인을 설명해주세요"
+                    placeholder="답변을 입력하세요..."
                     value={inputValue}
                     onChangeText={setInputValue}
                     onSubmitEditing={() => handleSend()}
+                    placeholderTextColor="#9CA3AF"
                   />
-                  <TouchableOpacity onPress={() => handleSend()} style={styles.sendBtn}><Send size={18} color="white" /></TouchableOpacity>
-                </View>
+                  <TouchableOpacity onPress={() => handleSend()} style={styles.sendBtnGradient}>
+                    <Send size={18} color="#9CA3AF" />
+                  </TouchableOpacity>
+                </LinearGradient>
               </View>
             </Animated.View>
 
@@ -430,12 +454,19 @@ const styles = StyleSheet.create({
   typingIndicator: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, gap: 8, marginBottom: 20 },
   typingText: { fontSize: 13, color: "#9CA3AF" },
   inputArea: { paddingHorizontal: 20, paddingTop: 12, backgroundColor: "white", borderTopWidth: 1, borderTopColor: "#F3F4F6" },
-  inputContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "#F9FAFB", borderRadius: 24, paddingHorizontal: 16, borderWidth: 1, borderColor: "#E5E7EB" },
-  input: { flex: 1, paddingVertical: 12, fontSize: 15 },
+  inputContainerGradient: { flexDirection: "row", alignItems: "center", borderRadius: 24, paddingHorizontal: 16, borderWidth: 1, borderColor: "#FF69B4" },
+  input: { flex: 1, paddingVertical: 12, fontSize: 15, color: '#374151' },
+  sendBtnGradient: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#E5E7EB", alignItems: "center", justifyContent: "center", marginLeft: 8 },
   sendBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.primary, alignItems: "center", justifyContent: "center", marginLeft: 8 },
-  summaryCard: { marginTop: 12, backgroundColor: '#F9FAFB', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB' },
-  summaryTitle: { fontSize: 13, fontWeight: '700', color: theme.colors.primary, marginBottom: 8 },
-  summaryRow: { fontSize: 13, color: '#374151', marginBottom: 4 },
+  summaryCard: { marginTop: 12, backgroundColor: '#F3F4F6', padding: 16, borderRadius: 12 },
+  summaryTitle: { fontSize: 14, color: '#374151', marginBottom: 12 },
+  slotsList: { marginBottom: 16, gap: 6 },
+  summaryRow: { fontSize: 14, color: '#4B5563' },
+  summaryConfirmText: { fontSize: 14, color: '#4B5563', marginBottom: 16, lineHeight: 20 },
+  confirmBtnPrimary: { backgroundColor: '#FF69B4', paddingVertical: 12, borderRadius: 24, alignItems: 'center', marginBottom: 8 },
+  confirmBtnTextPrimary: { color: 'white', fontWeight: '500', fontSize: 14 },
+  confirmBtnSecondary: { backgroundColor: 'white', paddingVertical: 12, borderRadius: 24, alignItems: 'center', borderWidth: 1, borderColor: '#E5E7EB' },
+  confirmBtnTextSecondary: { color: '#4B5563', fontWeight: '500', fontSize: 14 },
   paymentCard: { marginTop: 12, backgroundColor: 'white', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.primary },
   paymentTitle: { fontSize: 12, color: '#6B7280', marginBottom: 4, textAlign: 'center' },
   paymentPrice: { fontSize: 20, fontWeight: '800', color: theme.colors.primary, textAlign: 'center', marginBottom: 12 },
