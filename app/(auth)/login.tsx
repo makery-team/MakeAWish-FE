@@ -155,14 +155,8 @@ const CakeIllustration = () => (
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signInWithGoogle, user } = useAuth();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-
-  const [request, response] = Google.useAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-  });
 
   const logoScale = useSharedValue(1);
 
@@ -181,113 +175,34 @@ export default function LoginScreen() {
     transform: [{ scale: logoScale.value }],
   }));
 
+  // 로그인 성공 및 유저 정보 업데이트 시 화면 이동
   useEffect(() => {
-    if (!response) {
-      return;
-    }
-
-    if (response.type === "error") {
-      Alert.alert(
-        "로그인 실패",
-        "Google 로그인 중 오류가 발생했습니다. 다시 시도해 주세요.",
-      );
-      return;
-    }
-
-    if (response.type !== "success") {
-      return;
-    }
-
-    const finishGoogleLogin = async () => {
-      const accessToken = response.authentication?.accessToken;
-
-      if (!accessToken) {
-        Alert.alert("로그인 실패", "Google 인증 토큰을 가져오지 못했습니다.");
-        return;
+    if (user) {
+      // 닉네임이나 전화번호가 없으면 신규 유저로 간주하여 회원가입(추가정보 입력) 페이지로 이동
+      if (!user.nickname || !user.phoneNumber) {
+        router.replace("/(auth)/signup");
+      } else {
+        router.replace("/(tabs)");
       }
-
-      try {
-        setIsGoogleLoading(true);
-        const userResponse = await fetch(
-          "https://www.googleapis.com/userinfo/v2/me",
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          },
-        );
-
-        if (!userResponse.ok) {
-          throw new Error("Failed to fetch Google profile");
-        }
-
-        const profile: GoogleUserInfo = await userResponse.json();
-        const userData = {
-          id: profile.id || profile.email,
-          email: profile.email,
-          nickname: profile.name ?? "",
-          phoneNumber: "",
-          language: "",
-          profileImage: profile.picture,
-        };
-        
-        signIn(userData);
-        
-        // 기존 사용자(닉네임과 전화번호가 있는 경우)는 바로 메인으로, 신규 사용자는 정보 입력창으로 이동
-        if (userData.nickname && userData.phoneNumber) {
-          router.replace("/(tabs)");
-        } else {
-          router.replace("/(auth)/signup");
-        }
-      } catch {
-        Alert.alert(
-          "로그인 실패",
-          "Google 계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
-        );
-      } finally {
-        setIsGoogleLoading(false);
-      }
-    };
-
-    finishGoogleLogin();
-  }, [response, router, signIn]);
+    }
+  }, [user, router]);
 
   const handleGoogleLogin = async () => {
-    if (IS_MOCK) {
+    try {
       setIsGoogleLoading(true);
-      // 모의 로그인 흐름
-      setTimeout(() => {
-        const mockUser = {
-          id: "mock-user-123",
-          email: "test@example.com",
-          nickname: "지니테스터",
-          phoneNumber: "010-1234-5678",
-          language: "ko",
-          profileImage: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-        };
-        signIn(mockUser);
-        setIsGoogleLoading(false);
-        
-        // 모의 데이터에서도 기존 사용자 체크 로직 시뮬레이션
-        if (mockUser.nickname && mockUser.phoneNumber) {
-          router.replace("/(tabs)");
-        } else {
-          router.replace("/(auth)/signup");
-        }
-      }, 1000);
-      return;
-    }
-
-    // 실제 Google OAuth 흐름 호출
-    if (request) {
-      try {
-        await request.promptAsync();
-      } catch (error) {
-        Alert.alert("로그인 오류", "Google 로그인을 시작할 수 없습니다.");
-        console.error(error);
-      }
+      await signInWithGoogle();
+    } catch (error) {
+      Alert.alert(
+        "로그인 실패",
+        "Google 로그인 중 오류가 발생했습니다. 다시 시도해 주세요."
+      );
+      console.error(error);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
-  const isGoogleDisabled = isGoogleLoading || (!IS_MOCK && !request);
+  const isGoogleDisabled = isGoogleLoading;
 
   return (
     <View style={styles.container}>

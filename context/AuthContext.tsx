@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authService } from '@/services/auth';
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   isLoading: boolean;
-  signIn: (userData: Pick<User, 'id' | 'email'> & Partial<User>) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (data: Partial<User>) => Promise<void>;
 }
@@ -14,46 +16,60 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadUser = async () => {
+    const initAuth = async () => {
       try {
-        const storedUser = await AsyncStorage.getItem('user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
+        const storedToken = await AsyncStorage.getItem('auth_token');
+        if (storedToken) {
+          setToken(storedToken);
+          const userData = await authService.getCurrentUser();
+          if (userData) {
+            setUser(userData);
+          } else {
+            // 토큰은 있는데 유저 정보를 못 가져오면 토큰 만료로 간주
+            await authService.logout();
+            setToken(null);
+          }
         }
       } catch (error) {
-        console.error('Failed to load user session:', error);
+        console.error('Auth Init Error:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    loadUser();
+    initAuth();
   }, []);
 
-  const signIn = async (userData: Pick<User, 'id' | 'email'> & Partial<User>) => {
-    const newUser: User = {
-      nickname: '',
-      phoneNumber: '',
-      language: 'ko',
-      ...userData
-    } as User;
-    
-    setUser(newUser);
+  const signInWithGoogle = async () => {
     try {
-      await AsyncStorage.setItem('user', JSON.stringify(newUser));
+      setIsLoading(true);
+      const callbackUrl = await authService.startGoogleLogin();
+      if (callbackUrl) {
+        const newToken = await authService.handleAuthCallback(callbackUrl);
+        if (newToken) {
+          setToken(newToken);
+          const userData = await authService.getCurrentUser();
+          setUser(userData);
+        }
+      }
     } catch (error) {
-      console.error('Failed to save user session:', error);
+      console.error('Login Failed:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signOut = async () => {
-    setUser(null);
     try {
-      await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('auth_token');
+      setToken(null);
+      setUser(null);
     } catch (error) {
-      console.error('Failed to remove user session:', error);
+      console.error('Sign Out Error:', error);
     }
   };
 
@@ -61,16 +77,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user) {
       const updatedUser = { ...user, ...data };
       setUser(updatedUser);
-      try {
-        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-      } catch (error) {
-        console.error('Failed to update user session:', error);
-      }
+      // 필요 시 백엔드 업데이트 API 호출 로직 추가
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signOut, updateUser }}>
+    <AuthContext.Provider value={{ user, token, isLoading, signInWithGoogle, signOut, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
