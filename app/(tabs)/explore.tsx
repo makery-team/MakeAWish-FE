@@ -8,7 +8,7 @@ export default function SearchScreen() {
   const insets = useSafeAreaInsets();
 
   const recentSearches = ['티아라 케이크', '레터링 케이크', '성수동 케이크'];
-  const trendingCategories = ['#Y2K감성', '#커스텀케이크', '#기념일선물', '#당일픽업', '#비건케이크'];
+  const trendingCategories = ['#생일', '#기념일', '#리본', '#캐릭터', '#초코'];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
