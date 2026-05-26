@@ -1,0 +1,8 @@
+fix(layout): 안드로이드 Edge-to-Edge 상태바 헤더 겹침 현상 해결
+
+- app/_layout.tsx: 앱 최상단에 SafeAreaProvider 추가하여 iOS 노치 및 상태바 여백 계산 정상화
+- app/(tabs)/index.tsx: 안드로이드 홈 화면의 중복 상태바 여백(Double Padding) 제거
+- components/header.tsx, favorites-view.tsx, reviews-view.tsx, order-status.tsx, shop-detail.tsx:
+  - 불안정한 기본 SafeAreaView를 View로 교체
+  - 안드로이드의 edgeToEdge 모드에서 insets.top이 0으로 반환되는 버그를 우회하기 위해 StatusBar.currentHeight를 활용하여 강제 패딩 부여
+  - 커스텀 헤더의 paddingTop을 기기 환경에 맞게 동적 조정하여 상단표시줄 침범 문제 완벽 해결

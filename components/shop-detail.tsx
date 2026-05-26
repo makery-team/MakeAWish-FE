@@ -8,7 +8,10 @@ import {
   SafeAreaView,
   Dimensions,
   Share,
+  Platform,
+  StatusBar as RNStatusBar
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { ArrowLeft, Heart, Star, MapPin, Clock, Phone, Share2 } from 'lucide-react-native';
 import { SAMPLE_CAKE_IMAGES } from '@/constants/mock-data';
@@ -67,6 +70,8 @@ interface ShopDetailProps {
 }
 
 export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: ShopDetailProps) {
+  const insets = useSafeAreaInsets();
+  const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 0) : insets.top;
   const shop = (shopData as any)[shopId] || shopData[1];
 
   const handleShare = async () => {
@@ -133,9 +138,9 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* Sticky Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: statusBarHeight + 12 }]}>
         <TouchableOpacity onPress={onBack} style={styles.headerButton}>
           <ArrowLeft size={24} color="#333" />
         </TouchableOpacity>
@@ -220,7 +225,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

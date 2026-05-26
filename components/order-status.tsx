@@ -7,8 +7,10 @@ import {
   ScrollView, 
   Dimensions,
   SafeAreaView,
-  Platform
+  Platform,
+  StatusBar as RNStatusBar
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { 
   ArrowLeft, 
@@ -183,10 +185,12 @@ function OrderCard({ order }: { order: Order }) {
 }
 
 export const OrderStatus: React.FC<OrderStatusProps> = ({ orders, onBack }) => {
+  const insets = useSafeAreaInsets();
+  const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 0) : insets.top;
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: statusBarHeight + 12 }]}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>
@@ -213,7 +217,7 @@ export const OrderStatus: React.FC<OrderStatusProps> = ({ orders, onBack }) => {
           ))
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
