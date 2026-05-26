@@ -232,13 +232,13 @@ export function AISearchBar({
 
   const renderMessageItem = ({ item, index }: { item: Message, index: number }) => (
     <View style={[styles.msgRow, item.type === "user" ? styles.userRow : styles.aiRow]}>
-      {item.type === "ai" && <View style={styles.aiIcon}><Sparkles size={12} color="white" /></View>}
+      {item.type === "ai" && <View style={styles.aiIcon}><Sparkles size={12} color="white" strokeWidth={1.5} /></View>}
       <View style={[styles.bubble, item.type === "user" ? styles.userBubble : styles.aiBubble]}>
         <View style={styles.bubbleHeader}>
           <Text style={[styles.msgText, { flexShrink: 1 }, item.type === "user" ? styles.userText : styles.aiText]}>{item.text}</Text>
           {item.type === "ai" && item.images && item.images.length > 0 && (
             <TouchableOpacity onPress={() => toggleViewMode(index)} style={styles.toggleBtn}>
-              {item.viewMode === 'grid' ? <List size={14} color={theme.colors.primary} /> : <LayoutGrid size={14} color={theme.colors.primary} />}
+              {item.viewMode === 'grid' ? <List size={14} color={theme.colors.primary} strokeWidth={1.5} /> : <LayoutGrid size={14} color={theme.colors.primary} strokeWidth={1.5} />}
               <Text style={styles.toggleText}>{item.viewMode === 'grid' ? '슬라이드' : '그리드'}</Text>
             </TouchableOpacity>
           )}
@@ -289,12 +289,12 @@ export function AISearchBar({
                 {item.cakeDetails ? item.cakeDetails.map((cake, imgIdx) => (
                   <TouchableOpacity key={imgIdx} style={styles.gridItem} onPress={() => onCakeSelect?.(cake.image, cake.shopName)}>
                     <Image source={{ uri: cake.image }} style={styles.gridImage} contentFit="cover" />
-                    <View style={styles.gridOverlay}><View style={styles.gridEditBtn}><Sparkles size={10} color="white" /><Text style={styles.gridBtnText}>편집</Text></View></View>
+                    <View style={styles.gridOverlay}><View style={styles.gridEditBtn}><Sparkles size={10} color="white" strokeWidth={1.5} /><Text style={styles.gridBtnText}>편집</Text></View></View>
                   </TouchableOpacity>
                 )) : item.images.map((img, imgIdx) => (
                   <TouchableOpacity key={imgIdx} style={styles.gridItem} onPress={() => onCakeSelect?.(img, '지니 추천')}>
                     <Image source={{ uri: img }} style={styles.gridImage} contentFit="cover" />
-                    <View style={styles.gridOverlay}><View style={styles.gridEditBtn}><Sparkles size={10} color="white" /><Text style={styles.gridBtnText}>편집</Text></View></View>
+                    <View style={styles.gridOverlay}><View style={styles.gridEditBtn}><Sparkles size={10} color="white" strokeWidth={1.5} /><Text style={styles.gridBtnText}>편집</Text></View></View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -343,7 +343,7 @@ export function AISearchBar({
                   style={styles.closeBtn}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <X size={20} color="#666" />
+                  <X size={20} color="#666" strokeWidth={1.5} />
                 </TouchableOpacity>
               </View>
 
@@ -366,7 +366,7 @@ export function AISearchBar({
 
               <View style={[styles.inputArea, { paddingBottom: tabBarHeight + (Platform.OS === "ios" ? 8 : 16) }]}>
                 <LinearGradient
-                  colors={['#FFE6EE', '#E6F4F1']}
+                  colors={[theme.colors.surface, theme.colors.lightGray]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.inputContainerGradient}
@@ -377,10 +377,10 @@ export function AISearchBar({
                     value={inputValue}
                     onChangeText={setInputValue}
                     onSubmitEditing={() => handleSend()}
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={theme.colors.textMuted}
                   />
                   <TouchableOpacity onPress={() => handleSend()} style={styles.sendBtnGradient}>
-                    <Send size={18} color="#9CA3AF" />
+                    <Send size={18} color="white" strokeWidth={1.5} />
                   </TouchableOpacity>
                 </LinearGradient>
               </View>
@@ -393,10 +393,10 @@ export function AISearchBar({
             >
               <TouchableOpacity style={styles.collapsedBar} onPress={() => handleOpen("half")} activeOpacity={0.9}>
                 <View style={styles.collapsedLeft}>
-                  <View style={styles.collapsedIcon}><Sparkles size={18} color="white" /></View>
+                  <View style={styles.collapsedIcon}><Sparkles size={18} color="white" strokeWidth={1.5} /></View>
                   <Text style={styles.collapsedTitle}>AI 케이크 플래너에게 물어보기</Text>
                 </View>
-                <ChevronRight size={20} color={theme.colors.gray} />
+                <ChevronRight size={20} color={theme.colors.gray} strokeWidth={1.5} />
               </TouchableOpacity>
             </Animated.View>
           </View>
@@ -407,69 +407,69 @@ export function AISearchBar({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 99 },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.3)", zIndex: 99 },
   sheet: {
     position: "absolute", left: 0, right: 0, bottom: 0, height: SHEET_HEIGHT,
-    backgroundColor: "white", borderTopLeftRadius: 32, borderTopRightRadius: 32,
-    shadowColor: "#000", shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 25, zIndex: 1000,
+    backgroundColor: theme.colors.background, borderTopLeftRadius: 32, borderTopRightRadius: 32,
+    shadowColor: theme.colors.primary, shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.08, shadowRadius: 30, elevation: 25, zIndex: 1000,
   },
   dragHandleArea: { 
     width: "100%", height: HANDLE_HEIGHT, alignItems: "center", justifyContent: "center", 
-    backgroundColor: 'white', borderTopLeftRadius: 32, borderTopRightRadius: 32 
+    backgroundColor: theme.colors.background, borderTopLeftRadius: 32, borderTopRightRadius: 32 
   },
-  dragHandle: { width: 40, height: 4, backgroundColor: "#E5E7EB", borderRadius: 2 },
+  dragHandle: { width: 36, height: 4, backgroundColor: theme.colors.border, borderRadius: 2 },
   collapsedWrapper: { position: 'absolute', top: HANDLE_HEIGHT, left: 0, right: 0, height: COLLAPSED_BAR_HEIGHT - HANDLE_HEIGHT },
   collapsedBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 24, height: '100%' },
   collapsedLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
   collapsedIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.primary, alignItems: "center", justifyContent: "center" },
-  collapsedTitle: { fontSize: 14, fontWeight: "700", color: theme.colors.text },
+  collapsedTitle: { fontSize: 14, fontWeight: "600", color: theme.colors.text, letterSpacing: -0.5 },
   fullContent: { position: 'absolute', top: HANDLE_HEIGHT, bottom: 0, left: 0, right: 0 },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 24, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: "#F3F4F6" },
-  headerTitle: { fontSize: 18, fontWeight: "800", color: theme.colors.text },
-  headerSubtitle: { fontSize: 12, color: "#6B7280", marginTop: 2 },
-  closeBtn: { padding: 8, backgroundColor: "#F9FAFB", borderRadius: 12 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 24, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.border },
+  headerTitle: { fontSize: 18, fontWeight: "700", color: theme.colors.text, letterSpacing: -0.5 },
+  headerSubtitle: { fontSize: 13, color: theme.colors.textMuted, marginTop: 2, letterSpacing: -0.3 },
+  closeBtn: { padding: 8, backgroundColor: theme.colors.lightGray, borderRadius: 16 },
   chatList: { padding: 20 },
   msgRow: { flexDirection: "row", marginBottom: 16, width: '100%' },
   userRow: { justifyContent: 'flex-end' },
   aiRow: { justifyContent: 'flex-start' },
-  aiIcon: { width: 24, height: 24, borderRadius: 12, backgroundColor: theme.colors.primary, alignItems: "center", justifyContent: "center", marginRight: 8, marginTop: 4 },
-  bubble: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20, maxWidth: '85%' },
+  aiIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: theme.colors.primary, alignItems: "center", justifyContent: "center", marginRight: 10, marginTop: 4, shadowColor: theme.colors.primary, shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 8 },
+  bubble: { paddingHorizontal: 18, paddingVertical: 14, borderRadius: 24, maxWidth: '85%', shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 },
   bubbleHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 },
-  toggleBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'white', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.primary },
-  toggleText: { fontSize: 10, fontWeight: '700', color: theme.colors.primary },
-  gridContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-start', marginTop: 8 },
-  gridItem: { width: (SCREEN_WIDTH * 0.9 - 64) / 2, aspectRatio: 1, borderRadius: 12, overflow: 'hidden', backgroundColor: '#F3F4F6' },
+  toggleBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: theme.colors.surface, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.border, shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.05, shadowRadius: 4 },
+  toggleText: { fontSize: 10, fontWeight: '700', color: theme.colors.textMuted, letterSpacing: -0.3 },
+  gridContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'flex-start', marginTop: 12 },
+  gridItem: { width: (SCREEN_WIDTH * 0.9 - 68) / 2, aspectRatio: 1, borderRadius: 16, overflow: 'hidden', backgroundColor: theme.colors.lightGray },
   gridImage: { width: '100%', height: '100%' },
-  gridOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 6, backgroundColor: 'rgba(0,0,0,0.3)' },
-  gridEditBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: theme.colors.primary, paddingVertical: 4, borderRadius: 8 },
-  gridBtnText: { fontSize: 9, fontWeight: '800', color: 'white' },
-  userBubble: { backgroundColor: theme.colors.primary, borderBottomRightRadius: 4 },
-  aiBubble: { backgroundColor: "#F3F4F6", borderBottomLeftRadius: 4 },
-  msgText: { fontSize: 15, lineHeight: 22 },
+  gridOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 8, backgroundColor: 'rgba(0,0,0,0.2)' },
+  gridEditBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.9)', paddingVertical: 6, borderRadius: 12 },
+  gridBtnText: { fontSize: 10, fontWeight: '700', color: theme.colors.text, letterSpacing: -0.3 },
+  userBubble: { backgroundColor: theme.colors.primary, borderBottomRightRadius: 6 },
+  aiBubble: { backgroundColor: theme.colors.surface, borderBottomLeftRadius: 6 },
+  msgText: { fontSize: 15, lineHeight: 24, letterSpacing: -0.5 },
   userText: { color: "white", fontWeight: "500" },
-  aiText: { color: "#374151" },
-  optionsContainer: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 },
-  optionChip: { backgroundColor: "white", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: theme.colors.primary },
-  optionText: { fontSize: 13, color: theme.colors.primary, fontWeight: "600" },
-  typingIndicator: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, gap: 8, marginBottom: 20 },
-  typingText: { fontSize: 13, color: "#9CA3AF" },
-  inputArea: { paddingHorizontal: 20, paddingTop: 12, backgroundColor: "white", borderTopWidth: 1, borderTopColor: "#F3F4F6" },
-  inputContainerGradient: { flexDirection: "row", alignItems: "center", borderRadius: 24, paddingHorizontal: 16, borderWidth: 1, borderColor: "#FF69B4" },
-  input: { flex: 1, paddingVertical: 12, fontSize: 15, color: '#374151' },
-  sendBtnGradient: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#E5E7EB", alignItems: "center", justifyContent: "center", marginLeft: 8 },
-  sendBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.primary, alignItems: "center", justifyContent: "center", marginLeft: 8 },
-  summaryCard: { marginTop: 12, backgroundColor: '#F3F4F6', padding: 16, borderRadius: 12 },
-  summaryTitle: { fontSize: 14, color: '#374151', marginBottom: 12 },
-  slotsList: { marginBottom: 16, gap: 6 },
-  summaryRow: { fontSize: 14, color: '#4B5563' },
-  summaryConfirmText: { fontSize: 14, color: '#4B5563', marginBottom: 16, lineHeight: 20 },
-  confirmBtnPrimary: { backgroundColor: '#FF69B4', paddingVertical: 12, borderRadius: 24, alignItems: 'center', marginBottom: 8 },
-  confirmBtnTextPrimary: { color: 'white', fontWeight: '500', fontSize: 14 },
-  confirmBtnSecondary: { backgroundColor: 'white', paddingVertical: 12, borderRadius: 24, alignItems: 'center', borderWidth: 1, borderColor: '#E5E7EB' },
-  confirmBtnTextSecondary: { color: '#4B5563', fontWeight: '500', fontSize: 14 },
-  paymentCard: { marginTop: 12, backgroundColor: 'white', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.primary },
-  paymentTitle: { fontSize: 12, color: '#6B7280', marginBottom: 4, textAlign: 'center' },
-  paymentPrice: { fontSize: 20, fontWeight: '800', color: theme.colors.primary, textAlign: 'center', marginBottom: 12 },
-  paymentBtn: { backgroundColor: theme.colors.primary, paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
-  paymentBtnText: { color: 'white', fontWeight: '700', fontSize: 14 },
+  aiText: { color: theme.colors.text },
+  optionsContainer: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 16 },
+  optionChip: { backgroundColor: theme.colors.surface, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.border, shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.02, shadowRadius: 4 },
+  optionText: { fontSize: 14, color: theme.colors.text, fontWeight: "500", letterSpacing: -0.3 },
+  typingIndicator: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, gap: 10, marginBottom: 20 },
+  typingText: { fontSize: 13, color: theme.colors.textMuted, letterSpacing: -0.3 },
+  inputArea: { paddingHorizontal: 20, paddingTop: 16, backgroundColor: theme.colors.background, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border },
+  inputContainerGradient: { flexDirection: "row", alignItems: "center", borderRadius: 32, paddingHorizontal: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.03, shadowRadius: 10 },
+  input: { flex: 1, paddingVertical: 14, fontSize: 15, color: theme.colors.text, letterSpacing: -0.5 },
+  sendBtnGradient: { width: 40, height: 40, borderRadius: 20, backgroundColor: theme.colors.primary, alignItems: "center", justifyContent: "center", marginLeft: 8, shadowColor: theme.colors.primary, shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 8 },
+  sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: theme.colors.primary, alignItems: "center", justifyContent: "center", marginLeft: 8 },
+  summaryCard: { marginTop: 16, backgroundColor: theme.colors.surface, padding: 20, borderRadius: 24, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.border, shadowColor: '#000', shadowOffset: {width: 0, height: 6}, shadowOpacity: 0.04, shadowRadius: 16 },
+  summaryTitle: { fontSize: 15, fontWeight: '700', color: theme.colors.text, marginBottom: 16, letterSpacing: -0.5 },
+  slotsList: { marginBottom: 20, gap: 10 },
+  summaryRow: { fontSize: 14, color: theme.colors.text, letterSpacing: -0.3 },
+  summaryConfirmText: { fontSize: 14, color: theme.colors.textMuted, marginBottom: 16, lineHeight: 22, letterSpacing: -0.3 },
+  confirmBtnPrimary: { backgroundColor: theme.colors.primary, paddingVertical: 14, borderRadius: 24, alignItems: 'center', marginBottom: 10, shadowColor: theme.colors.primary, shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.25, shadowRadius: 8 },
+  confirmBtnTextPrimary: { color: 'white', fontWeight: '600', fontSize: 15, letterSpacing: -0.5 },
+  confirmBtnSecondary: { backgroundColor: theme.colors.surface, paddingVertical: 14, borderRadius: 24, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.border },
+  confirmBtnTextSecondary: { color: theme.colors.textMuted, fontWeight: '600', fontSize: 15, letterSpacing: -0.5 },
+  paymentCard: { marginTop: 16, backgroundColor: theme.colors.surface, padding: 24, borderRadius: 24, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.primary, shadowColor: theme.colors.primary, shadowOffset: {width: 0, height: 8}, shadowOpacity: 0.1, shadowRadius: 16 },
+  paymentTitle: { fontSize: 13, color: theme.colors.textMuted, marginBottom: 6, textAlign: 'center', letterSpacing: -0.3 },
+  paymentPrice: { fontSize: 28, fontWeight: '800', color: theme.colors.text, textAlign: 'center', marginBottom: 20, letterSpacing: -1 },
+  paymentBtn: { backgroundColor: theme.colors.text, paddingVertical: 16, borderRadius: 24, alignItems: 'center', shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.2, shadowRadius: 8 },
+  paymentBtnText: { color: 'white', fontWeight: '700', fontSize: 16, letterSpacing: -0.5 },
 });
