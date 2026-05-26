@@ -16,13 +16,15 @@ const { width } = Dimensions.get('window');
 
 interface ImageSliderProps {
   images: string[];
+  cakeDetails?: { image: string, shopName: string }[];
   onCakeSelect?: (image: string, shopName: string) => void;
-  onInquiry?: (image: string) => void;
+  onInquiry?: (image: string, shopName?: string) => void;
   onMinimize?: () => void;
 }
 
 export const ImageSlider: React.FC<ImageSliderProps> = ({
   images,
+  cakeDetails,
   onCakeSelect,
   onInquiry,
   onMinimize
@@ -109,7 +111,8 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
             style={styles.actionButtonSecondary}
             onPress={() => {
               if (onCakeSelect) {
-                onCakeSelect(images[currentIndex], '지니 AI');
+                const shopName = cakeDetails ? cakeDetails[currentIndex].shopName : '지니 AI';
+                onCakeSelect(images[currentIndex], shopName);
                 onMinimize && onMinimize();
               }
             }}
@@ -120,7 +123,7 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
           
           <TouchableOpacity 
             style={styles.actionButtonPrimary}
-            onPress={() => onInquiry && onInquiry(images[currentIndex])}
+            onPress={() => onInquiry && onInquiry(images[currentIndex], cakeDetails?.[currentIndex]?.shopName)}
           >
             <MessageCircle size={14} color="white" />
             <Text style={styles.actionButtonTextPrimary}>이 시안 문의하기</Text>

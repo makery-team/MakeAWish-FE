@@ -1,61 +1,89 @@
-import { 
-  AIChatRequest, 
-  AIChatResponse, 
-  AIInpaintRequest, 
-  AIInpaintResponse 
-} from '@/types/ai';
+import { AIActionType } from '@/types/ai';
 
-// TODO: 환경 변수에서 가져오도록 설정 (현재는 로컬 AI 서버 주소 기본값 사용)
-const AI_SERVER_URL = process.env.EXPO_PUBLIC_AI_SERVER_URL || 'https://makeawish-ai.onrender.com';
+import { Platform } from 'react-native';
+
+export interface AiAgentRequest {
+  message: string;
+}
+
+export interface AiAgentResponse {
+  message: string;
+  actionType: AIActionType;
+  data: any;
+}
+
+// TODO: 환경 변수에서 가져오도록 설정
+const BACKEND_API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://make-a-wish-env.eba-dvjn7a8x.ap-northeast-2.elasticbeanstalk.com';
 
 /**
- * AI 서버와 채팅 통신을 처리하는 서비스
+ * 백엔드 서버(Spring Boot)와 채팅 통신을 처리하는 서비스
+ * (백엔드가 AI, DB 호출을 오케스트레이션함)
  */
 export const aiService = {
   /**
-   * 대화 분석 및 응답 요청
+   * 사용자 메시지 전송 및 통합 응답 수신
    */
-  async chat(request: AIChatRequest): Promise<AIChatResponse> {
+  async chat(message: string): Promise<AiAgentResponse> {
     try {
-      const response = await fetch(`${AI_SERVER_URL}/api/ai/chat`, {
+      // --- UI 테스트용 치트키 (운영 배포 시 삭제) ---
+      if (message === '!테스트1') {
+        return {
+          message: "주문 내역을 꼼꼼히 확인해주세요!",
+          actionType: 'CONFIRM_SLOTS',
+          data: { slots: { "디자인": "포트폴리오 #12", "맛": "초코", "사이즈": "1호", "문구": "HBD Mom!" } }
+        };
+      }
+      if (message === '!테스트2') {
+        return {
+          message: "사장님이 주문을 수락했습니다! 하단의 최종 금액을 결제하시겠습니까?",
+          actionType: 'ORDER_SUMMARY',
+          data: { totalPrice: 45000 }
+        };
+      }
+      // ----------------------------------------------
+
+      // TODO: 인증 토큰 처리가 필요할 수 있습니다 (현재는 임시 생략)
+      const response = await fetch(`${BACKEND_API_URL}/api/ai-agent/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // 'Authorization': `Bearer ${token}` 
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify({ message }),
       });
 
       if (!response.ok) {
-        throw new Error(`AI Chat API error: ${response.status}`);
+        throw new Error(`Chat API error: ${response.status}`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error('AI Chat Service Error:', error);
+      console.error('Chat Service Error:', error);
       throw error;
     }
   },
 
   /**
-   * 이미지 인페인팅(편집) 요청
+   * 포트폴리오 이미지 기반 인페인팅(디자인 수정) 요청
    */
-  async inpaint(request: AIInpaintRequest): Promise<AIInpaintResponse> {
+  async inpaint(portfolioId: number, prompt: string, maskImage: string): Promise<any> {
     try {
-      const response = await fetch(`${AI_SERVER_URL}/api/ai/inpaint`, {
+      const response = await fetch(`${BACKEND_API_URL}/api/portfolios/${portfolioId}/inpaintings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // 'Authorization': `Bearer ${token}` 
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify({ prompt, maskImage }),
       });
 
       if (!response.ok) {
-        throw new Error(`AI Inpaint API error: ${response.status}`);
+        throw new Error(`Inpaint API error: ${response.status}`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error('AI Inpaint Service Error:', error);
+      console.error('Inpaint Service Error:', error);
       throw error;
     }
   },

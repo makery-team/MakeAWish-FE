@@ -61,9 +61,13 @@ export interface Message {
   type: MessageType;
   text: string;
   images?: string[];
+  cakeDetails?: { image: string, shopName: string }[];
   options?: string[];
   messageId?: string;
   viewMode?: 'slider' | 'grid'; // Added for image display options
+  actionType?: string;
+  slots?: any;
+  totalPrice?: number;
 }
 
 // Conversation state for AI chat
@@ -145,3 +149,45 @@ export interface PaginatedResponse<T> {
   empty: boolean;
 }
 
+export interface OrderSchemaTemplate {
+  name: string;
+  type: string;
+  label: string;
+  options?: string[];
+  required: boolean;
+}
+
+export interface OrderSchema {
+  templates: OrderSchemaTemplate[];
+}
+
+export interface StorePortfolio {
+  id: number;
+  imageUrl: string;
+  tags: string[];
+  isInpaintingAllowed: boolean;
+  likeCount: number;
+}
+
+export interface StoreCategory {
+  id: number;
+  name: string;
+  price: number;
+  description: string;
+  orderSchema: OrderSchema;
+  portfolios: StorePortfolio[];
+}
+
+export interface Store {
+  id: number;
+  name: string;
+  description: string;
+  hours: string | null;
+  notice: string | null;
+  cautionNotice: string | null;
+  rating: number;
+  reviewCount: number;
+  latitude: number;
+  longitude: number;
+  categories: StoreCategory[];
+}
