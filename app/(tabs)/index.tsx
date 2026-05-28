@@ -117,6 +117,7 @@ export default function HomeScreen() {
               onShopSelect={(shopId) => {
                 router.push(`/shop/${shopId}`);
               }}
+              onListView={() => navigation.navigateToView('list')}
             />
           </View>
         )}

@@ -1,141 +1,177 @@
-import { SAMPLE_CAKE_IMAGES } from '@/constants/mock-data';
+import { CAKE_SHOPS, CakeShop } from '@/constants/map-shops';
+import { SEOUL_DISTRICTS, SeoulGu } from '@/constants/seoul-districts';
 import { theme } from '@/constants/theme';
-import NaverMapView, {
-  NaverMapMarker,
+import {
+  NaverMapMarkerOverlay,
+  NaverMapView,
 } from '@mj-studio/react-native-naver-map';
 import { Image } from 'expo-image';
 import * as Location from 'expo-location';
-import { Heart, LocateFixed, Star } from 'lucide-react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import {
+  ChevronDown,
+  ChevronRight,
+  List,
+  LocateFixed,
+  MapPin,
+  Search,
+  Star,
+  X,
+} from 'lucide-react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
+  FlatList,
+  Modal,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 
-const cakeShops = [
-  {
-    id: 1,
-    name: 'Creamy Seoul',
-    latitude: 37.4996,
-    longitude: 127.0276,
-    rating: 4.9,
-    likes: 342,
-    specialty: 'Y2K 감성 케이크',
-    image: SAMPLE_CAKE_IMAGES[0],
-    address: '강남구 역삼동',
-  },
-  {
-    id: 2,
-    name: 'BlueDream Cakes',
-    latitude: 37.5446,
-    longitude: 127.0564,
-    rating: 5.0,
-    likes: 521,
-    specialty: '레터링 케이크',
-    image: SAMPLE_CAKE_IMAGES[1],
-    address: '성동구 성수동',
-  },
-  {
-    id: 3,
-    name: 'Rainbow Bakery',
-    latitude: 37.5663,
-    longitude: 126.9235,
-    rating: 4.8,
-    likes: 287,
-    specialty: '캐릭터 케이크',
-    image: SAMPLE_CAKE_IMAGES[2],
-    address: '마포구 연남동',
-  },
-  {
-    id: 4,
-    name: 'FlowerCake Garden',
-    latitude: 37.5172,
-    longitude: 127.0473,
-    rating: 4.8,
-    likes: 389,
-    specialty: '플라워 케이크',
-    image: SAMPLE_CAKE_IMAGES[3],
-    address: '강남구 압구정동',
-  },
-];
-
 interface MapViewProps {
   onShopSelect: (shopId: number) => void;
+  onListView?: () => void;
 }
 
-export function MapView({ onShopSelect }: MapViewProps) {
-  const [selectedShop, setSelectedShop] = useState<number | null>(null);
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
+export function MapView({ onShopSelect, onListView }: MapViewProps) {
   const mapRef = useRef<any>(null);
 
-  const selectedShopData = cakeShops.find((s) => s.id === selectedShop);
+  // Location state
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+
+  // Region selection state
+  const [selectedGu, setSelectedGu] = useState<SeoulGu | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedGu, setExpandedGu] = useState<string | null>(null);
+
+  // Shop selection state
+  const [selectedShop, setSelectedShop] = useState<CakeShop | null>(null);
+
+  // Filtered shops by selected gu
+  const visibleShops = useMemo(() => {
+    if (!selectedGu) return CAKE_SHOPS;
+    return CAKE_SHOPS.filter((s) => s.gu === selectedGu.name);
+  }, [selectedGu]);
+
+  // Filtered districts for search
+  const filteredDistricts = useMemo(() => {
+    if (!searchQuery.trim()) return SEOUL_DISTRICTS;
+    const q = searchQuery.trim().toLowerCase();
+    return SEOUL_DISTRICTS.filter(
+      (gu) =>
+        gu.name.toLowerCase().includes(q) ||
+        gu.dongs.some((dong) => dong.name.toLowerCase().includes(q))
+    );
+  }, [searchQuery]);
 
   const requestLocation = async () => {
     setIsLocating(true);
     setLocationError(null);
-
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      setLocationError('위치 권한이 필요합니다');
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationError('위치 권한이 필요합니다');
+        return;
+      }
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const coords = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+      setUserLocation(coords);
+      mapRef.current?.animateCameraTo({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        zoom: 14,
+      });
+    } catch {
+      setLocationError('현재 위치를 가져올 수 없습니다');
+    } finally {
       setIsLocating(false);
-      return;
     }
-
-    const location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-
-    const coords = {
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-    };
-
-    setUserLocation(coords);
-    setIsLocating(false);
-
-    mapRef.current?.animateCameraTo({
-      latitude: coords.latitude,
-      longitude: coords.longitude,
-      zoom: 13,
-    });
   };
 
   useEffect(() => {
     requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleGuSelect = useCallback((gu: SeoulGu) => {
+    setSelectedGu(gu);
+    setIsSheetOpen(false);
+    setSearchQuery('');
+    setExpandedGu(null);
+    setSelectedShop(null);
+    mapRef.current?.animateCameraTo({
+      latitude: gu.latitude,
+      longitude: gu.longitude,
+      zoom: 14,
+    });
+  }, []);
+
+  const handleDongSelect = useCallback(
+    (dong: { name: string; latitude: number; longitude: number }, gu: SeoulGu) => {
+      setSelectedGu(gu);
+      setIsSheetOpen(false);
+      setSearchQuery('');
+      setExpandedGu(null);
+      setSelectedShop(null);
+      mapRef.current?.animateCameraTo({
+        latitude: dong.latitude,
+        longitude: dong.longitude,
+        zoom: 16,
+      });
+    },
+    []
+  );
+
+  const handleMarkerTap = useCallback((shop: CakeShop) => {
+    setSelectedShop((prev) => (prev?.id === shop.id ? null : shop));
+  }, []);
+
+  const regionLabel = selectedGu ? `서울 ${selectedGu.name}` : '서울특별시';
 
   return (
     <View style={styles.container}>
+      {/* Naver Map */}
       <NaverMapView
         ref={mapRef}
         style={styles.map}
         initialCamera={{
-          latitude: userLocation?.latitude ?? 37.534,
-          longitude: userLocation?.longitude ?? 126.99,
+          latitude: userLocation?.latitude ?? 37.5665,
+          longitude: userLocation?.longitude ?? 126.9780,
           zoom: 12,
         }}
         isShowLocationButton={false}
       >
-        {/* 케이크 가게 마커 */}
-        {cakeShops.map((shop) => (
-          <NaverMapMarker
+        {visibleShops.map((shop) => (
+          <NaverMapMarkerOverlay
             key={shop.id}
             latitude={shop.latitude}
             longitude={shop.longitude}
-            onTap={() =>
-              setSelectedShop(selectedShop === shop.id ? null : shop.id)
-            }
+            tintColor={theme.colors.primary}
+            onTap={() => handleMarkerTap(shop)}
           />
         ))}
 
-        {/* 내 현재 위치 마커 */}
         {userLocation && (
-          <NaverMapMarker
+          <NaverMapMarkerOverlay
             latitude={userLocation.latitude}
             longitude={userLocation.longitude}
             width={20}
@@ -145,7 +181,18 @@ export function MapView({ onShopSelect }: MapViewProps) {
         )}
       </NaverMapView>
 
-      {/* 내 위치로 이동 버튼 */}
+      {/* Region Search Bar (top overlay) */}
+      <TouchableOpacity
+        style={styles.regionBar}
+        onPress={() => setIsSheetOpen(true)}
+        activeOpacity={0.85}
+      >
+        <MapPin size={16} color={theme.colors.primary} />
+        <Text style={styles.regionBarText}>{regionLabel}</Text>
+        <ChevronDown size={16} color="#888" />
+      </TouchableOpacity>
+
+      {/* Location Button */}
       <TouchableOpacity
         style={styles.locationButton}
         onPress={requestLocation}
@@ -158,54 +205,414 @@ export function MapView({ onShopSelect }: MapViewProps) {
         )}
       </TouchableOpacity>
 
-      {/* 위치 오류 메시지 */}
+      {/* Floating Chips Row */}
+      <View style={styles.floatingChips}>
+        <View style={styles.chip}>
+          <Text style={styles.chipText}>🎂 케이크샵 ({visibleShops.length})</Text>
+        </View>
+        {onListView && (
+          <TouchableOpacity style={styles.listButton} onPress={onListView}>
+            <List size={14} color="#333" />
+            <Text style={styles.listButtonText}>리스트로 보기</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Location Error Banner */}
       {locationError && (
         <View style={styles.errorBanner}>
           <Text style={styles.errorText}>{locationError}</Text>
         </View>
       )}
 
-      {/* 마커 클릭 시 팝업 카드 */}
-      {selectedShopData && (
-        <View style={styles.popup}>
-          <Image
-            source={{ uri: selectedShopData.image }}
-            style={styles.popupImage}
-          />
-          <View style={styles.popupContent}>
-            <Text style={styles.shopName}>@{selectedShopData.name}</Text>
-            <Text style={styles.shopAddress}>{selectedShopData.address}</Text>
-            <Text style={styles.shopSpecialty}>
-              {selectedShopData.specialty}
-            </Text>
-
-            <View style={styles.statsRow}>
-              <View style={styles.stat}>
-                <Heart
-                  size={14}
-                  color={theme.colors.primary}
-                  fill={theme.colors.primary}
-                />
-                <Text style={styles.statText}>{selectedShopData.likes}</Text>
-              </View>
-              <View style={styles.stat}>
-                <Star size={14} color="#FACC15" fill="#FACC15" />
-                <Text style={styles.statText}>{selectedShopData.rating}</Text>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              onPress={() => onShopSelect(selectedShopData.id)}
-              style={styles.detailButton}
-            >
-              <Text style={styles.detailButtonText}>상점 상세 보기</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+      {/* Shop Bottom Card */}
+      {selectedShop && (
+        <ShopBottomCard
+          shop={selectedShop}
+          onClose={() => setSelectedShop(null)}
+          onDetail={() => onShopSelect(selectedShop.id)}
+        />
       )}
+
+      {/* Region Bottom Sheet */}
+      <RegionBottomSheet
+        visible={isSheetOpen}
+        searchQuery={searchQuery}
+        filteredDistricts={filteredDistricts}
+        expandedGu={expandedGu}
+        onSearchChange={setSearchQuery}
+        onGuExpand={(name) =>
+          setExpandedGu((prev) => (prev === name ? null : name))
+        }
+        onGuSelect={handleGuSelect}
+        onDongSelect={handleDongSelect}
+        onClose={() => {
+          setIsSheetOpen(false);
+          setSearchQuery('');
+          setExpandedGu(null);
+        }}
+      />
     </View>
   );
 }
+
+// ─── ShopBottomCard ───────────────────────────────────────────────────────────
+
+interface ShopBottomCardProps {
+  shop: CakeShop;
+  onClose: () => void;
+  onDetail: () => void;
+}
+
+function ShopBottomCard({ shop, onClose, onDetail }: ShopBottomCardProps) {
+  return (
+    <View style={cardStyles.container}>
+      <Image source={{ uri: shop.thumbnail }} style={cardStyles.image} />
+      <View style={cardStyles.content}>
+        <TouchableOpacity style={cardStyles.closeBtn} onPress={onClose}>
+          <X size={16} color="#888" />
+        </TouchableOpacity>
+
+        <Text style={cardStyles.shopName}>@{shop.name}</Text>
+        <Text style={cardStyles.shopAddress}>{shop.address}</Text>
+
+        <View style={cardStyles.statsRow}>
+          <View style={cardStyles.stat}>
+            <Star size={13} color="#FACC15" fill="#FACC15" />
+            <Text style={cardStyles.statText}>{shop.rating}</Text>
+            <Text style={cardStyles.statSub}>({shop.reviewCount})</Text>
+          </View>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={cardStyles.categoriesRow}
+        >
+          {shop.categories.map((cat) => (
+            <View key={cat} style={cardStyles.categoryTag}>
+              <Text style={cardStyles.categoryText}>{cat}</Text>
+            </View>
+          ))}
+        </ScrollView>
+
+        <TouchableOpacity onPress={onDetail} style={cardStyles.detailButton}>
+          <Text style={cardStyles.detailButtonText}>상점 상세 보기</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const cardStyles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 32,
+    left: 16,
+    right: 16,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    elevation: 10,
+    overflow: 'hidden',
+    flexDirection: 'row',
+  },
+  image: {
+    width: 110,
+    height: 110,
+    backgroundColor: '#F0F0F0',
+  },
+  content: {
+    flex: 1,
+    padding: 12,
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 4,
+  },
+  shopName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#222',
+    marginBottom: 2,
+    marginRight: 24,
+  },
+  shopAddress: {
+    fontSize: 11,
+    color: '#999',
+    marginBottom: 4,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 6,
+  },
+  stat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  statText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
+  },
+  statSub: {
+    fontSize: 11,
+    color: '#aaa',
+  },
+  categoriesRow: {
+    marginBottom: 8,
+  },
+  categoryTag: {
+    backgroundColor: '#FFF0F5',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginRight: 6,
+  },
+  categoryText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: theme.colors.primary,
+  },
+  detailButton: {
+    backgroundColor: '#FFF0F5',
+    paddingVertical: 7,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  detailButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.primary,
+  },
+});
+
+// ─── RegionBottomSheet ────────────────────────────────────────────────────────
+
+interface RegionBottomSheetProps {
+  visible: boolean;
+  searchQuery: string;
+  filteredDistricts: SeoulGu[];
+  expandedGu: string | null;
+  onSearchChange: (q: string) => void;
+  onGuExpand: (name: string) => void;
+  onGuSelect: (gu: SeoulGu) => void;
+  onDongSelect: (
+    dong: { name: string; latitude: number; longitude: number },
+    gu: SeoulGu
+  ) => void;
+  onClose: () => void;
+}
+
+function RegionBottomSheet({
+  visible,
+  searchQuery,
+  filteredDistricts,
+  expandedGu,
+  onSearchChange,
+  onGuExpand,
+  onGuSelect,
+  onDongSelect,
+  onClose,
+}: RegionBottomSheetProps) {
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity
+        style={sheetStyles.backdrop}
+        activeOpacity={1}
+        onPress={onClose}
+      />
+      <View style={sheetStyles.sheet}>
+        {/* Handle */}
+        <View style={sheetStyles.handle} />
+
+        {/* Header */}
+        <View style={sheetStyles.header}>
+          <Text style={sheetStyles.title}>지역 선택</Text>
+          <TouchableOpacity onPress={onClose} style={sheetStyles.closeBtn}>
+            <X size={20} color="#555" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Search input */}
+        <View style={sheetStyles.searchRow}>
+          <Search size={16} color="#aaa" />
+          <TextInput
+            style={sheetStyles.searchInput}
+            placeholder="구 또는 동 검색"
+            placeholderTextColor="#bbb"
+            value={searchQuery}
+            onChangeText={onSearchChange}
+            autoCapitalize="none"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => onSearchChange('')}>
+              <X size={14} color="#aaa" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* District List */}
+        <FlatList
+          data={filteredDistricts}
+          keyExtractor={(item) => item.name}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={sheetStyles.listContent}
+          renderItem={({ item: gu }) => (
+            <View>
+              {/* Gu row */}
+              <TouchableOpacity
+                style={sheetStyles.guRow}
+                onPress={() => onGuExpand(gu.name)}
+                activeOpacity={0.7}
+              >
+                <TouchableOpacity
+                  onPress={() => onGuSelect(gu)}
+                  style={sheetStyles.guNameBtn}
+                >
+                  <Text style={sheetStyles.guName}>{gu.name}</Text>
+                </TouchableOpacity>
+                <ChevronRight
+                  size={16}
+                  color="#bbb"
+                  style={
+                    expandedGu === gu.name
+                      ? sheetStyles.chevronDown
+                      : undefined
+                  }
+                />
+              </TouchableOpacity>
+
+              {/* Dong list (accordion) */}
+              {expandedGu === gu.name && (
+                <View style={sheetStyles.dongList}>
+                  {gu.dongs.map((dong) => (
+                    <TouchableOpacity
+                      key={dong.name}
+                      style={sheetStyles.dongRow}
+                      onPress={() => onDongSelect(dong, gu)}
+                    >
+                      <Text style={sheetStyles.dongName}>{dong.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+        />
+      </View>
+    </Modal>
+  );
+}
+
+const sheetStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  sheet: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '75%',
+    paddingBottom: 32,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    backgroundColor: '#DDD',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#222',
+  },
+  closeBtn: {
+    padding: 6,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginVertical: 10,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    padding: 0,
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  guRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8F8F8',
+  },
+  guNameBtn: {
+    flex: 1,
+  },
+  guName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#333',
+  },
+  chevronDown: {
+    transform: [{ rotate: '90deg' }],
+  },
+  dongList: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 10,
+    marginBottom: 4,
+    overflow: 'hidden',
+  },
+  dongRow: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  dongName: {
+    fontSize: 13,
+    color: '#555',
+  },
+});
+
+// ─── Root styles ──────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
@@ -213,6 +620,30 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  regionBar: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    right: 70,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'white',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  regionBarText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#222',
   },
   locationButton: {
     position: 'absolute',
@@ -230,6 +661,51 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
+  floatingChips: {
+    position: 'absolute',
+    bottom: 160,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+  },
+  chip: {
+    backgroundColor: 'white',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+  },
+  listButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'white',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  listButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+  },
   errorBanner: {
     position: 'absolute',
     top: 70,
@@ -244,68 +720,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#E53E3E',
     textAlign: 'center',
-  },
-  popup: {
-    position: 'absolute',
-    bottom: 32,
-    left: 16,
-    right: 16,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    elevation: 10,
-    overflow: 'hidden',
-  },
-  popupImage: {
-    width: '100%',
-    height: 120,
-  },
-  popupContent: {
-    padding: 16,
-  },
-  shopName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#333',
-  },
-  shopAddress: {
-    fontSize: 11,
-    color: '#888',
-    marginTop: 2,
-  },
-  shopSpecialty: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-    marginBottom: 12,
-  },
-  stat: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statText: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
-  },
-  detailButton: {
-    backgroundColor: '#FFF0F5',
-    paddingVertical: 8,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  detailButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: theme.colors.primary,
   },
 });

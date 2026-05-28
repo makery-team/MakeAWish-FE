@@ -33,8 +33,7 @@
       [
         "@mj-studio/react-native-naver-map",
         {
-          "naverMapAndroidClientId": "laezvz9irj",
-          "naverMapIosClientId": "laezvz9irj"
+          "client_id": "laezvz9irj"
         }
       ],
       [
