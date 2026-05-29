@@ -1,9 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
-import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
 import { Heart, Sparkles } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -27,14 +25,6 @@ import Animated, {
 import Svg, { Path } from "react-native-svg";
 
 const { width, height } = Dimensions.get("window");
-WebBrowser.maybeCompleteAuthSession();
-
-interface GoogleUserInfo {
-  id: string;
-  email: string;
-  name?: string;
-  picture?: string;
-}
 
 const GoogleGLogo = ({ size = 18 }: { size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 48 48">
@@ -58,7 +48,7 @@ const GoogleGLogo = ({ size = 18 }: { size?: number }) => (
   </Svg>
 );
 
-const IS_MOCK = true; // 개발 및 테스트를 위해 true로 설정. 실제 API 적용 시 false로 변경.
+const IS_MOCK = false; // 💡 실제 Google OAuth 흐름을 테스트하기 위해 false로 설정합니다.
 
 const Particle = ({
   delay,
@@ -106,7 +96,7 @@ const Particle = ({
       -1,
       false,
     );
-  }, [delay]); // useSharedValue는 안정적인 참조이므로 의존성 배열에서 제외
+  }, [delay]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }, { scale: scale.value }],
@@ -155,6 +145,8 @@ const CakeIllustration = () => (
 
 export default function LoginScreen() {
   const router = useRouter();
+
+  // 💡 [수정 포인트] AuthContext에 정의된 정확한 함수명(signInWithGoogle)과 사용자 상태(user)를 가져옵니다.
   const { signInWithGoogle, user } = useAuth();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -175,14 +167,13 @@ export default function LoginScreen() {
     transform: [{ scale: logoScale.value }],
   }));
 
-  // 로그인 성공 및 유저 정보 업데이트 시 화면 이동
+  // 💡 [추가 포인트] 로그인이 완료되어 전역 context의 user 상태가 업데이트되면 목적지로 리다이렉트합니다.
   useEffect(() => {
     if (user) {
-      // 닉네임이나 전화번호가 없으면 신규 유저로 간주하여 회원가입(추가정보 입력) 페이지로 이동
-      if (!user.nickname || !user.phoneNumber) {
-        router.replace("/(auth)/signup");
-      } else {
+      if (user.nickname && user.phoneNumber) {
         router.replace("/(tabs)");
+      } else {
+        router.replace("/(auth)/signup");
       }
     }
   }, [user, router]);
@@ -190,12 +181,23 @@ export default function LoginScreen() {
   const handleGoogleLogin = async () => {
     try {
       setIsGoogleLoading(true);
+
+      if (IS_MOCK) {
+        // 모의 로그인 흐름 (테스트용)
+        setTimeout(() => {
+          Alert.alert(
+            "알림",
+            "모의 로그인은 작동하지 않도록 세팅을 교체했습니다.",
+          );
+          setIsGoogleLoading(false);
+        }, 1000);
+        return;
+      }
+
+      // 💡 [핵심 교체] 꼬여있던 내부 훅 대신, AuthContext가 제공하는 우회 브라우저 로그인 함수를 직접 호출합니다.
       await signInWithGoogle();
     } catch (error) {
-      Alert.alert(
-        "로그인 실패",
-        "Google 로그인 중 오류가 발생했습니다. 다시 시도해 주세요."
-      );
+      Alert.alert("로그인 오류", "Google 로그인을 완료할 수 없습니다.");
       console.error(error);
     } finally {
       setIsGoogleLoading(false);
@@ -288,7 +290,7 @@ const styles = StyleSheet.create({
     height: width * 0.7,
     borderRadius: width,
     backgroundColor: "#FCE7E0",
-    opacity: 0.9,
+    opacity: 0.95,
   },
   bgGlowBottomLeft: {
     position: "absolute",
