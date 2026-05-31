@@ -2,6 +2,7 @@ import { authService } from "@/services/auth";
 import { User } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
+import Constants from "expo-constants";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface AuthContextType {
@@ -15,6 +16,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// 현재 실행 환경이 Expo Go인지 확인하는 변수 (안전장치)
+const isExpoGo = Constants.appOwnership === "expo" || Constants.executionEnvironment === "storeClient";
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -22,11 +26,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 구글 로그인 설정 및 자동 로그인 검사
   useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-      offlineAccess: false,
-    });
+    // Expo Go 환경에서는 네이티브 설정을 건너뜁니다.
+    if (!isExpoGo) {
+      GoogleSignin.configure({
+        webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+        iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+        offlineAccess: false,
+      });
+    }
 
     const initAuth = async () => {
       try {
@@ -52,6 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 네이티브 구글 로그인
   const signInWithGoogle = async () => {
+    if (isExpoGo) {
+      console.log("Expo Go에서는 구글 로그인 네이티브 기능을 사용할 수 없습니다.");
+      alert("Expo Go 모드입니다. 구글 로그인은 실제 기기(또는 에뮬레이터) 빌드에서만 작동합니다.");
+      return;
+    }
+
     try {
       setIsLoading(true);
       await GoogleSignin.hasPlayServices();
