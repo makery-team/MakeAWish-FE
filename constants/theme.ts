@@ -29,11 +29,14 @@ export const Colors = {
 
 export const theme = {
   colors: {
-    primary: '#FF69B4',
-    secondary: '#87CEEB',
-    background: '#FFFFFF',
-    text: '#11181C',
-    gray: '#687076',
-    lightGray: '#F0F0F0',
+    primary: '#FF7B9C', // Soft Coral Pink
+    secondary: '#A3D2CA', // Soft mint
+    background: '#FAFAFA', // Warm off-white
+    surface: '#FFFFFF', // Pure white for cards
+    text: '#212529', // Dark grey for typography
+    textMuted: '#868E96', // Light grey text
+    border: '#F1F3F5', // Very light border
+    gray: '#868E96',
+    lightGray: '#F8F9FA', // Very light background
   },
 };

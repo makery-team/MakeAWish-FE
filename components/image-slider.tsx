@@ -11,18 +11,21 @@ import {
 import { Image } from 'expo-image';
 import { ChevronRight, ChevronLeft, Sparkles, MessageCircle } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { theme } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
 
 interface ImageSliderProps {
   images: string[];
+  cakeDetails?: { image: string, shopName: string }[];
   onCakeSelect?: (image: string, shopName: string) => void;
-  onInquiry?: (image: string) => void;
+  onInquiry?: (image: string, shopName?: string) => void;
   onMinimize?: () => void;
 }
 
 export const ImageSlider: React.FC<ImageSliderProps> = ({
   images,
+  cakeDetails,
   onCakeSelect,
   onInquiry,
   onMinimize
@@ -91,14 +94,14 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
               style={[styles.navButton, styles.leftButton]}
               activeOpacity={0.7}
             >
-              <ChevronLeft size={20} color="#374151" />
+              <ChevronLeft size={20} color="#374151" strokeWidth={1.5} />
             </TouchableOpacity>
             <TouchableOpacity 
               onPress={goToNext}
               style={[styles.navButton, styles.rightButton]}
               activeOpacity={0.7}
             >
-              <ChevronRight size={20} color="#374151" />
+              <ChevronRight size={20} color="#374151" strokeWidth={1.5} />
             </TouchableOpacity>
           </>
         )}
@@ -109,20 +112,21 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
             style={styles.actionButtonSecondary}
             onPress={() => {
               if (onCakeSelect) {
-                onCakeSelect(images[currentIndex], '지니 AI');
+                const shopName = cakeDetails ? cakeDetails[currentIndex].shopName : '지니 AI';
+                onCakeSelect(images[currentIndex], shopName);
                 onMinimize && onMinimize();
               }
             }}
           >
-            <Sparkles size={14} color="#374151" />
+            <Sparkles size={14} color="#374151" strokeWidth={1.5} />
             <Text style={styles.actionButtonTextSecondary}>시안 편집하기</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.actionButtonPrimary}
-            onPress={() => onInquiry && onInquiry(images[currentIndex])}
+            onPress={() => onInquiry && onInquiry(images[currentIndex], cakeDetails?.[currentIndex]?.shopName)}
           >
-            <MessageCircle size={14} color="white" />
+            <MessageCircle size={14} color="white" strokeWidth={1.5} />
             <Text style={styles.actionButtonTextPrimary}>이 시안 문의하기</Text>
           </TouchableOpacity>
         </View>
@@ -157,10 +161,14 @@ const styles = StyleSheet.create({
   },
   sliderWrapper: {
     position: 'relative',
-    borderRadius: 16,
+    borderRadius: 24,
     overflow: 'hidden',
-    backgroundColor: 'white',
+    backgroundColor: theme.colors.surface,
     height: 300,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
   },
   flatList: {
     flex: 1,
@@ -201,56 +209,63 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 12,
-    gap: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    padding: 16,
+    paddingTop: 40,
+    gap: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   actionButtonPrimary: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#FF69B4',
-    paddingVertical: 8,
-    borderRadius: 99,
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 12,
+    borderRadius: 24,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   actionButtonTextPrimary: {
     color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: -0.5,
   },
   actionButtonSecondary: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: 'white',
-    paddingVertical: 8,
-    borderRadius: 99,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingVertical: 10,
+    borderRadius: 24,
   },
   actionButtonTextSecondary: {
-    color: '#374151',
-    fontSize: 12,
-    fontWeight: 'bold',
+    color: theme.colors.text,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 12,
-    gap: 6,
+    marginTop: 16,
+    gap: 8,
   },
   dot: {
     height: 6,
-    borderRadius: 3,
+    borderRadius: 4,
   },
   activeDot: {
-    width: 20,
-    backgroundColor: '#FF69B4',
+    width: 24,
+    backgroundColor: theme.colors.primary,
   },
   inactiveDot: {
     width: 6,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: theme.colors.border,
   },
   counterText: {
     textAlign: 'center',

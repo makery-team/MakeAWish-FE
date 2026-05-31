@@ -1,14 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import { Search as SearchIcon, Filter, TrendingUp, Clock } from 'lucide-react-native';
+import { Search as SearchIcon, Filter } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
 
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
-
-  const recentSearches = ['티아라 케이크', '레터링 케이크', '성수동 케이크'];
-  const trendingCategories = ['#생일', '#기념일', '#리본', '#캐릭터', '#초코'];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -28,43 +25,6 @@ export default function SearchScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Recent Searches */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <Clock size={16} color={theme.colors.gray} />
-              <Text style={styles.sectionTitle}>최근 검색어</Text>
-            </View>
-            <TouchableOpacity>
-              <Text style={styles.clearBtn}>모두 지우기</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.tagCloud}>
-            {recentSearches.map((search, i) => (
-              <TouchableOpacity key={i} style={styles.recentTag}>
-                <Text style={styles.recentTagText}>{search}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Trending Categories */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <TrendingUp size={16} color={theme.colors.primary} />
-              <Text style={styles.sectionTitle}>지금 뜨는 키워드</Text>
-            </View>
-          </View>
-          <View style={styles.tagCloud}>
-            {trendingCategories.map((category, i) => (
-              <TouchableOpacity key={i} style={styles.trendingTag}>
-                <Text style={styles.trendingTagText}>{category}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
         {/* Categories Grid (Mock) */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>카테고리별 탐색</Text>

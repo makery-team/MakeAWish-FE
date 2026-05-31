@@ -5,9 +5,12 @@ import {
   StyleSheet, 
   TouchableOpacity, 
   FlatList, 
+  SafeAreaView,
+  Platform,
   Dimensions,
-  SafeAreaView
+  StatusBar as RNStatusBar
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { ArrowLeft, Heart, Trash2 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -29,6 +32,9 @@ export const FavoritesView: React.FC<FavoritesViewProps> = ({
   onCakeSelect,
   onRemoveFavorite
 }) => {
+  const insets = useSafeAreaInsets();
+  const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 0) : insets.top;
+
   const renderItem = ({ item, index }: { item: FavoriteCake; index: number }) => (
     <Animated.View 
       entering={FadeInDown.delay(index * 100)}
@@ -74,9 +80,9 @@ export const FavoritesView: React.FC<FavoritesViewProps> = ({
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: statusBarHeight + 12 }]}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>
@@ -108,7 +114,7 @@ export const FavoritesView: React.FC<FavoritesViewProps> = ({
           </Text>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 

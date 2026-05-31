@@ -7,8 +7,10 @@ import {
   FlatList, 
   SafeAreaView,
   ScrollView,
-  Platform
+  Platform,
+  StatusBar as RNStatusBar
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { ArrowLeft, Star, Trash2, Edit2, MoreVertical } from 'lucide-react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -25,6 +27,8 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
   onBack, 
   onDeleteReview 
 }) => {
+  const insets = useSafeAreaInsets();
+  const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 0) : insets.top;
   const [expandedReview, setExpandedReview] = useState<string | null>(null);
 
   const renderStars = (rating: number) => {
@@ -120,9 +124,9 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: statusBarHeight + 12 }]}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>
@@ -152,7 +156,7 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
           </Text>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 

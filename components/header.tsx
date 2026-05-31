@@ -7,12 +7,15 @@ import {
   ScrollView,
   Dimensions,
   Pressable,
+  Platform,
+  StatusBar as RNStatusBar,
 } from 'react-native';
 import { Bell, User, X, Map as MapIcon, List as ListIcon } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { MyPage } from './my-page';
 import { theme } from '@/constants/theme';
+import { Logo } from './logo';
 
 const { width: WINDOW_WIDTH } = Dimensions.get('window');
 
@@ -50,16 +53,17 @@ export function Header({
   onToggleView,
 }: HeaderProps) {
   const insets = useSafeAreaInsets();
+  const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 0) : insets.top;
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isMyPageOpen, setIsMyPageOpen] = useState(false);
   const unreadCount = mockNotifications.filter((n) => !n.isRead).length;
 
   return (
-    <View style={[styles.wrapper, { paddingTop: insets.top }]}>
+    <View style={[styles.wrapper, { paddingTop: statusBarHeight }]}>
       <View style={styles.header}>
         {/* Logo & Toggle Container */}
         <View style={styles.leftSection}>
-          <Text style={styles.logo}>Make a Wish</Text>
+          <Logo />
           
           {/* View Mode Toggle */}
           <TouchableOpacity 
