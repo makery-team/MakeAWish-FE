@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { MyPage } from './my-page';
 import { theme } from '@/constants/theme';
+import { Logo } from './logo';
 
 const { width: WINDOW_WIDTH } = Dimensions.get('window');
 
@@ -62,7 +63,7 @@ export function Header({
       <View style={styles.header}>
         {/* Logo & Toggle Container */}
         <View style={styles.leftSection}>
-          <Text style={styles.logo}>Make a Wish</Text>
+          <Logo />
           
           {/* View Mode Toggle */}
           <TouchableOpacity 
