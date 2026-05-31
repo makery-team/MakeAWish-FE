@@ -1,9 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
-import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
 import { Heart, Sparkles } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -27,14 +25,6 @@ import Animated, {
 import Svg, { Path } from "react-native-svg";
 
 const { width, height } = Dimensions.get("window");
-WebBrowser.maybeCompleteAuthSession();
-
-interface GoogleUserInfo {
-  id: string;
-  email: string;
-  name?: string;
-  picture?: string;
-}
 
 const GoogleGLogo = ({ size = 18 }: { size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 48 48">
@@ -58,7 +48,7 @@ const GoogleGLogo = ({ size = 18 }: { size?: number }) => (
   </Svg>
 );
 
-const IS_MOCK = true; // 개발 및 테스트를 위해 true로 설정. 실제 API 적용 시 false로 변경.
+const IS_MOCK = false; // 💡 실제 Google OAuth 흐름을 테스트하기 위해 false로 설정합니다.
 
 const Particle = ({
   delay,
@@ -106,7 +96,7 @@ const Particle = ({
       -1,
       false,
     );
-  }, [delay]); // useSharedValue는 안정적인 참조이므로 의존성 배열에서 제외
+  }, [delay]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }, { scale: scale.value }],
@@ -155,14 +145,10 @@ const CakeIllustration = () => (
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn } = useAuth();
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const [request, response] = Google.useAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-  });
+  // 💡 [수정 포인트] AuthContext에 정의된 정확한 함수명(signInWithGoogle)과 사용자 상태(user)를 가져옵니다.
+  const { signInWithGoogle, user } = useAuth();
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const logoScale = useSharedValue(1);
 
@@ -181,113 +167,44 @@ export default function LoginScreen() {
     transform: [{ scale: logoScale.value }],
   }));
 
+  // 💡 [추가 포인트] 로그인이 완료되어 전역 context의 user 상태가 업데이트되면 목적지로 리다이렉트합니다.
   useEffect(() => {
-    if (!response) {
-      return;
+    if (user) {
+      if (user.nickname && user.phoneNumber) {
+        router.replace("/(tabs)");
+      } else {
+        router.replace("/(auth)/signup");
+      }
     }
+  }, [user, router]);
 
-    if (response.type === "error") {
-      Alert.alert(
-        "로그인 실패",
-        "Google 로그인 중 오류가 발생했습니다. 다시 시도해 주세요.",
-      );
-      return;
-    }
+  const handleGoogleLogin = async () => {
+    try {
+      setIsGoogleLoading(true);
 
-    if (response.type !== "success") {
-      return;
-    }
-
-    const finishGoogleLogin = async () => {
-      const accessToken = response.authentication?.accessToken;
-
-      if (!accessToken) {
-        Alert.alert("로그인 실패", "Google 인증 토큰을 가져오지 못했습니다.");
+      if (IS_MOCK) {
+        // 모의 로그인 흐름 (테스트용)
+        setTimeout(() => {
+          Alert.alert(
+            "알림",
+            "모의 로그인은 작동하지 않도록 세팅을 교체했습니다.",
+          );
+          setIsGoogleLoading(false);
+        }, 1000);
         return;
       }
 
-      try {
-        setIsGoogleLoading(true);
-        const userResponse = await fetch(
-          "https://www.googleapis.com/userinfo/v2/me",
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          },
-        );
-
-        if (!userResponse.ok) {
-          throw new Error("Failed to fetch Google profile");
-        }
-
-        const profile: GoogleUserInfo = await userResponse.json();
-        const userData = {
-          id: profile.id || profile.email,
-          email: profile.email,
-          nickname: profile.name ?? "",
-          phoneNumber: "",
-          language: "",
-          profileImage: profile.picture,
-        };
-        
-        signIn(userData);
-        
-        // 기존 사용자(닉네임과 전화번호가 있는 경우)는 바로 메인으로, 신규 사용자는 정보 입력창으로 이동
-        if (userData.nickname && userData.phoneNumber) {
-          router.replace("/(tabs)");
-        } else {
-          router.replace("/(auth)/signup");
-        }
-      } catch {
-        Alert.alert(
-          "로그인 실패",
-          "Google 계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
-        );
-      } finally {
-        setIsGoogleLoading(false);
-      }
-    };
-
-    finishGoogleLogin();
-  }, [response, router, signIn]);
-
-  const handleGoogleLogin = async () => {
-    if (IS_MOCK) {
-      setIsGoogleLoading(true);
-      // 모의 로그인 흐름
-      setTimeout(() => {
-        const mockUser = {
-          id: "mock-user-123",
-          email: "test@example.com",
-          nickname: "지니테스터",
-          phoneNumber: "010-1234-5678",
-          language: "ko",
-          profileImage: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-        };
-        signIn(mockUser);
-        setIsGoogleLoading(false);
-        
-        // 모의 데이터에서도 기존 사용자 체크 로직 시뮬레이션
-        if (mockUser.nickname && mockUser.phoneNumber) {
-          router.replace("/(tabs)");
-        } else {
-          router.replace("/(auth)/signup");
-        }
-      }, 1000);
-      return;
-    }
-
-    // 실제 Google OAuth 흐름 호출
-    if (request) {
-      try {
-        await request.promptAsync();
-      } catch (error) {
-        Alert.alert("로그인 오류", "Google 로그인을 시작할 수 없습니다.");
-        console.error(error);
-      }
+      // 💡 [핵심 교체] 꼬여있던 내부 훅 대신, AuthContext가 제공하는 우회 브라우저 로그인 함수를 직접 호출합니다.
+      await signInWithGoogle();
+    } catch (error) {
+      Alert.alert("로그인 오류", "Google 로그인을 완료할 수 없습니다.");
+      console.error(error);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
-  const isGoogleDisabled = isGoogleLoading || (!IS_MOCK && !request);
+  const isGoogleDisabled = isGoogleLoading;
 
   return (
     <View style={styles.container}>
@@ -373,7 +290,7 @@ const styles = StyleSheet.create({
     height: width * 0.7,
     borderRadius: width,
     backgroundColor: "#FCE7E0",
-    opacity: 0.9,
+    opacity: 0.95,
   },
   bgGlowBottomLeft: {
     position: "absolute",
