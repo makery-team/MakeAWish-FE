@@ -23,6 +23,7 @@ const BACKEND_API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://make-a-wish-e
 export const aiService = {
   /**
    * 사용자 메시지 전송 및 통합 응답 수신
+   * (백엔드가 오케스트레이션하므로 텍스트만 보냄)
    */
   async chat(message: string): Promise<AiAgentResponse> {
     try {
@@ -58,7 +59,9 @@ export const aiService = {
       });
 
       if (!response.ok) {
-        throw new Error(`Chat API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error(`🚨 [백엔드 에러 상세]: ${errorText}`);
+        throw new Error(`Chat API error: ${response.status} - ${errorText}`);
       }
 
       return await response.json();
