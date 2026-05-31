@@ -9,7 +9,9 @@ import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "react-native-reanimated";
+import * as SplashScreen from "expo-splash-screen";
 
+SplashScreen.preventAutoHideAsync();
 import { InquiryProvider } from "@/context/InquiryContext";
 import { ShopProvider } from "@/context/ShopContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
@@ -44,6 +46,11 @@ function RootLayoutNav() {
     }
   }, [user, isLoading, segments, router]);
 
+  useEffect(() => {
+    if (!isLoading) {
+      SplashScreen.hideAsync();
+    }
+  }, [isLoading]);
   if (isLoading) {
     return null; // Or a splash screen component
   }
