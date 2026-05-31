@@ -1,6 +1,7 @@
 import { AIActionType } from '@/types/ai';
 
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface AiAgentRequest {
   message: string;
@@ -42,13 +43,17 @@ export const aiService = {
       }
       // ----------------------------------------------
 
-      // TODO: 인증 토큰 처리가 필요할 수 있습니다 (현재는 임시 생략)
+      const token = await AsyncStorage.getItem("auth_token");
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${BACKEND_API_URL}/api/ai-agent/chat`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${token}` 
-        },
+        headers,
         body: JSON.stringify({ message }),
       });
 
@@ -68,12 +73,17 @@ export const aiService = {
    */
   async inpaint(portfolioId: number, prompt: string, maskImage: string): Promise<any> {
     try {
+      const token = await AsyncStorage.getItem("auth_token");
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${BACKEND_API_URL}/api/portfolios/${portfolioId}/inpaintings`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${token}` 
-        },
+        headers,
         body: JSON.stringify({ prompt, maskImage }),
       });
 

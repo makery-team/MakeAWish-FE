@@ -1,7 +1,6 @@
 import { authService } from "@/services/auth";
 import { User } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 import Constants from "expo-constants";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
@@ -18,6 +17,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // 현재 실행 환경이 Expo Go인지 확인하는 변수 (안전장치)
 const isExpoGo = Constants.appOwnership === "expo" || Constants.executionEnvironment === "storeClient";
+
+let GoogleSignin: any;
+let statusCodes: any;
+if (!isExpoGo) {
+  const gs = require("@react-native-google-signin/google-signin");
+  GoogleSignin = gs.GoogleSignin;
+  statusCodes = gs.statusCodes;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -101,7 +108,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      await GoogleSignin.signOut();
+      if (!isExpoGo) {
+        await GoogleSignin.signOut();
+      }
       await authService.logout();
       await AsyncStorage.removeItem("auth_token");
       setToken(null);
