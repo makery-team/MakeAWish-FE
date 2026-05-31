@@ -145,4 +145,39 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.text,
   },
+  listContainer: {
+    flex: 1,
+  },
+  toggleWrapper: {
+    position: 'absolute',
+    alignSelf: 'center',
+    zIndex: 100,
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    padding: 4,
+    borderRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  toggleBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 26,
+  },
+  activeToggleBtn: {
+    backgroundColor: theme.colors.primary,
+  },
+  toggleText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#666',
+  },
+  activeToggleText: {
+    color: 'white',
+  },
 });

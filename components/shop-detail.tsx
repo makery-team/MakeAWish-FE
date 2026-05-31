@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,61 +6,70 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
-  Dimensions,
   Share,
-  Platform,
-  StatusBar as RNStatusBar
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { ArrowLeft, Heart, Star, MapPin, Clock, Phone, Share2 } from 'lucide-react-native';
+import { ArrowLeft, Star, MapPin, Clock, Phone, Share2, MessageCircle, Heart } from 'lucide-react-native';
 import { SAMPLE_CAKE_IMAGES } from '@/constants/mock-data';
+import { CAKE_SHOPS } from '@/constants/map-shops';
 import { theme } from '@/constants/theme';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CHIPS = ['검색한 메뉴', '인기 메뉴', '레터링 케이크', '도시락 케이크', '당일 픽업 가능', '3단 케이크'];
 
-const shopData = {
+// 칩별로 다른 이미지 시안 (실제 서비스에서는 API 응답으로 교체)
+const CHIP_GALLERIES: Record<string, string[]> = {
+  '검색한 메뉴':    [SAMPLE_CAKE_IMAGES[0], SAMPLE_CAKE_IMAGES[1], SAMPLE_CAKE_IMAGES[2], SAMPLE_CAKE_IMAGES[3], SAMPLE_CAKE_IMAGES[4], SAMPLE_CAKE_IMAGES[5]],
+  '인기 메뉴':      [SAMPLE_CAKE_IMAGES[2], SAMPLE_CAKE_IMAGES[4], SAMPLE_CAKE_IMAGES[0], SAMPLE_CAKE_IMAGES[5], SAMPLE_CAKE_IMAGES[3], SAMPLE_CAKE_IMAGES[1]],
+  '레터링 케이크':  [SAMPLE_CAKE_IMAGES[1], SAMPLE_CAKE_IMAGES[3], SAMPLE_CAKE_IMAGES[5], SAMPLE_CAKE_IMAGES[0]],
+  '도시락 케이크':  [SAMPLE_CAKE_IMAGES[4], SAMPLE_CAKE_IMAGES[2], SAMPLE_CAKE_IMAGES[1], SAMPLE_CAKE_IMAGES[3]],
+  '당일 픽업 가능': [SAMPLE_CAKE_IMAGES[5], SAMPLE_CAKE_IMAGES[0], SAMPLE_CAKE_IMAGES[2]],
+  '3단 케이크':     [SAMPLE_CAKE_IMAGES[3], SAMPLE_CAKE_IMAGES[5], SAMPLE_CAKE_IMAGES[1], SAMPLE_CAKE_IMAGES[4]],
+};
+
+// 상세 정보 오버라이드 (일부 샵만 별도 정보 설정)
+const SHOP_DETAIL_OVERRIDES: Record<number, {
+  phone: string;
+  hours: string;
+  description: string;
+  likes: number;
+  gallery: string[];
+}> = {
   1: {
-    id: 1,
-    name: 'Creamy Seoul',
-    rating: 4.9,
-    likes: 342,
-    reviews: 156,
-    specialty: 'Y2K 감성 케이크',
-    address: '서울 강남구 역삼로 123',
     phone: '02-1234-5678',
     hours: '매일 10:00 - 20:00 (월요일 휴무)',
     description: '심플한 Y2K 감성부터 화려한 캐릭터 케이크까지! 원하는 디자인을 말씀해주세요. AI 이미지 편집기로 나만의 케이크를 미리 만들어보고 주문할 수 있습니다.',
-    gallery: [
-      SAMPLE_CAKE_IMAGES[0],
-      SAMPLE_CAKE_IMAGES[1],
-      SAMPLE_CAKE_IMAGES[2],
-      SAMPLE_CAKE_IMAGES[3],
-      SAMPLE_CAKE_IMAGES[4],
-      SAMPLE_CAKE_IMAGES[5],
-    ],
+    likes: 342,
+    gallery: SAMPLE_CAKE_IMAGES,
   },
   2: {
-    id: 2,
-    name: 'BlueDream Cakes',
-    rating: 5.0,
-    likes: 521,
-    reviews: 234,
-    specialty: '레터링 케이크',
-    address: '서울 성동구 성수이로 456',
     phone: '02-2345-6789',
     hours: '월-토 09:00 - 21:00',
     description: '특별한 날을 더 특별하게! 정성 가득한 레터링 케이크 전문점입니다. 천연 색소와 동물성 생크림만을 사용하여 맛과 건강을 모두 생각합니다.',
-    gallery: [
-      SAMPLE_CAKE_IMAGES[1],
-      SAMPLE_CAKE_IMAGES[2],
-      SAMPLE_CAKE_IMAGES[3],
-      SAMPLE_CAKE_IMAGES[4],
-      SAMPLE_CAKE_IMAGES[0],
-      SAMPLE_CAKE_IMAGES[5],
-    ],
+    likes: 521,
+    gallery: [...SAMPLE_CAKE_IMAGES].reverse(),
   },
 };
+
+// CAKE_SHOPS 데이터를 상세 페이지 포맷으로 변환
+function buildShopDetail(shopId: number) {
+  const base = CAKE_SHOPS.find((s) => s.id === shopId) ?? CAKE_SHOPS[0];
+  const override = SHOP_DETAIL_OVERRIDES[shopId];
+  return {
+    id: base.id,
+    name: base.name,
+    rating: base.rating,
+    reviews: base.reviewCount,
+    likes: override?.likes ?? Math.floor(base.reviewCount * 1.8),
+    specialty: base.categories[0] ?? '커스텀 케이크',
+    address: `서울 ${base.address}`,
+    phone: override?.phone ?? '문의 후 안내',
+    hours: override?.hours ?? '매일 10:00 - 19:00',
+    description:
+      override?.description ??
+      `${base.name}은 ${base.categories.join(', ')} 전문 케이크샵입니다. 정성스러운 수제 케이크로 소중한 날을 더욱 특별하게 만들어드립니다.`,
+    gallery: override?.gallery ?? SAMPLE_CAKE_IMAGES,
+  };
+}
 
 interface ShopDetailProps {
   shopId: number;
@@ -70,9 +79,8 @@ interface ShopDetailProps {
 }
 
 export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: ShopDetailProps) {
-  const insets = useSafeAreaInsets();
-  const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 0) : insets.top;
-  const shop = (shopData as any)[shopId] || shopData[1];
+  const [activeChip, setActiveChip] = useState('검색한 메뉴');
+  const shop = buildShopDetail(shopId);
 
   const handleShare = async () => {
     try {
@@ -85,62 +93,59 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
   };
 
   const renderGallery = () => {
+    const images = CHIP_GALLERIES[activeChip] ?? shop.gallery;
     const leftCol: string[] = [];
     const rightCol: string[] = [];
-
-    shop.gallery.forEach((img: string, i: number) => {
+    images.forEach((img, i) => {
       if (i % 2 === 0) leftCol.push(img);
       else rightCol.push(img);
     });
 
+    const renderItem = (img: string, idx: number, side: 'left' | 'right') => (
+      <View key={`${side}-${idx}`} style={styles.galleryItemWrapper}>
+        <Image
+          source={{ uri: img }}
+          style={[
+            styles.galleryImage,
+            { aspectRatio: side === 'left' ? (idx % 2 === 0 ? 0.85 : 1.15) : (idx % 2 === 0 ? 1.15 : 0.85) },
+          ]}
+        />
+        {/* 오버레이: 이미지 하단 그라데이션 + 버튼 2개 */}
+        <View style={styles.imageOverlay}>
+          <TouchableOpacity
+            style={styles.imageActionOutline}
+            onPress={() => onCakeSelect?.(img, shop.name)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.imageActionOutlineText}>이 시안 수정해보기</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.imageActionFill}
+            onPress={() => onCakeInquiry?.(img, shop.name)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.imageActionFillText}>이 시안 그대로 주문하기</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+
     return (
       <View style={styles.galleryGrid}>
         <View style={styles.galleryColumn}>
-          {leftCol.map((img, i) => (
-            <TouchableOpacity
-              key={`left-${i}`}
-              onPress={() => onCakeSelect?.(img, shop.name)}
-              activeOpacity={0.9}
-            >
-              <Image source={{ uri: img }} style={[styles.galleryImage, { aspectRatio: i % 2 === 0 ? 0.8 : 1.2 }]} />
-              <View style={styles.imageOverlay}>
-                <TouchableOpacity
-                  style={styles.imageAction}
-                  onPress={() => onCakeInquiry?.(img, shop.name)}
-                >
-                  <Text style={styles.imageActionText}>상담하기</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          ))}
+          {leftCol.map((img, i) => renderItem(img, i, 'left'))}
         </View>
         <View style={styles.galleryColumn}>
-          {rightCol.map((img, i) => (
-            <TouchableOpacity
-              key={`right-${i}`}
-              onPress={() => onCakeSelect?.(img, shop.name)}
-              activeOpacity={0.9}
-            >
-              <Image source={{ uri: img }} style={[styles.galleryImage, { aspectRatio: i % 2 === 0 ? 1.2 : 0.8 }]} />
-              <View style={styles.imageOverlay}>
-                <TouchableOpacity
-                  style={styles.imageAction}
-                  onPress={() => onCakeInquiry?.(img, shop.name)}
-                >
-                  <Text style={styles.imageActionText}>상담하기</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          ))}
+          {rightCol.map((img, i) => renderItem(img, i, 'right'))}
         </View>
       </View>
     );
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Sticky Header */}
-      <View style={[styles.header, { paddingTop: statusBarHeight + 12 }]}>
+      <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.headerButton}>
           <ArrowLeft size={24} color="#333" />
         </TouchableOpacity>
@@ -150,7 +155,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} stickyHeaderIndices={[1]}>
         {/* Shop Profile */}
         <View style={styles.shopInfo}>
           <View style={styles.shopHeader}>
@@ -191,41 +196,44 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
             </View>
           </View>
 
-          <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.secondaryButton]}
-              onPress={() => onCakeInquiry?.(shop.gallery[0], shop.name)}
-            >
-              <Text style={[styles.actionButtonText, styles.secondaryButtonText]}>문의하기</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.primaryButton]}
-              onPress={() => onCakeInquiry?.(shop.gallery[0], shop.name)}
-            >
-              <Text style={[styles.actionButtonText, styles.primaryButtonText]}>예약하기</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.chatButton}
+            onPress={() => onCakeInquiry?.(shop.gallery[0], shop.name)}
+          >
+            <MessageCircle size={18} color="white" />
+            <Text style={styles.chatButtonText}>1:1로 사장님께 채팅 문의하기</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Chip Bar - sticky */}
+        <View style={styles.chipBarWrapper}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipBar}
+          >
+            {CHIPS.map((chip) => (
+              <TouchableOpacity
+                key={chip}
+                style={[styles.chip, activeChip === chip && styles.chipActive]}
+                onPress={() => setActiveChip(chip)}
+              >
+                <Text style={[styles.chipText, activeChip === chip && styles.chipTextActive]}>
+                  {chip}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
         {/* Gallery */}
         <View style={styles.gallerySection}>
-          <Text style={styles.sectionTitle}>추천 케이크 디자인</Text>
+          <Text style={styles.sectionTitle}>{activeChip}</Text>
           {renderGallery()}
         </View>
-
-        {/* Tags */}
-        <View style={styles.tagsSection}>
-          <Text style={styles.tagsTitle}>추천 키워드</Text>
-          <View style={styles.tagsContainer}>
-            {['AI 주문', '레터링 무료', '당일 픽업', '캐릭터 전문', '비건 가능'].map((tag, i) => (
-              <View key={i} style={styles.tag}>
-                <Text style={styles.tagText}>{tag}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
       </ScrollView>
-    </View>
+
+    </SafeAreaView>
   );
 }
 
@@ -374,27 +382,48 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 12,
   },
+  galleryItemWrapper: {
+    position: 'relative',
+  },
   galleryImage: {
     width: '100%',
-    borderRadius: 20,
+    borderRadius: 16,
     backgroundColor: '#F0F0F0',
   },
   imageOverlay: {
     position: 'absolute',
-    bottom: 8,
-    left: 8,
-    right: 8,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.38)',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    gap: 5,
   },
-  imageAction: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    paddingVertical: 6,
-    borderRadius: 12,
+  imageActionOutline: {
+    borderWidth: 1.5,
+    borderColor: 'white',
+    borderRadius: 10,
+    paddingVertical: 5,
     alignItems: 'center',
   },
-  imageActionText: {
-    fontSize: 11,
+  imageActionOutlineText: {
+    fontSize: 10,
     fontWeight: '700',
-    color: theme.colors.primary,
+    color: 'white',
+  },
+  imageActionFill: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: 10,
+    paddingVertical: 5,
+    alignItems: 'center',
+  },
+  imageActionFillText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: 'white',
   },
   tagsSection: {
     padding: 20,
@@ -422,4 +451,50 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
+  chatButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: theme.colors.primary,
+    height: 52,
+    borderRadius: 16,
+    marginTop: 24,
+  },
+  chatButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: 'white',
+  },
+  chipBarWrapper: {
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  chipBar: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+    flexDirection: 'row',
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+  },
+  chipActive: {
+    backgroundColor: '#111',
+    borderColor: '#111',
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#444',
+  },
+  chipTextActive: {
+    color: 'white',
+  },
+
 });
