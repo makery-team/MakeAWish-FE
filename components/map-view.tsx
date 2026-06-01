@@ -1,258 +1,305 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-  ScrollView,
-} from 'react-native';
-import { Heart, Star, Navigation, MapPin } from 'lucide-react-native';
-import { Image } from 'expo-image';
-import Svg, { Line, Rect, G } from 'react-native-svg';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
-import { SAMPLE_CAKE_IMAGES } from '@/constants/mock-data';
+import { CAKE_SHOPS, CakeShop } from '@/constants/map-shops';
+import { SEOUL_DISTRICTS, SeoulGu } from '@/constants/seoul-districts';
 import { theme } from '@/constants/theme';
+import {
+  NaverMapMarkerOverlay,
+  NaverMapView,
+} from '@mj-studio/react-native-naver-map';
+import { Image } from 'expo-image';
+import * as Location from 'expo-location';
+import {
+  ChevronDown,
+  ChevronRight,
+  List,
+  LocateFixed,
+  MapPin,
+  Search,
+  Star,
+  X,
+} from 'lucide-react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const MAP_HEIGHT = SCREEN_HEIGHT - 200;
-
-const cakeShops = [
-  {
-    id: 1,
-    name: 'Creamy Seoul',
-    top: 0.45,
-    left: 0.48,
-    rating: 4.9,
-    likes: 342,
-    specialty: 'Y2K 감성 케이크',
-    image: SAMPLE_CAKE_IMAGES[0],
-    address: '강남구 역삼동',
-  },
-  {
-    id: 2,
-    name: 'BlueDream Cakes',
-    top: 0.35,
-    left: 0.52,
-    rating: 5.0,
-    likes: 521,
-    specialty: '레터링 케이크',
-    image: SAMPLE_CAKE_IMAGES[1],
-    address: '성동구 성수동',
-  },
-  {
-    id: 3,
-    name: 'Rainbow Bakery',
-    top: 0.55,
-    left: 0.55,
-    rating: 4.8,
-    likes: 287,
-    specialty: '캐릭터 케이크',
-    image: SAMPLE_CAKE_IMAGES[2],
-    address: '마포구 연남동',
-  },
-  {
-    id: 4,
-    name: 'FlowerCake Garden',
-    top: 0.70,
-    left: 0.65,
-    rating: 4.8,
-    likes: 389,
-    specialty: '플라워 케이크',
-    image: SAMPLE_CAKE_IMAGES[3],
-    address: '서초구 반포동',
-  },
-];
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface MapViewProps {
   onShopSelect: (shopId: number) => void;
 }
 
 export function MapView({ onShopSelect }: MapViewProps) {
-  const [selectedShop, setSelectedShop] = useState<number | null>(null);
+  const mapRef = useRef<any>(null);
+  const insets = useSafeAreaInsets();
+
+  // Location state
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+
+  // Region selection state
+  const [selectedGu, setSelectedGu] = useState<SeoulGu | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedGu, setExpandedGu] = useState<string | null>(null);
+
+  // Shop selection state
+  const [selectedShop, setSelectedShop] = useState<CakeShop | null>(null);
+
+  // Filtered shops by selected gu
+  const visibleShops = useMemo(() => {
+    if (!selectedGu) return CAKE_SHOPS;
+    return CAKE_SHOPS.filter((s) => s.gu === selectedGu.name);
+  }, [selectedGu]);
+
+  // Filtered districts for search
+  const filteredDistricts = useMemo(() => {
+    if (!searchQuery.trim()) return SEOUL_DISTRICTS;
+    const q = searchQuery.trim().toLowerCase();
+    return SEOUL_DISTRICTS.filter(
+      (gu) =>
+        gu.name.toLowerCase().includes(q) ||
+        gu.dongs.some((dong) => dong.name.toLowerCase().includes(q))
+    );
+  }, [searchQuery]);
+
+  const requestLocation = async () => {
+    setIsLocating(true);
+    setLocationError(null);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationError('위치 권한이 필요합니다');
+        return;
+      }
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const coords = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+      setUserLocation(coords);
+      mapRef.current?.animateCameraTo({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        zoom: 14,
+      });
+    } catch {
+      setLocationError('현재 위치를 가져올 수 없습니다');
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
+  useEffect(() => {
+    requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleGuSelect = useCallback((gu: SeoulGu) => {
+    setSelectedGu(gu);
+    setIsSheetOpen(false);
+    setSearchQuery('');
+    setExpandedGu(null);
+    setSelectedShop(null);
+    mapRef.current?.animateCameraTo({
+      latitude: gu.latitude,
+      longitude: gu.longitude,
+      zoom: 14,
+    });
+  }, []);
+
+  const handleDongSelect = useCallback(
+    (dong: { name: string; latitude: number; longitude: number }, gu: SeoulGu) => {
+      setSelectedGu(gu);
+      setIsSheetOpen(false);
+      setSearchQuery('');
+      setExpandedGu(null);
+      setSelectedShop(null);
+      mapRef.current?.animateCameraTo({
+        latitude: dong.latitude,
+        longitude: dong.longitude,
+        zoom: 16,
+      });
+    },
+    []
+  );
+
+  const handleMarkerTap = useCallback((shop: CakeShop) => {
+    setSelectedShop((prev) => (prev?.id === shop.id ? null : shop));
+  }, []);
+
+  const regionLabel = selectedGu ? `서울 ${selectedGu.name}` : '서울특별시';
 
   return (
     <View style={styles.container}>
-      {/* Map Container */}
-      <View style={styles.mapContainer}>
-        {/* Background Grid & Roads */}
-        <Svg style={StyleSheet.absoluteFill}>
-          <Rect x="0" y="0" width="100%" height="100%" fill="#F0F9FF" />
-          
-          {/* Roads */}
-          <G stroke="#CBD5E1" strokeWidth="4">
-            <Line x1="0" y1="40%" x2="100%" y2="40%" />
-            <Line x1="0" y1="60%" x2="100%" y2="60%" />
-            <Line x1="50%" y1="0" x2="50%" y2="100%" />
-            <Line x1="30%" y1="0" x2="30%" y2="100%" />
-            <Line x1="70%" y1="0" x2="70%" y2="100%" />
-          </G>
-        </Svg>
-
-        {/* Current Location */}
-        <View style={[styles.currentLocation, { top: '50%', left: '50%' }]}>
-          <View style={styles.locationPulse} />
-          <View style={styles.locationDot} />
-        </View>
-
-        {/* Markers */}
-        {cakeShops.map((shop) => (
-          <Marker
+      {/* Naver Map */}
+      <NaverMapView
+        ref={mapRef}
+        style={styles.map}
+        initialCamera={{
+          latitude: userLocation?.latitude ?? 37.5665,
+          longitude: userLocation?.longitude ?? 126.9780,
+          zoom: 12,
+        }}
+        isShowLocationButton={false}
+      >
+        {visibleShops.map((shop) => (
+          <NaverMapMarkerOverlay
             key={shop.id}
-            shop={shop}
-            isSelected={selectedShop === shop.id}
-            onPress={() => setSelectedShop(selectedShop === shop.id ? null : shop.id)}
-            onSelect={onShopSelect}
+            latitude={shop.latitude}
+            longitude={shop.longitude}
+            tintColor={theme.colors.primary}
+            onTap={() => handleMarkerTap(shop)}
           />
         ))}
-      </View>
 
-      {/* Floating Info */}
-      <View style={styles.floatingHeader}>
-        <Navigation size={16} color="#3B82F6" />
-        <Text style={styles.floatingHeaderText}>현재 위치: 강남역 인근</Text>
-      </View>
+        {userLocation && (
+          <NaverMapMarkerOverlay
+            latitude={userLocation.latitude}
+            longitude={userLocation.longitude}
+            width={20}
+            height={20}
+            anchor={{ x: 0.5, y: 0.5 }}
+          />
+        )}
+      </NaverMapView>
 
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={styles.legendPin}>
-            <MapPin size={12} color="white" />
-          </View>
-          <Text style={styles.legendText}>케이크 샵 ({cakeShops.length})</Text>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-function Marker({ shop, isSelected, onPress, onSelect }: any) {
-  const bounce = useSharedValue(0);
-
-  useEffect(() => {
-    bounce.value = withRepeat(
-      withSequence(
-        withTiming(-5, { duration: 1000 }),
-        withTiming(0, { duration: 1000 })
-      ),
-      -1,
-      true
-    );
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: bounce.value }],
-  }));
-
-  const popupStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(isSelected ? 1 : 0),
-    transform: [{ scale: withSpring(isSelected ? 1 : 0.8) }],
-  }));
-
-  return (
-    <View
-      style={[
-        styles.markerContainer,
-        { top: `${shop.top * 100}%`, left: `${shop.left * 100}%` },
-      ]}
-    >
-      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
-        <Animated.View style={[styles.pin, animatedStyle]}>
-          <MapPin size={24} color="white" fill={theme.colors.primary} />
-        </Animated.View>
+      {/* Region Search Bar (top overlay) */}
+      <TouchableOpacity
+        style={[styles.regionBar, { top: insets.top + 70 }]}
+        onPress={() => setIsSheetOpen(true)}
+        activeOpacity={0.85}
+      >
+        <MapPin size={16} color={theme.colors.primary} />
+        <Text style={styles.regionBarText}>{regionLabel}</Text>
+        <ChevronDown size={16} color="#888" />
       </TouchableOpacity>
 
-      {isSelected && (
-        <Animated.View style={[styles.popup, popupStyle]}>
-          <Image source={{ uri: shop.image }} style={styles.popupImage} />
-          <View style={styles.popupContent}>
-            <Text style={styles.shopName}>@{shop.name}</Text>
-            <Text style={styles.shopAddress}>{shop.address}</Text>
-            <Text style={styles.shopSpecialty}>{shop.specialty}</Text>
-            
-            <View style={styles.statsRow}>
-              <View style={styles.stat}>
-                <Heart size={14} color={theme.colors.primary} fill={theme.colors.primary} />
-                <Text style={styles.statText}>{shop.likes}</Text>
-              </View>
-              <View style={styles.stat}>
-                <Star size={14} color="#FACC15" fill="#FACC15" />
-                <Text style={styles.statText}>{shop.rating}</Text>
-              </View>
-            </View>
+      {/* Location Button */}
+      <TouchableOpacity
+        style={[styles.locationButton, { top: insets.top + 70 }]}
+        onPress={requestLocation}
+        disabled={isLocating}
+      >
+        {isLocating ? (
+          <ActivityIndicator size="small" color={theme.colors.primary} />
+        ) : (
+          <LocateFixed size={20} color={theme.colors.primary} />
+        )}
+      </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => onSelect(shop.id)}
-              style={styles.detailButton}
-            >
-              <Text style={styles.detailButtonText}>상점 상세 보기</Text>
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
+
+      {/* Location Error Banner */}
+      {locationError && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>{locationError}</Text>
+        </View>
       )}
+
+      {/* Shop Bottom Card */}
+      {selectedShop && (
+        <ShopBottomCard
+          shop={selectedShop}
+          onClose={() => setSelectedShop(null)}
+          onDetail={() => onShopSelect(selectedShop.id)}
+        />
+      )}
+
+      {/* Region Bottom Sheet */}
+      <RegionBottomSheet
+        visible={isSheetOpen}
+        searchQuery={searchQuery}
+        filteredDistricts={filteredDistricts}
+        expandedGu={expandedGu}
+        onSearchChange={setSearchQuery}
+        onGuExpand={(name) =>
+          setExpandedGu((prev) => (prev === name ? null : name))
+        }
+        onGuSelect={handleGuSelect}
+        onDongSelect={handleDongSelect}
+        onClose={() => {
+          setIsSheetOpen(false);
+          setSearchQuery('');
+          setExpandedGu(null);
+        }}
+      />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+// ─── ShopBottomCard ───────────────────────────────────────────────────────────
+
+interface ShopBottomCardProps {
+  shop: CakeShop;
+  onClose: () => void;
+  onDetail: () => void;
+}
+
+function ShopBottomCard({ shop, onClose, onDetail }: ShopBottomCardProps) {
+  return (
+    <View style={cardStyles.container}>
+      <Image source={{ uri: shop.thumbnail }} style={cardStyles.image} />
+      <View style={cardStyles.content}>
+        <TouchableOpacity style={cardStyles.closeBtn} onPress={onClose}>
+          <X size={16} color="#888" />
+        </TouchableOpacity>
+
+        <Text style={cardStyles.shopName}>@{shop.name}</Text>
+        <Text style={cardStyles.shopAddress}>{shop.address}</Text>
+
+        <View style={cardStyles.statsRow}>
+          <View style={cardStyles.stat}>
+            <Star size={13} color="#FACC15" fill="#FACC15" />
+            <Text style={cardStyles.statText}>{shop.rating}</Text>
+            <Text style={cardStyles.statSub}>({shop.reviewCount})</Text>
+          </View>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={cardStyles.categoriesRow}
+        >
+          {shop.categories.map((cat) => (
+            <View key={cat} style={cardStyles.categoryTag}>
+              <Text style={cardStyles.categoryText}>{cat}</Text>
+            </View>
+          ))}
+        </ScrollView>
+
+        <TouchableOpacity onPress={onDetail} style={cardStyles.detailButton}>
+          <Text style={cardStyles.detailButtonText}>상점 상세 보기</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const cardStyles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 16,
-  },
-  mapContainer: {
-    flex: 1,
-    borderRadius: 24,
-    overflow: 'hidden',
-    backgroundColor: '#F0F9FF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-    position: 'relative',
-  },
-  currentLocation: {
     position: 'absolute',
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 5,
-  },
-  locationDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#3B82F6',
-    borderWidth: 2,
-    borderColor: 'white',
-  },
-  locationPulse: {
-    position: 'absolute',
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(59, 130, 246, 0.3)',
-  },
-  markerContainer: {
-    position: 'absolute',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  pin: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  popup: {
-    position: 'absolute',
-    bottom: 40,
-    width: 220,
+    bottom: 32,
+    left: 16,
+    right: 16,
     backgroundColor: 'white',
     borderRadius: 20,
     shadowColor: '#000',
@@ -261,49 +308,72 @@ const styles = StyleSheet.create({
     shadowRadius: 15,
     elevation: 10,
     overflow: 'hidden',
-    zIndex: 20,
+    flexDirection: 'row',
   },
-  popupImage: {
-    width: '100%',
-    height: 100,
+  image: {
+    width: 110,
+    height: 110,
+    backgroundColor: '#F0F0F0',
   },
-  popupContent: {
+  content: {
+    flex: 1,
     padding: 12,
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 4,
   },
   shopName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#333',
+    color: '#222',
+    marginBottom: 2,
+    marginRight: 24,
   },
   shopAddress: {
     fontSize: 11,
-    color: '#888',
-    marginTop: 2,
-  },
-  shopSpecialty: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
+    color: '#999',
+    marginBottom: 4,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-    marginBottom: 12,
+    gap: 8,
+    marginBottom: 6,
   },
   stat: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
   },
   statText: {
     fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
+    fontWeight: '600',
+    color: '#333',
+  },
+  statSub: {
+    fontSize: 11,
+    color: '#aaa',
+  },
+  categoriesRow: {
+    marginBottom: 8,
+  },
+  categoryTag: {
+    backgroundColor: '#FFF0F5',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginRight: 6,
+  },
+  categoryText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: theme.colors.primary,
   },
   detailButton: {
     backgroundColor: '#FFF0F5',
-    paddingVertical: 8,
+    paddingVertical: 7,
     borderRadius: 10,
     alignItems: 'center',
   },
@@ -312,60 +382,289 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.primary,
   },
-  floatingHeader: {
-    position: 'absolute',
-    top: 32,
-    left: 32,
+});
+
+// ─── RegionBottomSheet ────────────────────────────────────────────────────────
+
+interface RegionBottomSheetProps {
+  visible: boolean;
+  searchQuery: string;
+  filteredDistricts: SeoulGu[];
+  expandedGu: string | null;
+  onSearchChange: (q: string) => void;
+  onGuExpand: (name: string) => void;
+  onGuSelect: (gu: SeoulGu) => void;
+  onDongSelect: (
+    dong: { name: string; latitude: number; longitude: number },
+    gu: SeoulGu
+  ) => void;
+  onClose: () => void;
+}
+
+function RegionBottomSheet({
+  visible,
+  searchQuery,
+  filteredDistricts,
+  expandedGu,
+  onSearchChange,
+  onGuExpand,
+  onGuSelect,
+  onDongSelect,
+  onClose,
+}: RegionBottomSheetProps) {
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity
+        style={sheetStyles.backdrop}
+        activeOpacity={1}
+        onPress={onClose}
+      />
+      <View style={sheetStyles.sheet}>
+        {/* Handle */}
+        <View style={sheetStyles.handle} />
+
+        {/* Header */}
+        <View style={sheetStyles.header}>
+          <Text style={sheetStyles.title}>지역 선택</Text>
+          <TouchableOpacity onPress={onClose} style={sheetStyles.closeBtn}>
+            <X size={20} color="#555" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Search input */}
+        <View style={sheetStyles.searchRow}>
+          <Search size={16} color="#aaa" />
+          <TextInput
+            style={sheetStyles.searchInput}
+            placeholder="구 또는 동 검색"
+            placeholderTextColor="#bbb"
+            value={searchQuery}
+            onChangeText={onSearchChange}
+            autoCapitalize="none"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => onSearchChange('')}>
+              <X size={14} color="#aaa" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* District List */}
+        <FlatList
+          data={filteredDistricts}
+          keyExtractor={(item) => item.name}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={sheetStyles.listContent}
+          renderItem={({ item: gu }) => (
+            <View>
+              {/* Gu row */}
+              <TouchableOpacity
+                style={sheetStyles.guRow}
+                onPress={() => onGuExpand(gu.name)}
+                activeOpacity={0.7}
+              >
+                <TouchableOpacity
+                  onPress={() => onGuSelect(gu)}
+                  style={sheetStyles.guNameBtn}
+                >
+                  <Text style={sheetStyles.guName}>{gu.name}</Text>
+                </TouchableOpacity>
+                <ChevronRight
+                  size={16}
+                  color="#bbb"
+                  style={
+                    expandedGu === gu.name
+                      ? sheetStyles.chevronDown
+                      : undefined
+                  }
+                />
+              </TouchableOpacity>
+
+              {/* Dong list (accordion) */}
+              {expandedGu === gu.name && (
+                <View style={sheetStyles.dongList}>
+                  {gu.dongs.map((dong) => (
+                    <TouchableOpacity
+                      key={dong.name}
+                      style={sheetStyles.dongRow}
+                      onPress={() => onDongSelect(dong, gu)}
+                    >
+                      <Text style={sheetStyles.dongName}>{dong.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+        />
+      </View>
+    </Modal>
+  );
+}
+
+const sheetStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  sheet: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '75%',
+    paddingBottom: 32,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    backgroundColor: '#DDD',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    gap: 8,
-    zIndex: 30,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
-  floatingHeaderText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#444',
+  title: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#222',
   },
-  legend: {
-    position: 'absolute',
-    bottom: 32,
-    right: 32,
-    backgroundColor: 'white',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    zIndex: 30,
+  closeBtn: {
+    padding: 6,
   },
-  legendItem: {
+  searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  legendPin: {
-    width: 24,
-    height: 24,
+    marginHorizontal: 16,
+    marginVertical: 10,
+    backgroundColor: '#F5F5F5',
     borderRadius: 12,
-    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    padding: 0,
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  guRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8F8F8',
+  },
+  guNameBtn: {
+    flex: 1,
+  },
+  guName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#333',
+  },
+  chevronDown: {
+    transform: [{ rotate: '90deg' }],
+  },
+  dongList: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 10,
+    marginBottom: 4,
+    overflow: 'hidden',
+  },
+  dongRow: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  dongName: {
+    fontSize: 13,
+    color: '#555',
+  },
+});
+
+// ─── Root styles ──────────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+  },
+  regionBar: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    right: 70,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'white',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  regionBarText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#222',
+  },
+  locationButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'white',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  legendText: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
+
+  errorBanner: {
+    position: 'absolute',
+    top: 70,
+    left: 16,
+    right: 16,
+    backgroundColor: '#FFF0F0',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  errorText: {
+    fontSize: 13,
+    color: '#E53E3E',
+    textAlign: 'center',
   },
 });
