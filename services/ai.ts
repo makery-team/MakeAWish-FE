@@ -84,7 +84,7 @@ export const aiService = {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${BACKEND_API_URL}/api/portfolios/${portfolioId}/inpaintings`, {
+      const response = await fetch(`${BACKEND_API_URL}/api/ai-agent/inpaint/${portfolioId}`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ prompt, maskImage }),
@@ -97,6 +97,35 @@ export const aiService = {
       return await response.json();
     } catch (error) {
       console.error('Inpaint Service Error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * 특정 인페인팅 결과물 상세 조회 (비동기 폴링용)
+   */
+  async getInpaintingDetail(portfolioId: number, inpaintingId: number): Promise<any> {
+    try {
+      const token = await AsyncStorage.getItem("auth_token");
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${BACKEND_API_URL}/api/ai-agent/inpaint/${portfolioId}/${inpaintingId}`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Inpaint detail API error: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Inpaint Detail Service Error:', error);
       throw error;
     }
   },

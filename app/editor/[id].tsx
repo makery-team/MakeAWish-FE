@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 
 export default function EditorScreen() {
-  const { image, shopName } = useLocalSearchParams<{
+  const { id, image, shopName } = useLocalSearchParams<{
     id?: string;
     image?: string;
     shopName?: string;
@@ -44,6 +44,7 @@ export default function EditorScreen() {
     <EditorView
       image={safeImage}
       shopName={safeShopName}
+      portfolioId={id ? parseInt(id, 10) : 1}
       onBack={handleBack}
       onInquiry={handleInquiry}
     />
