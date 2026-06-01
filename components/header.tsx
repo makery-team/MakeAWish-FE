@@ -10,10 +10,9 @@ import {
   Platform,
   StatusBar as RNStatusBar,
 } from 'react-native';
-import { Bell, User, X, Map as MapIcon, List as ListIcon } from 'lucide-react-native';
+import { Bell, X, Map as MapIcon, List as ListIcon } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
-import { MyPage } from './my-page';
 import { theme } from '@/constants/theme';
 import { Logo } from './logo';
 
@@ -38,24 +37,17 @@ const mockNotifications: Notification[] = [
 ];
 
 interface HeaderProps {
-  onNavigateToOrders?: () => void;
-  onNavigateToFavorites?: () => void;
-  onNavigateToReviews?: () => void;
   viewMode?: 'list' | 'map';
   onToggleView?: () => void;
 }
 
 export function Header({
-  onNavigateToOrders,
-  onNavigateToFavorites,
-  onNavigateToReviews,
   viewMode = 'list',
   onToggleView,
 }: HeaderProps) {
   const insets = useSafeAreaInsets();
   const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 0) : insets.top;
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [isMyPageOpen, setIsMyPageOpen] = useState(false);
   const unreadCount = mockNotifications.filter((n) => !n.isRead).length;
 
   return (
@@ -156,24 +148,9 @@ export function Header({
             )}
           </View>
 
-          <TouchableOpacity
-            onPress={() => setIsMyPageOpen(true)}
-            style={styles.iconButton}
-            activeOpacity={0.7}
-          >
-            <User size={24} color={theme.colors.text} />
-          </TouchableOpacity>
         </View>
       </View>
 
-      {/* MyPage Modal */}
-      <MyPage
-        isOpen={isMyPageOpen}
-        onClose={() => setIsMyPageOpen(false)}
-        onNavigateToOrders={() => onNavigateToOrders?.()}
-        onNavigateToFavorites={() => onNavigateToFavorites?.()}
-        onNavigateToReviews={() => onNavigateToReviews?.()}
-      />
     </View>
   );
 }
@@ -257,7 +234,7 @@ const styles = StyleSheet.create({
   notificationPanel: {
     position: 'absolute',
     top: 70,
-    right: -40,
+    right: 0,
     width: WINDOW_WIDTH - 40,
     backgroundColor: '#fff',
     borderRadius: 20,

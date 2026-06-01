@@ -103,8 +103,6 @@ export default function HomeScreen() {
   };
 
   const handleNavigateToOrders = () => router.push("/orders");
-  const handleNavigateToFavorites = () => router.push("/favorites");
-  const handleNavigateToReviews = () => router.push("/reviews");
 
   return (
     <View style={styles.container}>
@@ -112,9 +110,6 @@ export default function HomeScreen() {
 
       {/* Header */}
       <Header
-        onNavigateToOrders={handleNavigateToOrders}
-        onNavigateToFavorites={handleNavigateToFavorites}
-        onNavigateToReviews={handleNavigateToReviews}
         viewMode={navigation.viewMode}
         onToggleView={navigation.handleToggleView}
       />

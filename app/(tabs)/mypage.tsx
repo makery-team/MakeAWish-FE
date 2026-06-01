@@ -102,9 +102,9 @@ export default function MyPageScreen() {
         {/* 메뉴 리스트 */}
         <View style={styles.menuSection}>
           <Text style={styles.sectionTitle}>쇼핑 정보</Text>
-          {renderMenuItem(<Clock size={20} color={theme.colors.primary} />, "주문/예약 내역", "진행중인 주문을 확인하세요")}
-          {renderMenuItem(<Heart size={20} color={theme.colors.primary} />, "찜한 목록", "내가 찜한 케이크와 가게")}
-          {renderMenuItem(<MessageSquare size={20} color={theme.colors.primary} />, "내 리뷰 관리")}
+          {renderMenuItem(<Clock size={20} color={theme.colors.primary} />, "주문/예약 내역", "진행중인 주문을 확인하세요", () => router.push('/orders'))}
+          {renderMenuItem(<Heart size={20} color={theme.colors.primary} />, "찜한 목록", "내가 찜한 케이크와 가게", () => router.push('/favorites'))}
+          {renderMenuItem(<MessageSquare size={20} color={theme.colors.primary} />, "내 리뷰 관리", undefined, () => router.push('/reviews'))}
         </View>
 
         <View style={styles.menuSection}>
