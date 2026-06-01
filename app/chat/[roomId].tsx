@@ -11,14 +11,14 @@ import { DirectChatMessage } from '@/types';
 
 export default function ChatRoomScreen() {
   const router = useRouter();
-  const { roomId, storeName } = useLocalSearchParams<{ roomId: string; storeName: string }>();
+  const { roomId, storeName, myUserId } = useLocalSearchParams<{ roomId: string; storeName: string; myUserId: string }>();
   const numericRoomId = roomId ? parseInt(roomId, 10) : undefined;
   
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
   
   // 소켓 훅 연결
-  const { messages, setMessages, isConnected, sendMessage } = useChatSocket(numericRoomId);
+  const { messages, setMessages, isConnected, sendMessage } = useChatSocket(numericRoomId, Number(myUserId) || undefined);
 
   // 대화 기록 초기화
   useEffect(() => {
@@ -42,10 +42,10 @@ export default function ChatRoomScreen() {
     // 여기서는 화면 즉각 반응을 위해 클라이언트에 먼저 추가합니다.
     const newMsg: DirectChatMessage = {
       roomNumber: numericRoomId!,
-      senderType: 'USER',
-      senderId: 0, // 내 ID (보통 로컬에서 관리)
-      content: inputText,
-      timestamp: new Date().toISOString(),
+      userId: Number(myUserId) || 0, // 내 ID
+      message: inputText,
+      imageUrl: null,
+      createdTime: new Date().toISOString(),
     };
     
     setMessages(prev => [...prev, newMsg]);
@@ -57,8 +57,8 @@ export default function ChatRoomScreen() {
   };
 
   const renderMessage = ({ item }: { item: DirectChatMessage }) => {
-    const isMe = item.senderType === 'USER';
-    const timeText = new Date(item.timestamp).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const isMe = item.userId === Number(myUserId);
+    const timeText = new Date(item.createdTime).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit', hour12: true });
 
     return (
       <View style={[styles.messageRow, isMe ? styles.messageRowMe : styles.messageRowStore]}>
@@ -69,7 +69,7 @@ export default function ChatRoomScreen() {
         )}
         <View style={[styles.messageBubble, isMe ? styles.bubbleMe : styles.bubbleStore]}>
           <Text style={[styles.messageText, isMe ? styles.textMe : styles.textStore]}>
-            {item.content}
+            {item.message}
           </Text>
         </View>
         <Text style={styles.timeText}>{timeText}</Text>

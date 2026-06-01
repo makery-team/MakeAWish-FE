@@ -194,18 +194,18 @@ export interface Store {
 
 
 // --- Direct Chat Types ---
-export interface DirectChatRoom {
+export interface DirectChatMessage {
+  userId: number;
+  message: string;
+  imageUrl: string | null;
   roomNumber: number;
-  memberId: number;
-  storeId: number;
-  storeName: string;
-  createdAt: string;
+  createdTime: string;
 }
 
-export interface DirectChatMessage {
+export interface DirectChatRoom {
   roomNumber: number;
-  senderType: 'USER' | 'STORE';
-  senderId: number;
-  content: string;
-  timestamp: string;
+  userId: number;
+  otherId: number;
+  messages: DirectChatMessage[];
 }
+

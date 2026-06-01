@@ -7,18 +7,23 @@ export const chatService = {
    */
   async getChatRooms(): Promise<DirectChatRoom[]> {
     const res = await fetchWithAuth('/api/chatting/rooms');
-    if (!res.ok) throw new Error('Failed to get chat rooms');
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => 'No response body');
+      console.error(`[getChatRooms Error] Status: ${res.status}, Body: ${errorText}`);
+      throw new Error('Failed to get chat rooms');
+    }
     return res.json();
   },
 
   /**
    * 매장과 새로운 채팅방을 생성합니다. (또는 기존 채팅방 정보 조회)
-   * @param storeId 매장 ID
+   * @param userId 본인 ID
+   * @param otherId 상대(매장) ID
    */
-  async createChatRoom(storeId: number): Promise<DirectChatRoom> {
+  async createChatRoom(userId: number, otherId: number): Promise<DirectChatRoom> {
     const res = await fetchWithAuth('/api/chatting/room', {
       method: 'POST',
-      body: JSON.stringify({ storeId }),
+      body: JSON.stringify({ userId, otherId }),
     });
     if (!res.ok) throw new Error('Failed to create chat room');
     return res.json();

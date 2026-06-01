@@ -4,7 +4,7 @@ import { DirectChatMessage } from '../types';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://make-a-wish-env.eba-dvjn7a8x.ap-northeast-2.elasticbeanstalk.com";
 
-export function useChatSocket(roomNumber?: number) {
+export function useChatSocket(roomNumber?: number, myUserId?: number) {
   const [messages, setMessages] = useState<DirectChatMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
@@ -19,8 +19,11 @@ export function useChatSocket(roomNumber?: number) {
         return;
       }
 
-      // HTTP URL을 WS URL로 변환
-      const wsUrl = API_BASE_URL.replace(/^http/, 'ws') + `/chats`;
+      // HTTP URL을 WS URL로 변환하고 쿼리 파라미터(roomNumber, userId) 추가
+      let wsUrl = API_BASE_URL.replace(/^http/, 'ws') + `/chats`;
+      if (roomNumber && myUserId) {
+        wsUrl += `?roomNumber=${roomNumber}&userId=${myUserId}`;
+      }
       console.log(`Connecting to WebSocket: ${wsUrl}`);
       
       const ws = new WebSocket(wsUrl);
@@ -69,11 +72,12 @@ export function useChatSocket(roomNumber?: number) {
   }, []);
 
   const sendMessage = useCallback((content: string) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN && roomNumber) {
+    if (wsRef.current?.readyState === WebSocket.OPEN && roomNumber && myUserId) {
       const payload = {
+        userId: myUserId,
+        message: content,
+        imageUrl: null,
         roomNumber,
-        content,
-        // 필요 시 senderType, token 등을 추가
       };
       wsRef.current.send(JSON.stringify(payload));
     } else {

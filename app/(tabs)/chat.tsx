@@ -59,28 +59,38 @@ export default function ChatScreen() {
   };
 
   const renderItem = ({ item }: { item: DirectChatRoom }) => {
-    const formattedDate = new Date(item.createdAt).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+    const lastMessage = item.messages && item.messages.length > 0 
+      ? item.messages[item.messages.length - 1] 
+      : null;
+      
+    const formattedDate = lastMessage?.createdTime 
+      ? new Date(lastMessage.createdTime).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })
+      : '';
+      
+    // 임시로 매장 이름 대신 ID 사용 (백엔드 명세상 매장 이름이 반환되지 않음)
+    const displayStoreName = `매장 ${item.otherId}`;
+    const previewMessage = lastMessage?.message || '대화를 시작해 보세요!';
     
     return (
       <TouchableOpacity 
         style={styles.roomItem}
-        onPress={() => router.push(`/chat/${item.roomNumber}?storeName=${encodeURIComponent(item.storeName)}`)}
+        onPress={() => router.push(`/chat/${item.roomNumber}?storeName=${encodeURIComponent(displayStoreName)}&myUserId=${item.userId}`)}
       >
         <View style={styles.avatarContainer}>
           <MessageSquare size={24} color={theme.colors.primary} />
         </View>
         <View style={styles.roomInfo}>
           <View style={styles.roomHeader}>
-            <Text style={styles.storeName}>{item.storeName}</Text>
+            <Text style={styles.storeName}>{displayStoreName}</Text>
             <Text style={styles.dateText}>{formattedDate}</Text>
           </View>
           <Text style={styles.previewText} numberOfLines={1}>
-            매장과 채팅을 시작해 보세요!
+            {previewMessage}
           </Text>
         </View>
         <TouchableOpacity 
           style={styles.deleteButton}
-          onPress={() => handleDeleteRoom(item.roomNumber, item.storeName)}
+          onPress={() => handleDeleteRoom(item.roomNumber, displayStoreName)}
         >
           <Trash2 size={20} color="#EF4444" />
         </TouchableOpacity>
