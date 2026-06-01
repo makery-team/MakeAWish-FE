@@ -8,7 +8,7 @@ import {
   Pressable,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { Heart, Star } from 'lucide-react-native';
+import { Heart } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import Animated, { 
   FadeIn, 
@@ -129,10 +129,7 @@ export function CakeCard({
                 />
                 <Text style={styles.statText}>{likes}</Text>
               </TouchableOpacity>
-              <View style={styles.statItem}>
-                <Star size={14} color="#FBBF24" fill="#FBBF24" />
-                <Text style={styles.statText}>{rating}</Text>
-              </View>
+
             </View>
           </View>
 
