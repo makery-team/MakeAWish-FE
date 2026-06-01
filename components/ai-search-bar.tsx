@@ -32,6 +32,7 @@ import { useInquiry } from "@/hooks/use-inquiry";
 import { aiService } from "@/services/ai";
 import type { ChatMode, InquiryMode, Message, OrderData } from "@/types";
 import { ImageSlider } from "./image-slider";
+import { OrderReminderCard } from "./order-reminder-card";
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -186,7 +187,10 @@ export function AISearchBar({
       if (response.actionType === 'PORTFOLIO_LIST' && Array.isArray(response.data)) {
         recommendedCakeDetails = response.data.map((p: any) => ({ 
           image: p.imageUrl, 
-          shopName: p.storeName || '지니 추천' 
+          shopName: p.storeName || '지니 추천',
+          portfolioId: p.id,
+          storeId: p.storeId,
+          productId: p.productId
         }));
         recommendedImages = recommendedCakeDetails.map(c => c.image);
       }
@@ -216,6 +220,9 @@ export function AISearchBar({
           onInquiryComplete?.({ 
             cakeImage: conversationHistory.selectedCakeImage || "", 
             shopName: conversationHistory.shopName, 
+            portfolioId: conversationHistory.portfolioId,
+            storeId: conversationHistory.storeId,
+            productId: conversationHistory.productId,
             ...conversationHistory
           });
           resetChat();
@@ -230,7 +237,35 @@ export function AISearchBar({
     }
   };
 
-  const renderMessageItem = ({ item, index }: { item: Message, index: number }) => (
+  const renderMessageItem = ({ item, index }: { item: Message, index: number }) => {
+    // 💡 LOCAL_ORDER_REMINDER 카드는 말풍선 없이 넓게 렌더링
+    if (item.actionType === 'LOCAL_ORDER_REMINDER' && item.cakeDetails?.[0]) {
+      return (
+        <View style={[styles.msgRow, styles.aiRow, { marginBottom: 24 }]}>
+          <View style={styles.aiIcon}>
+            <Sparkles size={12} color="white" strokeWidth={1.5} />
+          </View>
+          <View style={{ flex: 1, paddingRight: 32 }}>
+            <OrderReminderCard 
+              conversationState={{
+                ...conversationHistory,
+                shopName: item.cakeDetails[0].shopName
+              }}
+              selectedImage={item.cakeDetails[0].image}
+              onConfirm={() => {
+                const shopName = item.cakeDetails![0].shopName;
+                handleSend(`이 시안(${shopName || '지니 추천'})으로 주문 문의할게요!`);
+              }}
+              onCancel={() => {
+                setMessages(prev => prev.filter(m => m !== item));
+              }}
+            />
+          </View>
+        </View>
+      );
+    }
+
+    return (
     <View style={[styles.msgRow, item.type === "user" ? styles.userRow : styles.aiRow]}>
       {item.type === "ai" && <View style={styles.aiIcon}><Sparkles size={12} color="white" strokeWidth={1.5} /></View>}
       <View style={[styles.bubble, item.type === "user" ? styles.userBubble : styles.aiBubble]}>
@@ -303,9 +338,31 @@ export function AISearchBar({
                 images={item.images}
                 cakeDetails={item.cakeDetails}
                 onCakeSelect={onCakeSelect}
-                onInquiry={(image, shopName) => {
-                  onInquiryComplete?.({ cakeImage: image, shopName: shopName || inquiryMode?.shopName || '지니 추천' });
-                  resetChat();
+                onInquiry={(image, shopName, portfolioId, storeId, productId) => {
+                  // 대화 중 슬라이더에서 문의하기 클릭 시, 챗봇 대화방 안에서 이어가도록 처리
+                  updateConversation({ 
+                    selectedCakeImage: image, 
+                    shopName: shopName || inquiryMode?.shopName || '지니 추천',
+                    portfolioId,
+                    storeId,
+                    productId
+                  });
+                  
+                  // 백엔드로 바로 쏘지 않고, 로컬에 확인 카드 메시지를 띄웁니다.
+                  const localReminderMsg: Message = {
+                    type: "ai",
+                    text: "",
+                    actionType: "LOCAL_ORDER_REMINDER" as any,
+                    cakeDetails: [{
+                      image,
+                      shopName: shopName || '지니 추천',
+                      portfolioId,
+                      storeId,
+                      productId
+                    }]
+                  };
+                  setMessages(prev => [...prev, localReminderMsg]);
+                  setTimeout(() => { flatListRef.current?.scrollToEnd({ animated: true }); }, 100);
                 }}
                 onMinimize={resetChat}
               />
@@ -314,7 +371,8 @@ export function AISearchBar({
         )}
       </View>
     </View>
-  );
+    );
+  };
 
   return (
     <>

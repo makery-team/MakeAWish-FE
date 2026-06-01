@@ -61,7 +61,13 @@ export interface Message {
   type: MessageType;
   text: string;
   images?: string[];
-  cakeDetails?: { image: string, shopName: string }[];
+  cakeDetails?: { 
+    image: string, 
+    shopName: string, 
+    portfolioId?: number, 
+    storeId?: number, 
+    productId?: number 
+  }[];
   options?: string[];
   messageId?: string;
   viewMode?: 'slider' | 'grid'; // Added for image display options
@@ -77,6 +83,9 @@ export interface ConversationState {
   design?: string;
   selectedCakeImage?: string;
   shopName?: string;
+  portfolioId?: number;
+  storeId?: number;
+  productId?: number;
   pickupDate?: string;
   pickupTime?: string;
   lettering?: string;
@@ -98,12 +107,18 @@ export interface InquiryMode {
 export interface SelectedCake {
   image: string;
   shopName: string;
+  portfolioId?: number;
+  storeId?: number;
+  productId?: number;
 }
 
 // Order data for inquiry completion
 export interface OrderData {
   cakeImage: string;
   shopName?: string;
+  portfolioId?: number;
+  storeId?: number;
+  productId?: number;
   pickupDate?: string;
   pickupTime?: string;
   lettering?: string;
@@ -125,6 +140,8 @@ export interface FeedItem {
   id: number;
   imageUrl: string;
   storeName: string;
+  storeId?: number;
+  productId?: number;
   tags: string[];
   likeCount: number;
   isInpaintingAllowed: boolean;
@@ -190,4 +207,18 @@ export interface Store {
   latitude: number;
   longitude: number;
   categories: StoreCategory[];
+}
+
+export interface OrderItemRequest {
+  productId: number;
+  quantity: number;
+  portfolioId?: number;
+  customizedImageUrl?: string;
+}
+
+export interface OrderCreateRequest {
+  storeId: number;
+  pickupDate: string;
+  orderData?: Record<string, string>;
+  items: OrderItemRequest[];
 }
