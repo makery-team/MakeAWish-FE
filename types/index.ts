@@ -191,3 +191,21 @@ export interface Store {
   longitude: number;
   categories: StoreCategory[];
 }
+
+
+// --- Direct Chat Types ---
+export interface DirectChatRoom {
+  roomNumber: number;
+  memberId: number;
+  storeId: number;
+  storeName: string;
+  createdAt: string;
+}
+
+export interface DirectChatMessage {
+  roomNumber: number;
+  senderType: 'USER' | 'STORE';
+  senderId: number;
+  content: string;
+  timestamp: string;
+}

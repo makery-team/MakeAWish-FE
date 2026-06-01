@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { Home, Search, ShoppingBag, User } from 'lucide-react-native';
+import { Home, Search, ShoppingBag, User, MessageCircle } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
 import { BlurView } from 'expo-blur';
 
@@ -45,6 +45,13 @@ export default function TabLayout() {
         options={{
           title: 'Search',
           tabBarIcon: ({ color }) => <Search size={24} color={color} strokeWidth={1.5} />,
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: 'Chat',
+          tabBarIcon: ({ color }) => <MessageCircle size={24} color={color} strokeWidth={1.5} />,
         }}
       />
       <Tabs.Screen
