@@ -47,7 +47,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Search size={24} color={color} strokeWidth={1.5} />,
         }}
       />
-      {/* 나중에 실제 파일(orders.tsx 등)을 생성하면 여기에 추가 가능합니다. */}
+      <Tabs.Screen
+        name="mypage"
+        options={{
+          title: 'My',
+          tabBarIcon: ({ color }) => <User size={24} color={color} strokeWidth={1.5} />,
+        }}
+      />
     </Tabs>
   );
 }
