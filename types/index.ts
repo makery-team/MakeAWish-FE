@@ -227,3 +227,30 @@ export interface NotificationResponse {
   last: boolean;
   hasNext: boolean;
 }
+
+// --- Order History Types ---
+export type BackendOrderStatus = "PENDING_QUOTE" | "APPROVED" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
+
+export interface OrderListItem {
+  id: number;
+  orderNumber: string;
+  storeName: string;
+  status: BackendOrderStatus;
+  totalPrice: number;
+  pickupDate: string;
+  createdAt: string;
+}
+
+export interface OrderItemDetail {
+  productId: number;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  customizedImageUrl: string;
+}
+
+export interface OrderDetail extends OrderListItem {
+  orderData: Record<string, string>;
+  items: OrderItemDetail[];
+}
+

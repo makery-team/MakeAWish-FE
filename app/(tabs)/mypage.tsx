@@ -1,24 +1,33 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, SafeAreaView, Alert } from 'react-native';
 import { useAuth } from '@/hooks/use-auth';
 import { theme } from '@/constants/theme';
 import { Settings, Heart, Clock, MessageSquare, ChevronRight, LogOut, Info } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { authService } from '@/services/auth';
+import { orderService } from '@/services/order';
 
 export default function MyPageScreen() {
   const { user, signOut, updateUser } = useAuth();
   const router = useRouter();
+  const [orderCount, setOrderCount] = useState(0);
 
   useEffect(() => {
-    // 마이페이지 진입 시마다 최신 유저 정보를 가져와서 업데이트
-    const fetchLatestUser = async () => {
-      const userData = await authService.getCurrentUser();
-      if (userData) {
-        updateUser(userData);
+    // 마이페이지 진입 시마다 최신 유저 정보와 주문 건수 업데이트
+    const fetchLatestData = async () => {
+      try {
+        const userData = await authService.getCurrentUser();
+        if (userData) {
+          updateUser(userData);
+        }
+        
+        const orders = await orderService.getMyOrders();
+        setOrderCount(orders.length);
+      } catch (error) {
+        console.error('Failed to fetch mypage data:', error);
       }
     };
-    fetchLatestUser();
+    fetchLatestData();
   }, []);
 
   const handleLogout = () => {
@@ -86,7 +95,7 @@ export default function MyPageScreen() {
           
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
-              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statValue}>{orderCount}</Text>
               <Text style={styles.statLabel}>주문 내역</Text>
             </View>
             <View style={styles.statDivider} />
