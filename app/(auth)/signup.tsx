@@ -32,6 +32,13 @@ export default function SignupScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [language, setLanguage] = useState('ko');
   const [isLoading, setIsLoading] = useState(false);
+  const [isNicknameAvailable, setIsNicknameAvailable] = useState<boolean | null>(null);
+  const [isCheckingNickname, setIsCheckingNickname] = useState(false);
+
+  const handleNicknameChange = (text: string) => {
+    setNickname(text);
+    setIsNicknameAvailable(null);
+  };
 
   // 전화번호 자동 하이픈 및 숫자만 입력되도록 처리
   const handlePhoneChange = (text: string) => {
@@ -45,9 +52,45 @@ export default function SignupScreen() {
     setPhoneNumber(formatted);
   };
 
+  const handleCheckNickname = async () => {
+    if (!nickname.trim()) {
+      Alert.alert('알림', '닉네임을 입력해주세요.');
+      return;
+    }
+
+    try {
+      setIsCheckingNickname(true);
+      const response = await fetchWithAuth(`/api/users/check-nickname?nickname=${encodeURIComponent(nickname)}`);
+      
+      if (!response.ok) {
+        throw new Error('중복 확인 실패');
+      }
+
+      const data = await response.json();
+      
+      if (data.isDuplicate) {
+        Alert.alert('사용 불가', '이미 사용중인 닉네임입니다.');
+        setIsNicknameAvailable(false);
+      } else {
+        Alert.alert('사용 가능', '사용 가능한 닉네임입니다.');
+        setIsNicknameAvailable(true);
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('오류', '닉네임 중복 확인 중 문제가 발생했습니다.');
+    } finally {
+      setIsCheckingNickname(false);
+    }
+  };
+
   const handleComplete = async () => {
     if (!nickname || !phoneNumber) {
       Alert.alert('입력 오류', '모든 필드를 입력해주세요.');
+      return;
+    }
+
+    if (isNicknameAvailable !== true) {
+      Alert.alert('입력 오류', '닉네임 중복 확인을 진행해주세요.');
       return;
     }
 
@@ -110,15 +153,26 @@ export default function SignupScreen() {
           <View style={styles.form}>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>닉네임</Text>
-              <View style={styles.inputWrapper}>
-                <UserIcon size={20} color={theme.colors.gray} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="닉네임을 입력하세요"
-                  value={nickname}
-                  onChangeText={setNickname}
-                />
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={[styles.inputWrapper, { flex: 1 }]}>
+                  <UserIcon size={20} color={theme.colors.gray} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="닉네임을 입력하세요"
+                    value={nickname}
+                    onChangeText={handleNicknameChange}
+                  />
+                </View>
+                <TouchableOpacity 
+                  style={[styles.checkButton, (!nickname || isCheckingNickname) && styles.checkButtonDisabled]}
+                  onPress={handleCheckNickname}
+                  disabled={!nickname || isCheckingNickname}
+                >
+                  <Text style={styles.checkButtonText}>{isCheckingNickname ? '확인 중' : '중복 확인'}</Text>
+                </TouchableOpacity>
               </View>
+              {isNicknameAvailable === true && <Text style={styles.successMessage}>사용 가능한 닉네임입니다.</Text>}
+              {isNicknameAvailable === false && <Text style={styles.errorMessage}>이미 사용중인 닉네임입니다.</Text>}
             </View>
 
             <View style={styles.inputGroup}>
@@ -163,10 +217,10 @@ export default function SignupScreen() {
           <TouchableOpacity 
             style={[
               styles.completeButton,
-              (!nickname || !phoneNumber || isLoading) && styles.completeButtonDisabled
+              (!nickname || !phoneNumber || isLoading || isNicknameAvailable !== true) && styles.completeButtonDisabled
             ]} 
             onPress={handleComplete}
-            disabled={!nickname || !phoneNumber || isLoading}
+            disabled={!nickname || !phoneNumber || isLoading || isNicknameAvailable !== true}
           >
             <Text style={styles.completeButtonText}>{isLoading ? '설정 중...' : '시작하기'}</Text>
             <ChevronRight size={20} color="#fff" />
@@ -276,5 +330,33 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     marginRight: 8,
+  },
+  checkButton: {
+    paddingHorizontal: 16,
+    height: 56,
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  checkButtonDisabled: {
+    backgroundColor: theme.colors.gray,
+  },
+  checkButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  successMessage: {
+    color: '#4CAF50',
+    fontSize: 12,
+    marginTop: 8,
+    marginLeft: 4,
+  },
+  errorMessage: {
+    color: theme.colors.error,
+    fontSize: 12,
+    marginTop: 8,
+    marginLeft: 4,
   },
 });
