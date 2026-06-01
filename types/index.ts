@@ -222,3 +222,64 @@ export interface OrderCreateRequest {
   orderData?: Record<string, string>;
   items: OrderItemRequest[];
 }
+
+// --- Direct Chat Types ---
+export interface DirectChatMessage {
+  userId: number;
+  message: string;
+  imageUrl: string | null;
+  roomNumber: number;
+  createdTime: string;
+}
+
+export interface DirectChatRoom {
+  roomNumber: number;
+  userId: number;
+  otherId: number;
+  messages: DirectChatMessage[];
+}
+
+// --- Notification Types ---
+export interface AppNotification {
+  id: number;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationResponse {
+  content: AppNotification[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+  };
+  first: boolean;
+  last: boolean;
+  hasNext: boolean;
+}
+
+// --- Order History Types ---
+export type BackendOrderStatus = "PENDING_QUOTE" | "APPROVED" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
+
+export interface OrderListItem {
+  id: number;
+  orderNumber: string;
+  storeName: string;
+  status: BackendOrderStatus;
+  totalPrice: number;
+  pickupDate: string;
+  createdAt: string;
+}
+
+export interface OrderItemDetail {
+  productId: number;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  customizedImageUrl: string;
+}
+
+export interface OrderDetail extends OrderListItem {
+  orderData: Record<string, string>;
+  items: OrderItemDetail[];
+}

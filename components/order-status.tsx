@@ -6,185 +6,171 @@ import {
   TouchableOpacity, 
   ScrollView, 
   Dimensions,
-  SafeAreaView,
   Platform,
   StatusBar as RNStatusBar
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Image } from 'expo-image';
 import { 
   ArrowLeft, 
   Clock, 
   CheckCircle, 
   Package, 
   Gift, 
-  MapPin, 
-  Phone, 
-  MessageSquare 
+  ChevronRight,
+  XCircle
 } from 'lucide-react-native';
 import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring, 
-  withTiming,
   FadeInUp
 } from 'react-native-reanimated';
-import type { Order, OrderStatus as OrderStatusType } from '@/types';
+import type { OrderListItem, BackendOrderStatus } from '@/types';
 
 const { width } = Dimensions.get('window');
 
 interface OrderStatusProps {
-  orders: Order[];
+  orders: OrderListItem[];
   onBack: () => void;
+  onOrderPress: (orderId: number) => void;
 }
 
 const statusSteps = [
-  { key: 'inquiry', label: '견적 문의', icon: Clock },
-  { key: 'accepted', label: '주문 수락', icon: CheckCircle },
-  { key: 'inProgress', label: '제작 중', icon: Package },
-  { key: 'ready', label: '픽업 준비 완료', icon: Gift },
+  { key: 'PENDING_QUOTE', label: '견적 대기', icon: Clock },
+  { key: 'APPROVED', label: '입금 대기', icon: CheckCircle },
+  { key: 'IN_PROGRESS', label: '제작 중', icon: Package },
+  { key: 'COMPLETED', label: '픽업 완료', icon: Gift },
 ];
 
-function OrderCard({ order }: { order: Order }) {
+function OrderCard({ order, onPress }: { order: OrderListItem, onPress: () => void }) {
   const currentStepIndex = statusSteps.findIndex(step => step.key === order.status);
 
   const progressWidth = useMemo(() => {
+    if (order.status === 'CANCELED') return 100;
+    if (currentStepIndex === -1) return 0;
     return (currentStepIndex / (statusSteps.length - 1)) * 100;
-  }, [currentStepIndex]);
+  }, [currentStepIndex, order.status]);
+
+  const isCanceled = order.status === 'CANCELED';
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(amount);
+  };
+
+  const formattedDate = new Date(order.createdAt).toLocaleDateString('ko-KR', {
+    year: 'numeric', month: 'long', day: 'numeric'
+  });
 
   return (
     <Animated.View 
       entering={FadeInUp.delay(200)}
       style={styles.orderCard}
     >
-      {/* Order Header with Image */}
-      <View style={styles.cardHeader}>
-        <View style={styles.headerTop}>
-          <Image
-            source={{ uri: order.cakeImage }}
-            style={styles.cakeImage}
-            contentFit="cover"
-          />
+      <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
+        {/* Order Header */}
+        <View style={styles.cardHeader}>
           <View style={styles.headerInfo}>
-            <View style={styles.orderIdRow}>
-              <Text style={styles.orderIdLabel}>주문번호</Text>
-              <View style={styles.orderIdBadge}>
-                <Text style={styles.orderIdText}>#{order.id}</Text>
-              </View>
+            <View style={styles.orderDateRow}>
+              <Text style={styles.orderDateText}>{formattedDate}</Text>
+              <ChevronRight size={16} color="#9CA3AF" />
             </View>
-            {order.shopName && (
-              <Text style={styles.shopNameText}>{order.shopName}</Text>
-            )}
+            
+            <View style={styles.orderMainInfo}>
+              <Text style={styles.shopNameText}>{order.storeName}</Text>
+              <Text style={styles.priceText}>{formatCurrency(order.totalPrice)}</Text>
+            </View>
+            
+            <View style={styles.orderIdBadge}>
+              <Text style={styles.orderIdLabel}>주문번호</Text>
+              <Text style={styles.orderIdText}>{order.orderNumber}</Text>
+            </View>
+            
             {order.pickupDate && (
               <View style={styles.pickupInfoBadge}>
                 <Clock size={12} color="#6B7280" />
-                <Text style={styles.pickupInfoText}>{order.pickupDate} {order.pickupTime}</Text>
+                <Text style={styles.pickupInfoText}>픽업일: {new Date(order.pickupDate).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
               </View>
             )}
           </View>
         </View>
 
-        {order.lettering && (
-          <View style={styles.letteringContainer}>
-            <Text style={styles.letteringLabel}>레터링 문구</Text>
-            <Text style={styles.letteringText}>💌 "{order.lettering}"</Text>
+        {/* Status Progress */}
+        <View style={styles.progressSection}>
+          <View style={styles.progressLineBg}>
+            <View style={[
+              styles.progressLineActive, 
+              { width: `${progressWidth}%` },
+              isCanceled && styles.progressLineCanceled
+            ]} />
           </View>
-        )}
-      </View>
 
-      {/* Status Progress */}
-      <View style={styles.progressSection}>
-        <View style={styles.progressLineBg}>
-          <View style={[styles.progressLineActive, { width: `${progressWidth}%` }]} />
-        </View>
-
-        <View style={styles.stepsRow}>
-          {statusSteps.map((step, index) => {
-            const Icon = step.icon;
-            const isActive = index <= currentStepIndex;
-            const isCurrent = index === currentStepIndex;
-
-            return (
-              <View key={step.key} style={styles.stepItem}>
-                <View style={[
-                  styles.stepIconContainer,
-                  isActive ? (isCurrent ? styles.stepIconCurrent : styles.stepIconActive) : styles.stepIconInactive
-                ]}>
-                  <Icon 
-                    size={20} 
-                    color={isActive ? 'white' : '#9CA3AF'} 
-                  />
+          <View style={styles.stepsRow}>
+            {isCanceled ? (
+              <View style={styles.stepItem}>
+                <View style={[styles.stepIconContainer, styles.stepIconCanceled]}>
+                  <XCircle size={20} color="white" />
                 </View>
-                <Text style={[
-                  styles.stepLabel,
-                  isActive ? styles.stepLabelActive : styles.stepLabelInactive
-                ]}>
-                  {step.label}
+                <Text style={[styles.stepLabel, styles.stepLabelActive, { color: '#EF4444' }]}>
+                  주문 취소
                 </Text>
               </View>
-            );
-          })}
-        </View>
+            ) : (
+              statusSteps.map((step, index) => {
+                const Icon = step.icon;
+                const isActive = index <= currentStepIndex;
+                const isCurrent = index === currentStepIndex;
 
-        {/* Current Status Message */}
-        <View style={[
-          styles.statusMessageCard,
-          order.status === 'inquiry' ? styles.statusBlue :
-          order.status === 'accepted' ? styles.statusGreen :
-          order.status === 'inProgress' ? styles.statusOrange :
-          styles.statusPink
-        ]}>
-          <Text style={[
-            styles.statusMessageTitle,
-            order.status === 'inquiry' ? styles.textBlue :
-            order.status === 'accepted' ? styles.textGreen :
-            order.status === 'inProgress' ? styles.textOrange :
-            styles.textPink
-          ]}>
-            {order.status === 'inquiry' && '✨ 매장에서 견적을 검토 중이에요'}
-            {order.status === 'accepted' && '🎉 주문이 확정되었어요!'}
-            {order.status === 'inProgress' && '👩‍🍳 열심히 제작 중이에요'}
-            {order.status === 'ready' && '🎂 픽업 준비가 완료되었어요!'}
-          </Text>
-          <Text style={styles.statusMessageSub}>
-            {order.status === 'inquiry' && '24시간 내로 연락드릴 예정이에요'}
-            {order.status === 'accepted' && '곧 케이크 제작을 시작할 거예요'}
-            {order.status === 'inProgress' && '조금만 기다려주세요, 거의 다 됐어요'}
-            {order.status === 'ready' && '매장으로 찾으러 오세요!'}
-          </Text>
-        </View>
-
-        {/* Action Buttons */}
-        {order.status === 'ready' && (
-          <View style={styles.actionSection}>
-            <View style={styles.locationCard}>
-              <View style={styles.locationRow}>
-                <MapPin size={18} color="#FF69B4" />
-                <View>
-                  <Text style={styles.locationLabel}>픽업 위치</Text>
-                  <Text style={styles.locationValue}>서울시 강남구 테헤란로 123</Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.actionButtonsRow}>
-              <TouchableOpacity style={styles.callButton}>
-                <Phone size={16} color="#FF69B4" />
-                <Text style={styles.callButtonText}>전화하기</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.chatButton}>
-                <MessageSquare size={16} color="#A855F7" />
-                <Text style={styles.chatButtonText}>채팅하기</Text>
-              </TouchableOpacity>
-            </View>
+                return (
+                  <View key={step.key} style={styles.stepItem}>
+                    <View style={[
+                      styles.stepIconContainer,
+                      isActive ? (isCurrent ? styles.stepIconCurrent : styles.stepIconActive) : styles.stepIconInactive
+                    ]}>
+                      <Icon 
+                        size={20} 
+                        color={isActive ? 'white' : '#9CA3AF'} 
+                      />
+                    </View>
+                    <Text style={[
+                      styles.stepLabel,
+                      isActive ? styles.stepLabelActive : styles.stepLabelInactive
+                    ]}>
+                      {step.label}
+                    </Text>
+                  </View>
+                );
+              })
+            )}
           </View>
-        )}
-      </View>
+
+          {/* Current Status Message */}
+          <View style={[
+            styles.statusMessageCard,
+            order.status === 'PENDING_QUOTE' ? styles.statusBlue :
+            order.status === 'APPROVED' ? styles.statusOrange :
+            order.status === 'IN_PROGRESS' ? styles.statusGreen :
+            order.status === 'COMPLETED' ? styles.statusPink :
+            styles.statusRed
+          ]}>
+            <Text style={[
+              styles.statusMessageTitle,
+              order.status === 'PENDING_QUOTE' ? styles.textBlue :
+              order.status === 'APPROVED' ? styles.textOrange :
+              order.status === 'IN_PROGRESS' ? styles.textGreen :
+              order.status === 'COMPLETED' ? styles.textPink :
+              styles.textRed
+            ]}>
+              {order.status === 'PENDING_QUOTE' && '✨ 매장에서 견적을 확인 중이에요'}
+              {order.status === 'APPROVED' && '💳 주문 수락 완료! 입금을 진행해주세요'}
+              {order.status === 'IN_PROGRESS' && '👩‍🍳 케이크를 열심히 제작 중이에요'}
+              {order.status === 'COMPLETED' && '🎉 픽업이 완료되었습니다'}
+              {order.status === 'CANCELED' && '❌ 주문이 취소되었습니다'}
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
     </Animated.View>
   );
 }
 
-export const OrderStatus: React.FC<OrderStatusProps> = ({ orders, onBack }) => {
+export const OrderStatus: React.FC<OrderStatusProps> = ({ orders, onBack, onOrderPress }) => {
   const insets = useSafeAreaInsets();
   const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 0) : insets.top;
   return (
@@ -194,7 +180,7 @@ export const OrderStatus: React.FC<OrderStatusProps> = ({ orders, onBack }) => {
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>주문 현황</Text>
+        <Text style={styles.headerTitle}>내 주문 내역</Text>
       </View>
 
       <ScrollView 
@@ -208,12 +194,12 @@ export const OrderStatus: React.FC<OrderStatusProps> = ({ orders, onBack }) => {
             </View>
             <Text style={styles.emptyTitle}>주문 내역이 없습니다</Text>
             <Text style={styles.emptySub}>
-              예쁜 케이크를 골라 견적 문의를 시작해보세요!
+              예쁜 케이크를 골라 첫 견적 문의를 시작해보세요!
             </Text>
           </View>
         ) : (
           orders.map((order) => (
-            <OrderCard key={order.id} order={order} />
+            <OrderCard key={order.id} order={order} onPress={() => onOrderPress(order.id)} />
           ))
         )}
       </ScrollView>
@@ -293,81 +279,73 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#FFF9FB',
   },
-  headerTop: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 16,
-  },
-  cakeImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 16,
-    backgroundColor: '#F3F4F6',
-  },
   headerInfo: {
     flex: 1,
-    justifyContent: 'center',
   },
-  orderIdRow: {
+  orderDateRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 12,
   },
-  orderIdLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#6B7280',
+  orderDateText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4B5563',
   },
-  orderIdBadge: {
-    backgroundColor: 'white',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 99,
-    borderWidth: 1,
-    borderColor: '#FFE4E1',
-  },
-  orderIdText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#FF69B4',
+  orderMainInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginBottom: 12,
   },
   shopNameText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#111827',
-    marginBottom: 6,
+  },
+  priceText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#DB2777',
+  },
+  orderIdBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+    gap: 6,
+  },
+  orderIdLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  orderIdText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#4B5563',
   },
   pickupInfoBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: 'white',
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 99,
+    paddingVertical: 6,
+    borderRadius: 12,
     alignSelf: 'flex-start',
-    gap: 4,
+    borderWidth: 1,
+    borderColor: '#FFE4E1',
+    gap: 6,
   },
   pickupInfoText: {
     fontSize: 12,
-    color: '#4B5563',
-  },
-  letteringContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    padding: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#FFE4E1',
-  },
-  letteringLabel: {
-    fontSize: 10,
-    color: '#6B7280',
-    marginBottom: 2,
-  },
-  letteringText: {
-    fontSize: 14,
-    color: '#DB2777',
     fontWeight: '500',
+    color: '#DB2777',
   },
   progressSection: {
     padding: 24,
@@ -386,6 +364,9 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#FF69B4',
     borderRadius: 2,
+  },
+  progressLineCanceled: {
+    backgroundColor: '#EF4444',
   },
   stepsRow: {
     flexDirection: 'row',
@@ -419,6 +400,9 @@ const styles = StyleSheet.create({
   stepIconInactive: {
     backgroundColor: '#F3F4F6',
   },
+  stepIconCanceled: {
+    backgroundColor: '#EF4444',
+  },
   stepLabel: {
     fontSize: 10,
     textAlign: 'center',
@@ -433,101 +417,38 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   statusMessageCard: {
-    padding: 16,
-    borderRadius: 16,
+    padding: 12,
+    borderRadius: 12,
     borderWidth: 1,
+    alignItems: 'center',
   },
   statusBlue: {
     backgroundColor: '#EFF6FF',
     borderColor: '#DBEAFE',
   },
-  statusGreen: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#DCFCE7',
-  },
   statusOrange: {
     backgroundColor: '#FFF7ED',
     borderColor: '#FFEDD5',
+  },
+  statusGreen: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#DCFCE7',
   },
   statusPink: {
     backgroundColor: '#FFF1F2',
     borderColor: '#FFE4E6',
   },
-  statusMessageTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 4,
+  statusRed: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FEE2E2',
   },
-  statusMessageSub: {
-    fontSize: 12,
-    color: '#4B5563',
+  statusMessageTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
   },
   textBlue: { color: '#1D4ED8' },
-  textGreen: { color: '#15803D' },
   textOrange: { color: '#C2410C' },
+  textGreen: { color: '#15803D' },
   textPink: { color: '#BE185D' },
-  actionSection: {
-    marginTop: 16,
-    gap: 12,
-  },
-  locationCard: {
-    backgroundColor: '#F9FAFB',
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  locationLabel: {
-    fontSize: 10,
-    color: '#6B7280',
-    marginBottom: 2,
-  },
-  locationValue: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#111827',
-  },
-  actionButtonsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  callButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    backgroundColor: 'white',
-    borderWidth: 2,
-    borderColor: '#FFE4E6',
-    borderRadius: 12,
-  },
-  callButtonText: {
-    color: '#FF69B4',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  chatButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    backgroundColor: 'white',
-    borderWidth: 2,
-    borderColor: '#F3E8FF',
-    borderRadius: 12,
-  },
-  chatButtonText: {
-    color: '#A855F7',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
+  textRed: { color: '#B91C1C' },
 });
