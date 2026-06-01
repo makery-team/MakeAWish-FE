@@ -60,6 +60,9 @@ export default function MyPageScreen() {
         {/* 헤더 타이틀 */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>마이페이지</Text>
+          <TouchableOpacity onPress={() => router.push('/edit-profile')}>
+            <Settings size={24} color={theme.colors.text} />
+          </TouchableOpacity>
         </View>
 
         {/* 프로필 카드 */}
