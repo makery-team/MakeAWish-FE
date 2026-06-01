@@ -209,3 +209,21 @@ export interface DirectChatRoom {
   messages: DirectChatMessage[];
 }
 
+// --- Notification Types ---
+export interface AppNotification {
+  id: number;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationResponse {
+  content: AppNotification[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+  };
+  first: boolean;
+  last: boolean;
+  hasNext: boolean;
+}
