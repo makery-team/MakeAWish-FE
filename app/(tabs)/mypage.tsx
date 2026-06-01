@@ -60,9 +60,6 @@ export default function MyPageScreen() {
         {/* 헤더 타이틀 */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>마이페이지</Text>
-          <TouchableOpacity onPress={() => router.push('/edit-profile')}>
-            <Settings size={24} color={theme.colors.text} />
-          </TouchableOpacity>
         </View>
 
         {/* 프로필 카드 */}
@@ -79,6 +76,12 @@ export default function MyPageScreen() {
               <Text style={styles.nickname}>{user?.nickname || '닉네임 없음'}</Text>
               <Text style={styles.email}>{user?.email || '이메일 정보 없음'}</Text>
             </View>
+            <TouchableOpacity 
+              style={styles.editProfileButton} 
+              onPress={() => router.push('/edit-profile')}
+            >
+              <Text style={styles.editProfileButtonText}>수정</Text>
+            </TouchableOpacity>
           </View>
           
           <View style={styles.statsContainer}>
@@ -190,6 +193,18 @@ const styles = StyleSheet.create({
   },
   email: {
     fontSize: 14,
+    color: theme.colors.gray,
+  },
+  editProfileButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#f3f4f6',
+    marginLeft: 8,
+  },
+  editProfileButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
     color: theme.colors.gray,
   },
   statsContainer: {
