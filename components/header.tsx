@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,26 +15,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 import { Logo } from './logo';
+import { AppNotification } from '@/types';
+import { notificationService } from '@/services/notification';
 
 const { width: WINDOW_WIDTH } = Dimensions.get('window');
 
-interface Notification {
-  id: number;
-  title: string;
-  message: string;
-  time: string;
-  isRead: boolean;
-}
-
-const mockNotifications: Notification[] = [
-  {
-    id: 1,
-    title: '새로운 메시지',
-    message: '케이크 주문이 확인되었습니다. 주문 내역을 확인해주세요.',
-    time: '10분 전',
-    isRead: false,
-  },
-];
 
 interface HeaderProps {
   viewMode?: 'list' | 'map';
@@ -48,7 +33,23 @@ export function Header({
   const insets = useSafeAreaInsets();
   const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 0) : insets.top;
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const unreadCount = mockNotifications.filter((n) => !n.isRead).length;
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await notificationService.getNotifications(0, 10);
+        if (response && response.content) {
+          setNotifications(response.content);
+        }
+      } catch (error) {
+        console.error('Failed to load notifications', error);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
     <View style={[styles.wrapper, { paddingTop: statusBarHeight }]}>
@@ -109,8 +110,8 @@ export function Header({
                   </View>
 
                   <ScrollView style={styles.notificationList} bounces={false}>
-                    {mockNotifications.length > 0 ? (
-                      mockNotifications.map((notification) => (
+                    {notifications.length > 0 ? (
+                      notifications.map((notification) => (
                         <View
                           key={notification.id}
                           style={[
@@ -120,10 +121,10 @@ export function Header({
                         >
                           <View style={styles.notificationItemHeader}>
                             <Text style={styles.notificationTitle}>
-                              {notification.title}
+                              {notification.message.includes('주문') ? '주문 알림' : '시스템 알림'}
                             </Text>
                             <Text style={styles.notificationTime}>
-                              {notification.time}
+                              {new Date(notification.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </Text>
                           </View>
                           <Text style={styles.notificationMessage}>
@@ -138,7 +139,7 @@ export function Header({
                     )}
                   </ScrollView>
 
-                  {mockNotifications.length > 0 && (
+                  {notifications.length > 0 && (
                     <TouchableOpacity style={styles.notificationFooter}>
                       <Text style={styles.footerText}>모든 알림 읽음 처리</Text>
                     </TouchableOpacity>
