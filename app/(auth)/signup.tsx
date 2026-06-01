@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/use-auth';
 import { theme } from '@/constants/theme';
 import { ChevronRight, Phone, User as UserIcon } from 'lucide-react-native';
+import { fetchWithAuth } from '@/utils/api';
 
 const LANGUAGES = [
   { label: '한국어', value: 'ko' },
@@ -30,21 +31,68 @@ export default function SignupScreen() {
   const [nickname, setNickname] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [language, setLanguage] = useState('ko');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleComplete = () => {
+  // 전화번호 자동 하이픈 및 숫자만 입력되도록 처리
+  const handlePhoneChange = (text: string) => {
+    const cleaned = text.replace(/\D/g, '');
+    let formatted = cleaned;
+    if (cleaned.length > 3 && cleaned.length <= 7) {
+      formatted = `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`;
+    } else if (cleaned.length > 7) {
+      formatted = `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)}-${cleaned.slice(7, 11)}`;
+    }
+    setPhoneNumber(formatted);
+  };
+
+  const handleComplete = async () => {
     if (!nickname || !phoneNumber) {
       Alert.alert('입력 오류', '모든 필드를 입력해주세요.');
       return;
     }
 
-    updateUser({
-      nickname,
-      phoneNumber,
-      language,
-    });
+    // 전화번호 형식 검증 (010-XXXX-XXXX)
+    const phoneRegex = /^010-\d{4}-\d{4}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+      Alert.alert('입력 오류', '올바른 전화번호 형식(010-0000-0000)으로 입력해주세요.');
+      return;
+    }
 
-    // In a real app, we would save this to the backend
-    router.replace('/(tabs)');
+    try {
+      setIsLoading(true);
+      
+      // 백엔드 명세에 맞게 language Enum (KO, EN 등 대문자)로 변환
+      const languageEnum = language.toUpperCase();
+
+      const response = await fetchWithAuth('/api/users/me/init', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nickname,
+          phoneNumber,
+          language: languageEnum,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('프로필 초기화 실패');
+      }
+
+      await updateUser({
+        nickname,
+        phoneNumber,
+        language,
+      });
+
+      router.replace('/(tabs)');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('오류', '프로필 설정 중 문제가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -81,8 +129,9 @@ export default function SignupScreen() {
                   style={styles.input}
                   placeholder="010-0000-0000"
                   value={phoneNumber}
-                  onChangeText={setPhoneNumber}
+                  onChangeText={handlePhoneChange}
                   keyboardType="phone-pad"
+                  maxLength={13}
                 />
               </View>
             </View>
@@ -114,12 +163,12 @@ export default function SignupScreen() {
           <TouchableOpacity 
             style={[
               styles.completeButton,
-              (!nickname || !phoneNumber) && styles.completeButtonDisabled
+              (!nickname || !phoneNumber || isLoading) && styles.completeButtonDisabled
             ]} 
             onPress={handleComplete}
-            disabled={!nickname || !phoneNumber}
+            disabled={!nickname || !phoneNumber || isLoading}
           >
-            <Text style={styles.completeButtonText}>시작하기</Text>
+            <Text style={styles.completeButtonText}>{isLoading ? '설정 중...' : '시작하기'}</Text>
             <ChevronRight size={20} color="#fff" />
           </TouchableOpacity>
         </ScrollView>
