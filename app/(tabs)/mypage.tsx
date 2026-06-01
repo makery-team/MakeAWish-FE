@@ -60,9 +60,6 @@ export default function MyPageScreen() {
         {/* 헤더 타이틀 */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>마이페이지</Text>
-          <TouchableOpacity>
-            <Settings size={24} color={theme.colors.text} />
-          </TouchableOpacity>
         </View>
 
         {/* 프로필 카드 */}
@@ -108,9 +105,8 @@ export default function MyPageScreen() {
         </View>
 
         <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>고객 센터</Text>
-          {renderMenuItem(<Info size={20} color={theme.colors.gray} />, "공지사항")}
-          {renderMenuItem(<MessageSquare size={20} color={theme.colors.gray} />, "1:1 문의하기")}
+          <Text style={styles.sectionTitle}>앱 설정</Text>
+          {renderMenuItem(<Settings size={20} color={theme.colors.gray} />, "설정", "앱 환경설정 및 계정 관리")}
         </View>
 
         {/* 하단 로그아웃 */}
