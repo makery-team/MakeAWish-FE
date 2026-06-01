@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { captureRef } from 'react-native-view-shot';
 
 /**
@@ -12,8 +12,18 @@ export const uriToBase64 = async (uri: string): Promise<string> => {
       return parts.length > 1 ? parts[1] : parts[0];
     }
     
+    let targetUri = uri;
+    
+    // 원격 URL인 경우 로컬 기기로 먼저 다운로드
+    if (uri.startsWith('http://') || uri.startsWith('https://')) {
+      const filename = `temp_${Date.now()}.jpg`;
+      const localFileUri = FileSystem.cacheDirectory + filename;
+      const { uri: downloadedUri } = await FileSystem.downloadAsync(uri, localFileUri);
+      targetUri = downloadedUri;
+    }
+
     // EncodingType.Base64 대신 문자열 리터럴 'base64' 사용 (안정성)
-    const base64 = await FileSystem.readAsStringAsync(uri, {
+    const base64 = await FileSystem.readAsStringAsync(targetUri, {
       encoding: 'base64',
     });
     return base64;

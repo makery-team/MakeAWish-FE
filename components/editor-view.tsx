@@ -42,6 +42,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 interface EditorViewProps {
   image: string;
   shopName: string;
+  portfolioId?: number;
   onBack: () => void;
   onInquiry?: (editedImage?: string) => void;
 }
@@ -55,6 +56,7 @@ interface DrawingPath {
 export function EditorView({
   image,
   shopName,
+  portfolioId,
   onBack,
   onInquiry,
 }: EditorViewProps) {
@@ -132,21 +134,36 @@ export function EditorView({
     setIsGenerating(true);
 
     try {
-      // 1. 원본 이미지 Base64 변환
-      const imageB64 = await uriToBase64(currentImage);
-      
-      // 2. 마스크 이미지 캡처 (SVG 영역)
+      // 1. 마스크 이미지 캡처 (SVG 영역)
       const maskB64 = await captureViewToBase64(svgContainerRef);
 
-      // 3. AI API 호출
-      const response = await aiService.inpaint({
-        image_b64: imageB64,
-        mask_b64: maskB64,
-        prompt: command,
-      });
+      // 2. AI API 호출 (비동기 202 응답)
+      const pId = portfolioId || 1;
+      const initialResponse = await aiService.inpaint(pId, command, maskB64);
+      
+      const inpaintingId = initialResponse.id;
+      if (!inpaintingId) {
+        throw new Error("서버에서 인페인팅 ID를 발급받지 못했습니다.");
+      }
+
+      // 3. 폴링 로직 (3초 간격으로 계속 확인)
+      let finalImageUrl = null;
+      for (let i = 0; i < 20; i++) { // 최대 60초 대기
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        const detailResponse = await aiService.getInpaintingDetail(pId, inpaintingId);
+        if (detailResponse.afterImageUrl) {
+          finalImageUrl = detailResponse.afterImageUrl;
+          break; // 이미지 생성 완료!
+        }
+      }
+
+      if (!finalImageUrl) {
+        throw new Error("이미지 생성 시간이 초과되었습니다.");
+      }
 
       // 4. 결과 적용
-      setCurrentImage(response.result_image);
+      setCurrentImage(finalImageUrl);
       setPaths([]); // 편집 완료 후 경로 초기화
       setCommand("");
       Alert.alert("성공", "디자인이 수정되었습니다!");
@@ -223,7 +240,7 @@ export function EditorView({
               <GestureDetector gesture={panGesture}>
                 <View 
                   ref={svgContainerRef}
-                  style={[styles.svgOverlay, { height: containerHeight, backgroundColor: 'black' }]}
+                  style={[styles.svgOverlay, { height: containerHeight }]}
                   collapsable={false}
                 >
                   <Svg style={StyleSheet.absoluteFill}>
