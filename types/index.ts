@@ -122,6 +122,10 @@ export interface OrderData {
   pickupDate?: string;
   pickupTime?: string;
   lettering?: string;
+  flavor?: string;
+  size?: string;
+  design?: string;
+  additionalRequests?: string;
 }
 
 // User interface for authentication

@@ -135,7 +135,7 @@ export const aiService = {
    */
   async checkHealth(): Promise<boolean> {
     try {
-      const response = await fetch(`${AI_SERVER_URL}/`);
+      const response = await fetch(`${BACKEND_API_URL}/`);
       return response.ok;
     } catch {
       return false;

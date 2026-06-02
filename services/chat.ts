@@ -51,7 +51,7 @@ export const chatService = {
    * @param roomNumber 채팅방 고유 번호
    */
   async deleteChatRoom(roomNumber: number): Promise<void> {
-    return fetchWithAuth(`/api/chatting/rooms/${roomNumber}`, {
+    await fetchWithAuth(`/api/chatting/rooms/${roomNumber}`, {
       method: 'DELETE',
     });
   }
