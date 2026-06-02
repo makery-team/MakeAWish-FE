@@ -202,7 +202,9 @@ export function AISearchBar({
     setIsAiTyping(true);
     try {
       // 오직 백엔드와 통신 (오케스트레이터 패턴)
-      const response = await aiService.chat(textToSend);
+      // 프론트엔드가 알고 있는 productId를 넘겨주어 백엔드가 스키마를 불러오게 함
+      const productId = conversationHistory.productId;
+      const response = await aiService.chat(textToSend, productId);
       
       let recommendedImages: string[] | undefined = undefined;
       let recommendedCakeDetails: { image: string, shopName: string }[] | undefined = undefined;

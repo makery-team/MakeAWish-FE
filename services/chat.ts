@@ -6,7 +6,7 @@ export const chatService = {
    * 내 채팅방 목록을 조회합니다.
    */
   async getChatRooms(): Promise<DirectChatRoom[]> {
-    const res = await fetchWithAuth('/api/chatting/rooms');
+    const res = await fetchWithAuth('/api/chatting/room');
     if (!res.ok) {
       const errorText = await res.text().catch(() => 'No response body');
       console.error(`[getChatRooms Error] Status: ${res.status}, Body: ${errorText}`);
@@ -35,7 +35,7 @@ export const chatService = {
    */
   async getChatHistory(roomNumber: number): Promise<DirectChatMessage[]> {
     try {
-      const res = await fetchWithAuth(`/api/chatting/rooms/${roomNumber}/messages`, {
+      const res = await fetchWithAuth(`/api/chatting/room/${roomNumber}/messages`, {
         method: 'GET',
       });
       if (!res.ok) return [];
@@ -51,7 +51,7 @@ export const chatService = {
    * @param roomNumber 채팅방 고유 번호
    */
   async deleteChatRoom(roomNumber: number): Promise<void> {
-    await fetchWithAuth(`/api/chatting/rooms/${roomNumber}`, {
+    await fetchWithAuth(`/api/chatting/room/${roomNumber}`, {
       method: 'DELETE',
     });
   }
