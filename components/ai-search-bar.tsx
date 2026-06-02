@@ -151,10 +151,34 @@ export function AISearchBar({
     if (inquiryMode?.active) {
       setChatMode("inquiry");
       handleOpen("full");
-      updateConversation({ selectedCakeImage: inquiryMode.image, shopName: inquiryMode.shopName });
+      updateConversation({ 
+        selectedCakeImage: inquiryMode.image, 
+        shopName: inquiryMode.shopName,
+        portfolioId: inquiryMode.portfolioId,
+        storeId: inquiryMode.storeId,
+        productId: inquiryMode.productId
+      });
       
-      // 백엔드가 오케스트레이션을 하므로 여기서 스키마를 찔러볼 필요가 없습니다.
-      // 필요 시 봇에게 초기 메시지를 던지게 할 수 있습니다.
+      const localReminderMsg: Message = {
+        type: "ai",
+        text: "",
+        actionType: "LOCAL_ORDER_REMINDER" as any,
+        cakeDetails: [{
+          image: inquiryMode.image,
+          shopName: inquiryMode.shopName || '지니 추천',
+          portfolioId: inquiryMode.portfolioId,
+          storeId: inquiryMode.storeId,
+          productId: inquiryMode.productId
+        }]
+      };
+      
+      setMessages(prev => {
+        const hasReminder = prev.some(m => m.actionType === 'LOCAL_ORDER_REMINDER' && m.cakeDetails?.[0]?.image === inquiryMode.image);
+        if (hasReminder) return prev;
+        return [...prev, localReminderMsg];
+      });
+      
+      setTimeout(() => { flatListRef.current?.scrollToEnd({ animated: true }); }, 100);
     }
   }, [handleOpen, inquiryMode, updateConversation]);
 
