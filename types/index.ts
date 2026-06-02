@@ -101,6 +101,9 @@ export interface InquiryMode {
   size?: string;
   design?: string;
   shopName?: string;
+  portfolioId?: number;
+  storeId?: number;
+  productId?: number;
 }
 
 // Selected cake interface

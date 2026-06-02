@@ -32,7 +32,9 @@ interface CakeCardProps {
   likes: number;
   rating: number;
   tag?: string;
-  onInquiry?: (image: string, shopName: string) => void;
+  storeId?: number;
+  productId?: number;
+  onInquiry?: (image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number) => void;
   isFavorited?: boolean;
   onToggleFavorite?: (
     cakeId: number,
@@ -49,6 +51,8 @@ export function CakeCard({
   likes,
   rating,
   tag,
+  storeId,
+  productId,
   onInquiry,
   isFavorited,
   onToggleFavorite,
@@ -67,7 +71,7 @@ export function CakeCard({
 
   const handleInquiry = () => {
     setShowActions(false);
-    onInquiry?.(image, shopName);
+    onInquiry?.(image, shopName, id, storeId, productId);
   };
 
   const handleToggleFavorite = () => {

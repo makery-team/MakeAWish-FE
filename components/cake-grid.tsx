@@ -6,7 +6,7 @@ import { CakeCard } from "./cake-card";
 interface CakeGridProps {
   cakes?: FeedItem[];
   onCakeSelect?: (image: string, shopName: string) => void;
-  onCakeInquiry?: (image: string, shopName: string) => void;
+  onCakeInquiry?: (image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number) => void;
   selectedCategory?: string; // Kept for compatibility if needed, but API handles filtering
   favorites?: FavoriteCake[];
   onToggleFavorite?: (
@@ -52,6 +52,8 @@ export function CakeGrid({
             likes={cake.likeCount}
             rating={0} // API response doesn't include rating currently
             tag={primaryTag}
+            storeId={cake.storeId}
+            productId={cake.productId}
             onInquiry={onCakeInquiry}
             isFavorited={isFavorited}
             onToggleFavorite={onToggleFavorite}

@@ -85,10 +85,13 @@ export default function HomeScreen() {
   const dynamicPaddingBottom = tabBarHeight + COLLAPSED_BAR_HEIGHT + 20;
 
   // Handler for cake inquiry from grid
-  const handleCakeInquiry = (image: string, shopName: string) => {
+  const handleCakeInquiry = (image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number) => {
     startInquiry({
       image,
       shopName,
+      portfolioId,
+      storeId,
+      productId,
       design: "디자인 상세 선택",
     });
   };
