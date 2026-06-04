@@ -37,8 +37,8 @@ export default function EditorScreen() {
       design: conversationHistory.design || "에디터에서 수정된 디자인",
     });
     
-    // 에디터를 닫고 AI 채팅(홈 화면)으로 이동
-    handleBack();
+    // 에디터를 닫고 AI 채팅(홈 화면)으로 다이렉트 이동
+    router.replace("/(tabs)");
   };
 
   if (!safeImage || !safeShopName) return null;

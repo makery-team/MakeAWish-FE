@@ -30,6 +30,8 @@ export default function ShopDetailScreen() {
       design: '디자인 상세 선택',
     });
     // The AISearchBar should handle the inquiry mode automatically
+    // 에디터와 마찬가지로 상세페이지를 닫고 메인으로 이동
+    router.replace('/(tabs)');
   };
 
   return (
