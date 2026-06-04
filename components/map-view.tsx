@@ -36,25 +36,49 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Image as RNImage,
 } from 'react-native';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // MapStore(API) → CakeShop(UI) 변환
 function mapStoreToCakeShop(store: MapStore): CakeShop {
-  const guMatch = store.address.match(/(\S+구)/);
+  const address = store.address || '';
+  const guMatch = address.match(/(\S+구)/);
   return {
     id: store.id,
     name: store.name,
     latitude: store.latitude,
     longitude: store.longitude,
-    thumbnail: store.thumbnailUrl ?? '',
-    rating: store.rating,
-    reviewCount: store.reviewCount,
-    categories: store.tags,
-    address: store.address,
-    gu: guMatch ? guMatch[1] : '',
+    thumbnail: store.thumbnailUrl || 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&q=80',
+    rating: store.rating || 4.5,
+    reviewCount: store.reviewCount || 0,
+    categories: store.tags || ['레터링 케이크'],
+    address: address,
+    gu: guMatch ? guMatch[1] : '마포구',
   };
+}
+
+// 마커 이미지 캐싱 이슈 해결을 위한 래퍼 컴포넌트
+function MarkerImage({ uri, selected }: { uri: string; selected: boolean }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <View
+      style={[
+        styles.markerContainer,
+        selected && styles.markerContainerSelected,
+        // 강제 리렌더링 효과 (Android 맵 오버레이 버그 방지)
+        { backgroundColor: loaded ? '#fff' : '#f0f0f0' },
+      ]}
+    >
+      <RNImage
+        key={loaded ? 'loaded' : 'loading'}
+        source={{ uri }}
+        style={styles.markerImage}
+        onLoad={() => setLoaded(true)}
+      />
+    </View>
+  );
 }
 
 interface MapViewProps {
@@ -139,13 +163,20 @@ export function MapView({ onShopSelect }: MapViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 사용자 위치 확인 후 주변 매장 조회 (반경 5km)
+  // 주변 매장 조회 (반경 5km) - 위치 없으면 서울시청 기준
   useEffect(() => {
-    if (!userLocation) return;
+    const lat = userLocation ? userLocation.latitude : 37.5665;
+    const lng = userLocation ? userLocation.longitude : 126.9780;
+    
     mapService
-      .getNearbyStores(userLocation.latitude, userLocation.longitude, 5000)
-      .then((stores) => setApiStores(stores.map(mapStoreToCakeShop)))
-      .catch(() => {}); // API 실패 시 mock 데이터 유지
+      .getNearbyStores(lat, lng, 5000)
+      .then((stores) => {
+        console.log('[API 성공] 주변 매장 데이터:', stores);
+        setApiStores(stores.map(mapStoreToCakeShop));
+      })
+      .catch((err) => {
+        console.error('[API 실패] Map API 에러:', err);
+      }); // API 실패 시 mock 데이터 유지
   }, [userLocation]);
 
   // 구 선택 시 해당 구 중심으로 매장 조회 (반경 3km)
@@ -210,9 +241,12 @@ export function MapView({ onShopSelect }: MapViewProps) {
             key={shop.id}
             latitude={shop.latitude}
             longitude={shop.longitude}
-            tintColor={theme.colors.primary}
-            onTap={() => handleMarkerTap(shop)}
-          />
+            onTap={() => onShopSelect(shop.id)}
+            width={48}
+            height={48}
+          >
+            <MarkerImage uri={shop.thumbnail} selected={selectedShop?.id === shop.id} />
+          </NaverMapMarkerOverlay>
         ))}
 
         {userLocation && (
@@ -653,6 +687,28 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  markerContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'white',
+    padding: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 6,
+  },
+  markerContainerSelected: {
+    backgroundColor: theme.colors.primary,
+    transform: [{ scale: 1.15 }],
+  },
+  markerImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 21,
+    backgroundColor: '#F0F0F0',
   },
   regionBar: {
     position: 'absolute',
