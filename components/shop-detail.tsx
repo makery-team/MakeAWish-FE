@@ -12,6 +12,7 @@ import {
 import { Image } from 'expo-image';
 import { ArrowLeft, Star, MapPin, Clock, Phone, Share2, MessageCircle, Heart } from 'lucide-react-native';
 import { SAMPLE_CAKE_IMAGES } from '@/constants/mock-data';
+import { useRouter } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { mapService } from '@/services/map';
 import { Store, StorePortfolio, StoreReview } from '@/types';
@@ -52,6 +53,7 @@ interface ShopDetailProps {
 }
 
 export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: ShopDetailProps) {
+  const router = useRouter();
   // API 상태
   const [storeData, setStoreData] = useState<Store | null>(null);
   const [portfolios, setPortfolios] = useState<StorePortfolio[]>([]);
@@ -77,6 +79,14 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
       if (reviewsResult.status === 'fulfilled') setReviewList(reviewsResult.value.content);
     }).finally(() => setIsLoadingDetail(false));
   }, [shopId]);
+
+  if (isLoadingDetail) {
+    return (
+      <View style={{flex:1, justifyContent:'center', alignItems:'center'}}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
 
   if (!storeData) {
     return (
@@ -224,7 +234,11 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
 
           <TouchableOpacity
             style={styles.chatButton}
-            onPress={() => onCakeInquiry?.(shop.gallery[0], shop.name)}
+            onPress={() => {
+              import('react-native').then(rn => {
+                rn.Alert.alert('안내', '현재 1:1 사장님 채팅 기능은 점검 중입니다.\n시연 영상에서는 제외될 예정입니다.');
+              });
+            }}
           >
             <MessageCircle size={18} color="white" />
             <Text style={styles.chatButtonText}>1:1로 사장님께 채팅 문의하기</Text>
