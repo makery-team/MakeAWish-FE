@@ -1,7 +1,6 @@
 import { theme } from "@/constants/theme";
 import { aiService } from "@/services/ai";
 import { captureViewToBase64, uriToBase64 } from "@/utils/image-utils";
-import { Image } from "expo-image";
 import {
   ArrowLeft,
   Brush,
@@ -24,6 +23,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Image as RNImage,
 } from "react-native";
 import {
   Gesture,
@@ -61,6 +61,7 @@ export function EditorView({
   onInquiry,
 }: EditorViewProps) {
   const [currentImage, setCurrentImage] = useState(image);
+  const [updateKey, setUpdateKey] = useState(Date.now());
   const [brushSize, setBrushSize] = useState(20);
   const [activeTool, setActiveTool] = useState<"brush" | "eraser">("brush");
   const [command, setCommand] = useState("");
@@ -162,8 +163,20 @@ export function EditorView({
         throw new Error("이미지 생성 시간이 초과되었습니다.");
       }
 
-      // 4. 결과 적용
-      setCurrentImage(finalImageUrl);
+      // 4. 결과 적용 (캐시 무효화 우회)
+      let bustedUrl = finalImageUrl;
+      if (finalImageUrl.startsWith('http')) {
+        if (!finalImageUrl.includes('X-Amz-Signature')) {
+          const separator = finalImageUrl.includes("?") ? "&" : "?";
+          bustedUrl = `${finalImageUrl}${separator}t=${Date.now()}`;
+        }
+      } else if (!finalImageUrl.startsWith('data:')) {
+        // 백엔드가 순수 base64(접두어 없음)만 보냈을 경우 대비
+        bustedUrl = `data:image/png;base64,${finalImageUrl}`;
+      }
+      
+      setCurrentImage(bustedUrl);
+      setUpdateKey(Date.now());
       setPaths([]); // 편집 완료 후 경로 초기화
       setCommand("");
       Alert.alert("성공", "디자인이 수정되었습니다!");
@@ -229,12 +242,12 @@ export function EditorView({
             keyboardShouldPersistTaps="handled"
             scrollEnabled={isKeyboardVisible}
           >
-            {/* Canvas Area */}
             <View style={styles.canvasContainer}>
-              <Image
+              <RNImage
+                key={updateKey}
                 source={{ uri: currentImage }}
                 style={[styles.baseImage, { height: containerHeight }]}
-                contentFit="cover"
+                resizeMode="cover"
               />
 
               <GestureDetector gesture={panGesture}>

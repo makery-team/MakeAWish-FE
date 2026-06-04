@@ -36,6 +36,9 @@ export default function EditorScreen() {
       shopName: safeShopName,
       design: conversationHistory.design || "에디터에서 수정된 디자인",
     });
+    
+    // 에디터를 닫고 AI 채팅(홈 화면)으로 이동
+    handleBack();
   };
 
   if (!safeImage || !safeShopName) return null;

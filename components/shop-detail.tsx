@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,15 @@ import {
   ScrollView,
   SafeAreaView,
   Share,
+  ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { ArrowLeft, Star, MapPin, Clock, Phone, Share2, MessageCircle, Heart } from 'lucide-react-native';
 import { SAMPLE_CAKE_IMAGES } from '@/constants/mock-data';
 import { CAKE_SHOPS } from '@/constants/map-shops';
 import { theme } from '@/constants/theme';
+import { mapService } from '@/services/map';
+import { Store, StorePortfolio, StoreReview } from '@/types';
 
 const CHIPS = ['검색한 메뉴', '인기 메뉴', '레터링 케이크', '도시락 케이크', '당일 픽업 가능', '3단 케이크'];
 
@@ -80,7 +83,38 @@ interface ShopDetailProps {
 
 export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: ShopDetailProps) {
   const [activeChip, setActiveChip] = useState('검색한 메뉴');
-  const shop = buildShopDetail(shopId);
+
+  // API 상태
+  const [storeData, setStoreData] = useState<Store | null>(null);
+  const [portfolios, setPortfolios] = useState<StorePortfolio[]>([]);
+  const [reviewList, setReviewList] = useState<StoreReview[]>([]);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(true);
+
+  useEffect(() => {
+    setIsLoadingDetail(true);
+    Promise.allSettled([
+      mapService.getStoreDetail(shopId),
+      mapService.getStorePortfolios(shopId, 0, 20),
+      mapService.getStoreReviews(shopId, 0, 5),
+    ]).then(([detailResult, portfoliosResult, reviewsResult]) => {
+      if (detailResult.status === 'fulfilled') setStoreData(detailResult.value);
+      if (portfoliosResult.status === 'fulfilled') setPortfolios(portfoliosResult.value.content);
+      if (reviewsResult.status === 'fulfilled') setReviewList(reviewsResult.value.content);
+    }).finally(() => setIsLoadingDetail(false));
+  }, [shopId]);
+
+  // mock 데이터를 기반으로 하되, API 데이터가 있으면 해당 필드를 덮어씀
+  const shopFallback = buildShopDetail(shopId);
+  const shop = storeData ? {
+    ...shopFallback,
+    name: storeData.name,
+    rating: storeData.rating,
+    reviews: storeData.reviewCount,
+    description: storeData.description || shopFallback.description,
+    hours: storeData.hours || shopFallback.hours,
+    address: storeData.address || shopFallback.address,
+    gallery: portfolios.length > 0 ? portfolios.map((p) => p.imageUrl) : shopFallback.gallery,
+  } : shopFallback;
 
   const handleShare = async () => {
     try {
@@ -93,7 +127,10 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
   };
 
   const renderGallery = () => {
-    const images = CHIP_GALLERIES[activeChip] ?? shop.gallery;
+    // API 포트폴리오가 있으면 우선 사용, 없으면 기존 mock 데이터
+    const images = portfolios.length > 0
+      ? portfolios.map((p) => p.imageUrl)
+      : (CHIP_GALLERIES[activeChip] ?? shop.gallery);
     const leftCol: string[] = [];
     const rightCol: string[] = [];
     images.forEach((img, i) => {
@@ -229,8 +266,45 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
         {/* Gallery */}
         <View style={styles.gallerySection}>
           <Text style={styles.sectionTitle}>{activeChip}</Text>
-          {renderGallery()}
+          {isLoadingDetail ? (
+            <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 40 }} />
+          ) : (
+            renderGallery()
+          )}
         </View>
+
+        {/* Reviews */}
+        {reviewList.length > 0 && (
+          <View style={reviewStyles.section}>
+            <Text style={styles.sectionTitle}>리뷰 ({shop.reviews})</Text>
+            {reviewList.map((review) => (
+              <View key={review.id} style={reviewStyles.card}>
+                <View style={reviewStyles.header}>
+                  <Text style={reviewStyles.nickname}>{review.nickname}</Text>
+                  <View style={reviewStyles.stars}>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        size={12}
+                        color="#FACC15"
+                        fill={i < review.rating ? '#FACC15' : 'none'}
+                      />
+                    ))}
+                  </View>
+                  <Text style={reviewStyles.date}>{review.createdAt.slice(0, 10)}</Text>
+                </View>
+                <Text style={reviewStyles.content}>{review.content}</Text>
+                {review.imageUrls.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={reviewStyles.imageRow}>
+                    {review.imageUrls.map((uri, i) => (
+                      <Image key={i} source={{ uri }} style={reviewStyles.reviewImage} />
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
 
     </SafeAreaView>
@@ -496,5 +570,53 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: 'white',
   },
+});
 
+const reviewStyles = StyleSheet.create({
+  section: {
+    padding: 20,
+    borderTopWidth: 8,
+    borderTopColor: '#F8F8F8',
+  },
+  card: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  nickname: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#333',
+    flex: 1,
+  },
+  stars: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  date: {
+    fontSize: 11,
+    color: '#AAA',
+  },
+  content: {
+    fontSize: 13,
+    color: '#555',
+    lineHeight: 20,
+  },
+  imageRow: {
+    marginTop: 10,
+  },
+  reviewImage: {
+    width: 72,
+    height: 72,
+    borderRadius: 10,
+    marginRight: 8,
+    backgroundColor: '#F0F0F0',
+  },
 });
