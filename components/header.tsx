@@ -17,6 +17,7 @@ import { theme } from '@/constants/theme';
 import { Logo } from './logo';
 import { AppNotification } from '@/types';
 import { notificationService } from '@/services/notification';
+import { useAuth } from '@/context/AuthContext';
 
 const { width: WINDOW_WIDTH } = Dimensions.get('window');
 
@@ -34,9 +35,11 @@ export function Header({
   const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 0) : insets.top;
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const { token } = useAuth();
 
   useEffect(() => {
     const fetchNotifications = async () => {
+      if (!token) return;
       try {
         const response = await notificationService.getNotifications(0, 10);
         if (response && response.content) {
@@ -47,7 +50,7 @@ export function Header({
       }
     };
     fetchNotifications();
-  }, []);
+  }, [token]);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 

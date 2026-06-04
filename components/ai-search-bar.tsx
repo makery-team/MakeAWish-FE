@@ -1,5 +1,5 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { ChevronRight, LayoutGrid, List, Send, Sparkles, X } from "lucide-react-native";
+import { ChevronRight, LayoutGrid, List, Send, Sparkles, X, RotateCcw } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -134,7 +134,13 @@ export function AISearchBar({
     setSheetState(mode);
   }, [FULL_Y, HALF_Y, translateY]);
 
-  const resetChat = () => {
+  const minimizeChat = () => {
+    Keyboard.dismiss();
+    setSheetState("closed");
+    translateY.value = withSpring(CLOSED_Y);
+  };
+
+  const clearChat = () => {
     Keyboard.dismiss();
     setSheetState("closed");
     translateY.value = withSpring(CLOSED_Y);
@@ -156,7 +162,8 @@ export function AISearchBar({
         shopName: inquiryMode.shopName,
         portfolioId: inquiryMode.portfolioId,
         storeId: inquiryMode.storeId,
-        productId: inquiryMode.productId
+        productId: inquiryMode.productId,
+        tags: inquiryMode.tags
       });
       
       const localReminderMsg: Message = {
@@ -168,15 +175,12 @@ export function AISearchBar({
           shopName: inquiryMode.shopName || '지니 추천',
           portfolioId: inquiryMode.portfolioId,
           storeId: inquiryMode.storeId,
-          productId: inquiryMode.productId
+          productId: inquiryMode.productId,
+          tags: inquiryMode.tags
         }]
       };
       
-      setMessages(prev => {
-        const hasReminder = prev.some(m => m.actionType === 'LOCAL_ORDER_REMINDER' && m.cakeDetails?.[0]?.image === inquiryMode.image);
-        if (hasReminder) return prev;
-        return [...prev, localReminderMsg];
-      });
+      setMessages([INITIAL_AI_MESSAGE, localReminderMsg]);
       
       setTimeout(() => { flatListRef.current?.scrollToEnd({ animated: true }); }, 100);
     }
@@ -251,7 +255,7 @@ export function AISearchBar({
             productId: conversationHistory.productId,
             ...conversationHistory
           });
-          resetChat();
+          clearChat();
         }, 1500);
       }
     } catch (error) {
@@ -275,7 +279,8 @@ export function AISearchBar({
             <OrderReminderCard 
               conversationState={{
                 ...conversationHistory,
-                shopName: item.cakeDetails[0].shopName
+                shopName: item.cakeDetails[0].shopName,
+                tags: item.cakeDetails[0].tags
               }}
               selectedImage={item.cakeDetails[0].image}
               onConfirm={() => {
@@ -326,7 +331,19 @@ export function AISearchBar({
               })}
             </View>
             <Text style={styles.summaryConfirmText}>이대로 매장에 견적 문의를 보내드릴까요?</Text>
-            <TouchableOpacity style={styles.confirmBtnPrimary} onPress={() => handleSend("네, 이대로 문의할게요!")}>
+            <TouchableOpacity style={styles.confirmBtnPrimary} onPress={() => {
+              if (onInquiryComplete) {
+                onInquiryComplete({ 
+                  cakeImage: conversationHistory.selectedCakeImage || "", 
+                  shopName: conversationHistory.shopName, 
+                  portfolioId: conversationHistory.portfolioId,
+                  storeId: conversationHistory.storeId,
+                  productId: conversationHistory.productId,
+                  ...conversationHistory
+                });
+                clearChat();
+              }
+            }}>
               <Text style={styles.confirmBtnTextPrimary}>이대로 문의하기!</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.confirmBtnSecondary} onPress={() => handleSend("내용 수정할게요")}>
@@ -364,14 +381,15 @@ export function AISearchBar({
                 images={item.images}
                 cakeDetails={item.cakeDetails}
                 onCakeSelect={onCakeSelect}
-                onInquiry={(image, shopName, portfolioId, storeId, productId) => {
+                onInquiry={(image, shopName, portfolioId, storeId, productId, tags) => {
                   // 대화 중 슬라이더에서 문의하기 클릭 시, 챗봇 대화방 안에서 이어가도록 처리
                   updateConversation({ 
                     selectedCakeImage: image, 
                     shopName: shopName || inquiryMode?.shopName || '지니 추천',
                     portfolioId,
                     storeId,
-                    productId
+                    productId,
+                    tags
                   });
                   
                   // 백엔드로 바로 쏘지 않고, 로컬에 확인 카드 메시지를 띄웁니다.
@@ -384,13 +402,14 @@ export function AISearchBar({
                       shopName: shopName || '지니 추천',
                       portfolioId,
                       storeId,
-                      productId
+                      productId,
+                      tags
                     }]
                   };
                   setMessages(prev => [...prev, localReminderMsg]);
                   setTimeout(() => { flatListRef.current?.scrollToEnd({ animated: true }); }, 100);
                 }}
-                onMinimize={resetChat}
+                onMinimize={minimizeChat}
               />
             )}
           </View>
@@ -422,13 +441,28 @@ export function AISearchBar({
                   <Text style={styles.headerTitle}>AI 케이크 플래너</Text>
                   <Text style={styles.headerSubtitle}>{chatMode === "inquiry" ? "상담 진행 중" : "무엇이든 물어보세요"}</Text>
                 </View>
-                <TouchableOpacity 
-                  onPress={resetChat} 
-                  style={styles.closeBtn}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <X size={20} color="#666" strokeWidth={1.5} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <TouchableOpacity 
+                    onPress={() => {
+                      setMessages([INITIAL_AI_MESSAGE]);
+                      setChatMode("search");
+                      setInputValue("");
+                      setCurrentStoreSchema(null);
+                      resetConversation();
+                    }} 
+                    style={styles.closeBtn}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <RotateCcw size={18} color="#666" strokeWidth={1.5} />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={minimizeChat} 
+                    style={styles.closeBtn}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <X size={20} color="#666" strokeWidth={1.5} />
+                  </TouchableOpacity>
+                </View>
               </View>
 
               <FlatList
@@ -478,7 +512,9 @@ export function AISearchBar({
               <TouchableOpacity style={styles.collapsedBar} onPress={() => handleOpen("half")} activeOpacity={0.9}>
                 <View style={styles.collapsedLeft}>
                   <View style={styles.collapsedIcon}><Sparkles size={18} color="white" strokeWidth={1.5} /></View>
-                  <Text style={styles.collapsedTitle}>AI 케이크 플래너에게 물어보기</Text>
+                  <Text style={styles.collapsedTitle}>
+                    {chatMode === "inquiry" ? "🍰 주문 상담 진행 중..." : "AI 케이크 플래너에게 물어보기"}
+                  </Text>
                 </View>
                 <ChevronRight size={20} color={theme.colors.gray} strokeWidth={1.5} />
               </TouchableOpacity>

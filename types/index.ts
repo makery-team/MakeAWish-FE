@@ -66,7 +66,8 @@ export interface Message {
     shopName: string, 
     portfolioId?: number, 
     storeId?: number, 
-    productId?: number 
+    productId?: number,
+    tags?: string[]
   }[];
   options?: string[];
   messageId?: string;
@@ -86,6 +87,7 @@ export interface ConversationState {
   portfolioId?: number;
   storeId?: number;
   productId?: number;
+  tags?: string[];
   pickupDate?: string;
   pickupTime?: string;
   lettering?: string;
@@ -104,6 +106,7 @@ export interface InquiryMode {
   portfolioId?: number;
   storeId?: number;
   productId?: number;
+  tags?: string[];
 }
 
 // Selected cake interface
