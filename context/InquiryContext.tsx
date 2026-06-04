@@ -5,7 +5,11 @@ import type { ConversationState, InquiryMode } from "@/types";
 interface StartInquiryData {
   image: string;
   shopName?: string;
+  portfolioId?: number;
+  storeId?: number;
+  productId?: number;
   design?: string;
+  tags?: string[];
 }
 
 export interface InquiryContextValue {
@@ -29,13 +33,23 @@ export function InquiryProvider({ children }: { children: React.ReactNode }) {
       setInquiryMode({
         active: true,
         image: data.image,
-        region: conversationHistory.region,
-        size: conversationHistory.size,
-        design: data.design || "디자인 상세 선택",
         shopName: data.shopName,
+        portfolioId: data.portfolioId,
+        storeId: data.storeId,
+        productId: data.productId,
+        tags: data.tags,
+      });
+      setConversationHistory({
+        selectedCakeImage: data.image,
+        shopName: data.shopName,
+        portfolioId: data.portfolioId,
+        storeId: data.storeId,
+        productId: data.productId,
+        design: data.design,
+        tags: data.tags,
       });
     },
-    [conversationHistory.region, conversationHistory.size],
+    [],
   );
 
   const completeInquiry = useCallback(() => {

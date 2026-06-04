@@ -49,6 +49,14 @@ function getShopAddress(shopName?: string, region?: string): string {
     return regionAddresses[region];
   }
 
+  // Fallback for demo
+  if (shopName === '메이커리 강남점') {
+    return '서울시 강남구 테헤란로 123';
+  }
+  if (shopName === '어드민 베이커리') {
+    return '서울시 마포구 월드컵로 321';
+  }
+
   return '매장 주소 확인 중';
 }
 
@@ -107,19 +115,11 @@ export const OrderReminderCard: React.FC<OrderReminderCardProps> = ({
         <View style={styles.detailRow}>
           <CheckCircle2 size={16} color="#FF69B4" style={styles.detailIcon} />
           <View style={styles.detailTextContainer}>
-            <Text style={styles.detailLabel}>케이크 크기:</Text>
+            <Text style={styles.detailLabel}>포함된 태그:</Text>
             <Text style={styles.detailValue}>
-              {conversationState.size || '레귤러 (3-4인)'}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.detailRow}>
-          <CheckCircle2 size={16} color="#FF69B4" style={styles.detailIcon} />
-          <View style={styles.detailTextContainer}>
-            <Text style={styles.detailLabel}>디자인 스타일:</Text>
-            <Text style={styles.detailValue}>
-              {conversationState.design || '사용자 맞춤 디자인'}
+              {conversationState.tags && conversationState.tags.length > 0 
+                ? conversationState.tags.slice(0, 2).join(', ') 
+                : '기본 디자인'}
             </Text>
           </View>
         </View>

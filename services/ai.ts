@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface AiAgentRequest {
   message: string;
+  productId?: number;
 }
 
 export interface AiAgentResponse {
@@ -23,9 +24,9 @@ const BACKEND_API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://make-a-wish-e
 export const aiService = {
   /**
    * 사용자 메시지 전송 및 통합 응답 수신
-   * (백엔드가 오케스트레이션하므로 텍스트만 보냄)
+   * (백엔드가 오케스트레이션하므로 productId와 텍스트를 보냄)
    */
-  async chat(message: string): Promise<AiAgentResponse> {
+  async chat(message: string, productId?: number): Promise<AiAgentResponse> {
     try {
       // --- UI 테스트용 치트키 (운영 배포 시 삭제) ---
       if (message === '!테스트1') {
@@ -55,7 +56,7 @@ export const aiService = {
       const response = await fetch(`${BACKEND_API_URL}/api/ai-agent/chat`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, productId }),
       });
 
       if (!response.ok) {
@@ -135,7 +136,7 @@ export const aiService = {
    */
   async checkHealth(): Promise<boolean> {
     try {
-      const response = await fetch(`${AI_SERVER_URL}/`);
+      const response = await fetch(`${BACKEND_API_URL}/`);
       return response.ok;
     } catch {
       return false;

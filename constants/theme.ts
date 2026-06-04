@@ -38,5 +38,6 @@ export const theme = {
     border: '#F1F3F5', // Very light border
     gray: '#868E96',
     lightGray: '#F8F9FA', // Very light background
+    error: '#FF4D4F', // Red for errors/danger
   },
 };

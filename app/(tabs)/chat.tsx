@@ -74,7 +74,7 @@ export default function ChatScreen() {
     return (
       <TouchableOpacity 
         style={styles.roomItem}
-        onPress={() => router.push(`/chat/${item.roomNumber}?storeName=${encodeURIComponent(displayStoreName)}&myUserId=${item.userId}`)}
+        onPress={() => router.push(`/chat/${item.roomNumber}?storeName=${encodeURIComponent(displayStoreName)}&myUserId=${item.userId}` as any)}
       >
         <View style={styles.avatarContainer}>
           <MessageSquare size={24} color={theme.colors.primary} />

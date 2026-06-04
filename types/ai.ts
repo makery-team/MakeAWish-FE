@@ -9,7 +9,8 @@ export type AIActionType =
   | 'SHOW_SCHEMA' 
   | 'CONFIRM_SLOTS' 
   | 'ORDER_SUMMARY'
-  | 'INPAINTING_RESULT';
+  | 'INPAINTING_RESULT'
+  | 'ORDER_COMPLETE';
 
 export interface AIChatMessage {
   role: 'user' | 'assistant' | 'system';

@@ -34,7 +34,7 @@ export default function OrdersScreen() {
   };
 
   const handleOrderPress = (orderId: number) => {
-    router.push(`/orders/${orderId}`);
+    router.push(`/orders/${orderId}` as any);
   };
 
   if (loading) {

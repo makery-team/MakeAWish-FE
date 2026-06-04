@@ -17,9 +17,9 @@ const { width } = Dimensions.get('window');
 
 interface ImageSliderProps {
   images: string[];
-  cakeDetails?: { image: string, shopName: string }[];
-  onCakeSelect?: (image: string, shopName: string) => void;
-  onInquiry?: (image: string, shopName?: string) => void;
+  cakeDetails?: { image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number }[];
+  onCakeSelect?: (image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number) => void;
+  onInquiry?: (image: string, shopName?: string, portfolioId?: number, storeId?: number, productId?: number) => void;
   onMinimize?: () => void;
 }
 
@@ -112,8 +112,9 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
             style={styles.actionButtonSecondary}
             onPress={() => {
               if (onCakeSelect) {
-                const shopName = cakeDetails ? cakeDetails[currentIndex].shopName : '지니 AI';
-                onCakeSelect(images[currentIndex], shopName);
+                const details = cakeDetails?.[currentIndex];
+                const shopName = details ? details.shopName : '지니 AI';
+                onCakeSelect(images[currentIndex], shopName, details?.portfolioId, details?.storeId, details?.productId);
                 onMinimize && onMinimize();
               }
             }}
@@ -124,7 +125,10 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
           
           <TouchableOpacity 
             style={styles.actionButtonPrimary}
-            onPress={() => onInquiry && onInquiry(images[currentIndex], cakeDetails?.[currentIndex]?.shopName)}
+            onPress={() => {
+              const details = cakeDetails?.[currentIndex];
+              onInquiry && onInquiry(images[currentIndex], details?.shopName, details?.portfolioId, details?.storeId, details?.productId);
+            }}
           >
             <MessageCircle size={14} color="white" strokeWidth={1.5} />
             <Text style={styles.actionButtonTextPrimary}>이 시안 문의하기</Text>

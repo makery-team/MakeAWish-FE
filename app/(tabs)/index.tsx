@@ -22,8 +22,9 @@ import { useInquiry } from "@/hooks/use-inquiry";
 import { useNavigation } from "@/hooks/use-navigation";
 import { useOrders } from "@/hooks/use-orders";
 
-import type { OrderData, FeedItem } from "@/types";
+import type { OrderData, FeedItem, OrderCreateRequest } from "@/types";
 import { feedService } from "@/services/feed";
+import { orderService } from "@/services/order";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -84,21 +85,67 @@ export default function HomeScreen() {
   const dynamicPaddingBottom = tabBarHeight + COLLAPSED_BAR_HEIGHT + 20;
 
   // Handler for cake inquiry from grid
-  const handleCakeInquiry = (image: string, shopName: string) => {
+  const handleCakeInquiry = (image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number, tags?: string[]) => {
     startInquiry({
       image,
       shopName,
+      portfolioId,
+      storeId,
+      productId,
+      tags,
       design: "디자인 상세 선택",
     });
   };
 
   // Handler for completing inquiry
-  const handleInquiryComplete = (orderData?: OrderData) => {
+  const handleInquiryComplete = async (orderData?: OrderData) => {
     completeInquiry();
 
     if (orderData) {
-      addOrder(orderData);
-      router.push("/orders");
+      try {
+        // 백엔드로 실제 주문 생성 API 호출
+        // 임시로 없으면 1로 fallback (추후 완벽 연동 전까지 앱이 죽지 않도록 방어)
+        const storeId = orderData.storeId || 1; 
+        const productId = orderData.productId || 1;
+        const portfolioId = orderData.portfolioId;
+        
+        // 날짜/시간 포맷 맞추기 (예: "2024-10-10T14:00:00")
+        let formattedDate = new Date().toISOString().split('.')[0]; // 기본값
+        if (orderData.pickupDate && orderData.pickupTime) {
+           formattedDate = `${orderData.pickupDate}T${orderData.pickupTime}:00`;
+        }
+
+        const requestPayload: OrderCreateRequest = {
+          storeId,
+          pickupDate: formattedDate,
+          orderData: {
+            flavor: orderData.flavor || "초코",
+            size: orderData.size || "1호",
+            design: orderData.design || "",
+            lettering: orderData.lettering || "",
+            additionalRequests: orderData.additionalRequests || "",
+          },
+          items: [
+            {
+              productId,
+              quantity: 1,
+              portfolioId: portfolioId,
+            }
+          ]
+        };
+
+        await orderService.createOrder(requestPayload);
+        
+        // 로컬 상태에도 추가 (UI 반영용)
+        addOrder(orderData);
+        router.push("/orders");
+      } catch (error) {
+        console.error("Failed to create order:", error);
+        // 에러 처리: Alert 띄우기 등 가능
+        // 실패하더라도 일단 화면 이동은 시켜줄지 선택 (여기선 그대로 이동)
+        addOrder(orderData);
+        router.push("/orders");
+      }
     }
   };
 
