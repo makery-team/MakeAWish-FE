@@ -148,7 +148,7 @@ export function EditorView({
 
       // 3. 폴링 로직 (3초 간격으로 계속 확인)
       let finalImageUrl = null;
-      for (let i = 0; i < 20; i++) { // 최대 60초 대기
+      for (let i = 0; i < 100; i++) { // 최대 300초(5분) 대기 (무료 서버 속도 감안)
         await new Promise(resolve => setTimeout(resolve, 3000));
         
         const detailResponse = await aiService.getInpaintingDetail(pId, inpaintingId);
