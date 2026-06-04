@@ -1,6 +1,8 @@
 import { CAKE_SHOPS, CakeShop } from '@/constants/map-shops';
 import { SEOUL_DISTRICTS, SeoulGu } from '@/constants/seoul-districts';
 import { theme } from '@/constants/theme';
+import { mapService } from '@/services/map';
+import { MapStore } from '@/types';
 import {
   NaverMapMarkerOverlay,
   NaverMapView,
@@ -38,6 +40,23 @@ import {
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+// MapStore(API) → CakeShop(UI) 변환
+function mapStoreToCakeShop(store: MapStore): CakeShop {
+  const guMatch = store.address.match(/(\S+구)/);
+  return {
+    id: store.id,
+    name: store.name,
+    latitude: store.latitude,
+    longitude: store.longitude,
+    thumbnail: store.thumbnailUrl ?? '',
+    rating: store.rating,
+    reviewCount: store.reviewCount,
+    categories: store.tags,
+    address: store.address,
+    gu: guMatch ? guMatch[1] : '',
+  };
+}
+
 interface MapViewProps {
   onShopSelect: (shopId: number) => void;
 }
@@ -63,11 +82,17 @@ export function MapView({ onShopSelect }: MapViewProps) {
   // Shop selection state
   const [selectedShop, setSelectedShop] = useState<CakeShop | null>(null);
 
+  // API로 가져온 매장 목록 (없으면 mock 데이터 fallback)
+  const [apiStores, setApiStores] = useState<CakeShop[]>([]);
+
   // Filtered shops by selected gu
   const visibleShops = useMemo(() => {
+    // API 데이터가 있으면 우선 사용 (이미 위치/반경 기준으로 필터링됨)
+    if (apiStores.length > 0) return apiStores;
+    // API 실패 시 mock 데이터 fallback
     if (!selectedGu) return CAKE_SHOPS;
     return CAKE_SHOPS.filter((s) => s.gu === selectedGu.name);
-  }, [selectedGu]);
+  }, [selectedGu, apiStores]);
 
   // Filtered districts for search
   const filteredDistricts = useMemo(() => {
@@ -113,6 +138,24 @@ export function MapView({ onShopSelect }: MapViewProps) {
     requestLocation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 사용자 위치 확인 후 주변 매장 조회 (반경 5km)
+  useEffect(() => {
+    if (!userLocation) return;
+    mapService
+      .getNearbyStores(userLocation.latitude, userLocation.longitude, 5000)
+      .then((stores) => setApiStores(stores.map(mapStoreToCakeShop)))
+      .catch(() => {}); // API 실패 시 mock 데이터 유지
+  }, [userLocation]);
+
+  // 구 선택 시 해당 구 중심으로 매장 조회 (반경 3km)
+  useEffect(() => {
+    if (!selectedGu) return;
+    mapService
+      .getNearbyStores(selectedGu.latitude, selectedGu.longitude, 3000)
+      .then((stores) => setApiStores(stores.map(mapStoreToCakeShop)))
+      .catch(() => {});
+  }, [selectedGu]);
 
   const handleGuSelect = useCallback((gu: SeoulGu) => {
     setSelectedGu(gu);

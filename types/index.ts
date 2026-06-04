@@ -189,5 +189,30 @@ export interface Store {
   reviewCount: number;
   latitude: number;
   longitude: number;
+  address?: string;
+  thumbnailUrl?: string;
   categories: StoreCategory[];
+}
+
+// /api/stores?lat=&lng=&radius= 응답 (지도 마커용 경량 타입)
+export interface MapStore {
+  id: number;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  thumbnailUrl: string;
+  rating: number;
+  reviewCount: number;
+  tags: string[];
+}
+
+// /api/stores/{storeId}/reviews 응답 아이템
+export interface StoreReview {
+  id: number;
+  rating: number;
+  content: string;
+  imageUrls: string[];
+  createdAt: string;
+  nickname: string;
 }
