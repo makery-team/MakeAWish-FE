@@ -1,4 +1,4 @@
-import { CAKE_SHOPS, CakeShop } from '@/constants/map-shops';
+import { CakeShop } from '@/constants/map-shops';
 import { SEOUL_DISTRICTS, SeoulGu } from '@/constants/seoul-districts';
 import { theme } from '@/constants/theme';
 import { mapService } from '@/services/map';
@@ -41,21 +41,34 @@ import {
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// MapStore(API) → CakeShop(UI) 변환
-function mapStoreToCakeShop(store: MapStore): CakeShop {
-  const address = store.address || '';
-  const guMatch = address.match(/(\S+구)/);
+// MapStore(API) → CakeShop(UI) 변환 (Mock 데이터 완전 제거)
+function mapStoreToCakeShop(store: any): CakeShop {
+  // 백엔드의 StoreResponse 구조 파싱
+  const categories = store.categories || [];
+  
+  // 첫 번째 카테고리의 첫 번째 포트폴리오 이미지를 썸네일로 사용
+  let thumbnailUrl = 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&q=80'; // fallback
+  let tags = ['커스텀 케이크'];
+  
+  if (categories.length > 0) {
+    const firstCategory = categories[0];
+    if (firstCategory.portfolios && firstCategory.portfolios.length > 0) {
+      thumbnailUrl = firstCategory.portfolios[0].imageUrl || thumbnailUrl;
+      tags = firstCategory.portfolios[0].tags || tags;
+    }
+  }
+
   return {
     id: store.id,
-    name: store.name,
+    name: store.name || '이름 없음',
     latitude: store.latitude,
     longitude: store.longitude,
-    thumbnail: store.thumbnailUrl || 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&q=80',
-    rating: store.rating || 4.5,
+    thumbnail: thumbnailUrl,
+    rating: store.rating || 0,
     reviewCount: store.reviewCount || 0,
-    categories: store.tags || ['레터링 케이크'],
-    address: address,
-    gu: guMatch ? guMatch[1] : '마포구',
+    categories: tags,
+    address: store.address || '', // 백엔드에 주소가 없으면 빈칸 처리
+    gu: '강남구', // 현재는 주소가 없으므로 기본값
   };
 }
 
@@ -109,14 +122,10 @@ export function MapView({ onShopSelect }: MapViewProps) {
   // API로 가져온 매장 목록 (없으면 mock 데이터 fallback)
   const [apiStores, setApiStores] = useState<CakeShop[]>([]);
 
-  // Filtered shops by selected gu
+  // Filtered shops by selected gu (Mock 완전 제거)
   const visibleShops = useMemo(() => {
-    // API 데이터가 있으면 우선 사용 (이미 위치/반경 기준으로 필터링됨)
-    if (apiStores.length > 0) return apiStores;
-    // API 실패 시 mock 데이터 fallback
-    if (!selectedGu) return CAKE_SHOPS;
-    return CAKE_SHOPS.filter((s) => s.gu === selectedGu.name);
-  }, [selectedGu, apiStores]);
+    return apiStores;
+  }, [apiStores]);
 
   // Filtered districts for search
   const filteredDistricts = useMemo(() => {
@@ -241,7 +250,7 @@ export function MapView({ onShopSelect }: MapViewProps) {
             key={shop.id}
             latitude={shop.latitude}
             longitude={shop.longitude}
-            onTap={() => onShopSelect(shop.id)}
+            onTap={() => handleMarkerTap(shop)}
             width={48}
             height={48}
           >
