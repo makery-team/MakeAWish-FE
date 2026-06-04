@@ -1,6 +1,8 @@
-import { CAKE_SHOPS, CakeShop } from '@/constants/map-shops';
+import { CakeShop } from '@/constants/map-shops';
 import { SEOUL_DISTRICTS, SeoulGu } from '@/constants/seoul-districts';
 import { theme } from '@/constants/theme';
+import { mapService } from '@/services/map';
+import { MapStore } from '@/types';
 import {
   NaverMapMarkerOverlay,
   NaverMapView,
@@ -34,9 +36,63 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Image as RNImage,
 } from 'react-native';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// MapStore(API) → CakeShop(UI) 변환 (Mock 데이터 완전 제거)
+function mapStoreToCakeShop(store: any): CakeShop {
+  // 백엔드의 StoreResponse 구조 파싱
+  const categories = store.categories || [];
+  
+  // 첫 번째 카테고리의 첫 번째 포트폴리오 이미지를 썸네일로 사용
+  let thumbnailUrl = 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&q=80'; // fallback
+  let tags = ['커스텀 케이크'];
+  
+  if (categories.length > 0) {
+    const firstCategory = categories[0];
+    if (firstCategory.portfolios && firstCategory.portfolios.length > 0) {
+      thumbnailUrl = firstCategory.portfolios[0].imageUrl || thumbnailUrl;
+      tags = firstCategory.portfolios[0].tags || tags;
+    }
+  }
+
+  return {
+    id: store.id,
+    name: store.name || '이름 없음',
+    latitude: store.latitude,
+    longitude: store.longitude,
+    thumbnail: thumbnailUrl,
+    rating: store.rating || 0,
+    reviewCount: store.reviewCount || 0,
+    categories: tags,
+    address: store.address || '', // 백엔드에 주소가 없으면 빈칸 처리
+    gu: '강남구', // 현재는 주소가 없으므로 기본값
+  };
+}
+
+// 마커 이미지 캐싱 이슈 해결을 위한 래퍼 컴포넌트
+function MarkerImage({ uri, selected }: { uri: string; selected: boolean }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <View
+      style={[
+        styles.markerContainer,
+        selected && styles.markerContainerSelected,
+        // 강제 리렌더링 효과 (Android 맵 오버레이 버그 방지)
+        { backgroundColor: loaded ? '#fff' : '#f0f0f0' },
+      ]}
+    >
+      <RNImage
+        key={loaded ? 'loaded' : 'loading'}
+        source={{ uri }}
+        style={styles.markerImage}
+        onLoad={() => setLoaded(true)}
+      />
+    </View>
+  );
+}
 
 interface MapViewProps {
   onShopSelect: (shopId: number) => void;
@@ -63,11 +119,13 @@ export function MapView({ onShopSelect }: MapViewProps) {
   // Shop selection state
   const [selectedShop, setSelectedShop] = useState<CakeShop | null>(null);
 
-  // Filtered shops by selected gu
+  // API로 가져온 매장 목록 (없으면 mock 데이터 fallback)
+  const [apiStores, setApiStores] = useState<CakeShop[]>([]);
+
+  // Filtered shops by selected gu (Mock 완전 제거)
   const visibleShops = useMemo(() => {
-    if (!selectedGu) return CAKE_SHOPS;
-    return CAKE_SHOPS.filter((s) => s.gu === selectedGu.name);
-  }, [selectedGu]);
+    return apiStores;
+  }, [apiStores]);
 
   // Filtered districts for search
   const filteredDistricts = useMemo(() => {
@@ -113,6 +171,31 @@ export function MapView({ onShopSelect }: MapViewProps) {
     requestLocation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 주변 매장 조회 (반경 5km) - 위치 없으면 서울시청 기준
+  useEffect(() => {
+    const lat = userLocation ? userLocation.latitude : 37.5665;
+    const lng = userLocation ? userLocation.longitude : 126.9780;
+    
+    mapService
+      .getNearbyStores(lat, lng, 5000)
+      .then((stores) => {
+        console.log('[API 성공] 주변 매장 데이터:', stores);
+        setApiStores(stores.map(mapStoreToCakeShop));
+      })
+      .catch((err) => {
+        console.error('[API 실패] Map API 에러:', err);
+      }); // API 실패 시 mock 데이터 유지
+  }, [userLocation]);
+
+  // 구 선택 시 해당 구 중심으로 매장 조회 (반경 3km)
+  useEffect(() => {
+    if (!selectedGu) return;
+    mapService
+      .getNearbyStores(selectedGu.latitude, selectedGu.longitude, 3000)
+      .then((stores) => setApiStores(stores.map(mapStoreToCakeShop)))
+      .catch(() => {});
+  }, [selectedGu]);
 
   const handleGuSelect = useCallback((gu: SeoulGu) => {
     setSelectedGu(gu);
@@ -167,9 +250,12 @@ export function MapView({ onShopSelect }: MapViewProps) {
             key={shop.id}
             latitude={shop.latitude}
             longitude={shop.longitude}
-            tintColor={theme.colors.primary}
             onTap={() => handleMarkerTap(shop)}
-          />
+            width={48}
+            height={48}
+          >
+            <MarkerImage uri={shop.thumbnail} selected={selectedShop?.id === shop.id} />
+          </NaverMapMarkerOverlay>
         ))}
 
         {userLocation && (
@@ -610,6 +696,28 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  markerContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'white',
+    padding: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 6,
+  },
+  markerContainerSelected: {
+    backgroundColor: theme.colors.primary,
+    transform: [{ scale: 1.15 }],
+  },
+  markerImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 21,
+    backgroundColor: '#F0F0F0',
   },
   regionBar: {
     position: 'absolute',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,24 +7,17 @@ import {
   ScrollView,
   SafeAreaView,
   Share,
+  ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { ArrowLeft, Star, MapPin, Clock, Phone, Share2, MessageCircle, Heart } from 'lucide-react-native';
 import { SAMPLE_CAKE_IMAGES } from '@/constants/mock-data';
-import { CAKE_SHOPS } from '@/constants/map-shops';
+import { useRouter } from 'expo-router';
 import { theme } from '@/constants/theme';
+import { mapService } from '@/services/map';
+import { Store, StorePortfolio, StoreReview } from '@/types';
 
-const CHIPS = ['검색한 메뉴', '인기 메뉴', '레터링 케이크', '도시락 케이크', '당일 픽업 가능', '3단 케이크'];
-
-// 칩별로 다른 이미지 시안 (실제 서비스에서는 API 응답으로 교체)
-const CHIP_GALLERIES: Record<string, string[]> = {
-  '검색한 메뉴':    [SAMPLE_CAKE_IMAGES[0], SAMPLE_CAKE_IMAGES[1], SAMPLE_CAKE_IMAGES[2], SAMPLE_CAKE_IMAGES[3], SAMPLE_CAKE_IMAGES[4], SAMPLE_CAKE_IMAGES[5]],
-  '인기 메뉴':      [SAMPLE_CAKE_IMAGES[2], SAMPLE_CAKE_IMAGES[4], SAMPLE_CAKE_IMAGES[0], SAMPLE_CAKE_IMAGES[5], SAMPLE_CAKE_IMAGES[3], SAMPLE_CAKE_IMAGES[1]],
-  '레터링 케이크':  [SAMPLE_CAKE_IMAGES[1], SAMPLE_CAKE_IMAGES[3], SAMPLE_CAKE_IMAGES[5], SAMPLE_CAKE_IMAGES[0]],
-  '도시락 케이크':  [SAMPLE_CAKE_IMAGES[4], SAMPLE_CAKE_IMAGES[2], SAMPLE_CAKE_IMAGES[1], SAMPLE_CAKE_IMAGES[3]],
-  '당일 픽업 가능': [SAMPLE_CAKE_IMAGES[5], SAMPLE_CAKE_IMAGES[0], SAMPLE_CAKE_IMAGES[2]],
-  '3단 케이크':     [SAMPLE_CAKE_IMAGES[3], SAMPLE_CAKE_IMAGES[5], SAMPLE_CAKE_IMAGES[1], SAMPLE_CAKE_IMAGES[4]],
-};
+// Mock 데이터 상수들 삭제됨
 
 // 상세 정보 오버라이드 (일부 샵만 별도 정보 설정)
 const SHOP_DETAIL_OVERRIDES: Record<number, {
@@ -50,26 +43,7 @@ const SHOP_DETAIL_OVERRIDES: Record<number, {
   },
 };
 
-// CAKE_SHOPS 데이터를 상세 페이지 포맷으로 변환
-function buildShopDetail(shopId: number) {
-  const base = CAKE_SHOPS.find((s) => s.id === shopId) ?? CAKE_SHOPS[0];
-  const override = SHOP_DETAIL_OVERRIDES[shopId];
-  return {
-    id: base.id,
-    name: base.name,
-    rating: base.rating,
-    reviews: base.reviewCount,
-    likes: override?.likes ?? Math.floor(base.reviewCount * 1.8),
-    specialty: base.categories[0] ?? '커스텀 케이크',
-    address: `서울 ${base.address}`,
-    phone: override?.phone ?? '문의 후 안내',
-    hours: override?.hours ?? '매일 10:00 - 19:00',
-    description:
-      override?.description ??
-      `${base.name}은 ${base.categories.join(', ')} 전문 케이크샵입니다. 정성스러운 수제 케이크로 소중한 날을 더욱 특별하게 만들어드립니다.`,
-    gallery: override?.gallery ?? SAMPLE_CAKE_IMAGES,
-  };
-}
+// (Mock data builder removed)
 
 interface ShopDetailProps {
   shopId: number;
@@ -79,8 +53,67 @@ interface ShopDetailProps {
 }
 
 export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: ShopDetailProps) {
-  const [activeChip, setActiveChip] = useState('검색한 메뉴');
-  const shop = buildShopDetail(shopId);
+  const router = useRouter();
+  // API 상태
+  const [storeData, setStoreData] = useState<Store | null>(null);
+  const [portfolios, setPortfolios] = useState<StorePortfolio[]>([]);
+  const [reviewList, setReviewList] = useState<StoreReview[]>([]);
+  const [activeChip, setActiveChip] = useState('전체');
+  const [isLoadingDetail, setIsLoadingDetail] = useState(true);
+
+  useEffect(() => {
+    setIsLoadingDetail(true);
+    Promise.allSettled([
+      mapService.getStoreDetail(shopId),
+      mapService.getStorePortfolios(shopId, 0, 20),
+      mapService.getStoreReviews(shopId, 0, 5),
+    ]).then(([detailResult, portfoliosResult, reviewsResult]) => {
+      if (detailResult.status === 'fulfilled') {
+        const data = detailResult.value;
+        setStoreData(data);
+        if (data.categories && data.categories.length > 0) {
+          setActiveChip(data.categories[0].name);
+        }
+      }
+      if (portfoliosResult.status === 'fulfilled') setPortfolios(portfoliosResult.value.content);
+      if (reviewsResult.status === 'fulfilled') setReviewList(reviewsResult.value.content);
+    }).finally(() => setIsLoadingDetail(false));
+  }, [shopId]);
+
+  if (isLoadingDetail) {
+    return (
+      <View style={{flex:1, justifyContent:'center', alignItems:'center'}}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  if (!storeData) {
+    return (
+      <View style={{flex:1, justifyContent:'center', alignItems:'center'}}>
+        <Text>매장 정보를 찾을 수 없습니다.</Text>
+      </View>
+    );
+  }
+
+  // 갤러리 이미지 추출 (카테고리의 포트폴리오를 모두 병합)
+  const apiGallery = storeData.categories
+    ? storeData.categories.flatMap(c => c.portfolios || []).map(p => p.imageUrl)
+    : [];
+
+  const shop = {
+    id: storeData.id,
+    name: storeData.name || '이름 없음',
+    rating: storeData.rating || 0,
+    reviews: storeData.reviewCount || 0,
+    likes: 0, // API에 likes 없으므로 0
+    specialty: storeData.categories && storeData.categories.length > 0 ? storeData.categories[0].name : '커스텀 케이크',
+    address: storeData.address || '',
+    phone: storeData.phone || '',
+    hours: storeData.hours || '문의 후 안내',
+    description: storeData.description || '매장 소개가 없습니다.',
+    gallery: apiGallery.length > 0 ? apiGallery : [SAMPLE_CAKE_IMAGES[0]], // 사진이 없으면 기본 1개만
+  };
 
   const handleShare = async () => {
     try {
@@ -93,7 +126,10 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
   };
 
   const renderGallery = () => {
-    const images = CHIP_GALLERIES[activeChip] ?? shop.gallery;
+    // API 포트폴리오가 있으면 우선 사용, 없으면 기존 mock 데이터
+    // activeChip과 카테고리 이름이 일치하는 포트폴리오의 이미지들만 필터링
+    const selectedCategory = storeData.categories?.find(c => c.name === activeChip);
+    const images = selectedCategory?.portfolios ? selectedCategory.portfolios.map(p => p.imageUrl) : shop.gallery;
     const leftCol: string[] = [];
     const rightCol: string[] = [];
     images.forEach((img, i) => {
@@ -198,7 +234,11 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
 
           <TouchableOpacity
             style={styles.chatButton}
-            onPress={() => onCakeInquiry?.(shop.gallery[0], shop.name)}
+            onPress={() => {
+              import('react-native').then(rn => {
+                rn.Alert.alert('안내', '현재 1:1 사장님 채팅 기능은 점검 중입니다.\n시연 영상에서는 제외될 예정입니다.');
+              });
+            }}
           >
             <MessageCircle size={18} color="white" />
             <Text style={styles.chatButtonText}>1:1로 사장님께 채팅 문의하기</Text>
@@ -212,25 +252,67 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.chipBar}
           >
-            {CHIPS.map((chip) => (
-              <TouchableOpacity
-                key={chip}
-                style={[styles.chip, activeChip === chip && styles.chipActive]}
-                onPress={() => setActiveChip(chip)}
-              >
-                <Text style={[styles.chipText, activeChip === chip && styles.chipTextActive]}>
-                  {chip}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {(() => {
+              const chips = storeData.categories && storeData.categories.length > 0 
+                ? storeData.categories.map(c => c.name) 
+                : ['전체'];
+              return chips.map((chip) => (
+                <TouchableOpacity
+                  key={chip}
+                  style={[styles.chip, activeChip === chip && styles.chipActive]}
+                  onPress={() => setActiveChip(chip)}
+                >
+                  <Text style={[styles.chipText, activeChip === chip && styles.chipTextActive]}>
+                    {chip}
+                  </Text>
+                </TouchableOpacity>
+              ));
+            })()}
           </ScrollView>
         </View>
 
         {/* Gallery */}
         <View style={styles.gallerySection}>
           <Text style={styles.sectionTitle}>{activeChip}</Text>
-          {renderGallery()}
+          {isLoadingDetail ? (
+            <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 40 }} />
+          ) : (
+            renderGallery()
+          )}
         </View>
+
+        {/* Reviews */}
+        {reviewList.length > 0 && (
+          <View style={reviewStyles.section}>
+            <Text style={styles.sectionTitle}>리뷰 ({shop.reviews})</Text>
+            {reviewList.map((review) => (
+              <View key={review.id} style={reviewStyles.card}>
+                <View style={reviewStyles.header}>
+                  <Text style={reviewStyles.nickname}>{review.nickname}</Text>
+                  <View style={reviewStyles.stars}>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        size={12}
+                        color="#FACC15"
+                        fill={i < review.rating ? '#FACC15' : 'none'}
+                      />
+                    ))}
+                  </View>
+                  <Text style={reviewStyles.date}>{review.createdAt.slice(0, 10)}</Text>
+                </View>
+                <Text style={reviewStyles.content}>{review.content}</Text>
+                {review.imageUrls && review.imageUrls.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={reviewStyles.imageRow}>
+                    {review.imageUrls.map((uri, i) => (
+                      <Image key={i} source={{ uri }} style={reviewStyles.reviewImage} />
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
 
     </SafeAreaView>
@@ -496,5 +578,53 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: 'white',
   },
+});
 
+const reviewStyles = StyleSheet.create({
+  section: {
+    padding: 20,
+    borderTopWidth: 8,
+    borderTopColor: '#F8F8F8',
+  },
+  card: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  nickname: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#333',
+    flex: 1,
+  },
+  stars: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  date: {
+    fontSize: 11,
+    color: '#AAA',
+  },
+  content: {
+    fontSize: 13,
+    color: '#555',
+    lineHeight: 20,
+  },
+  imageRow: {
+    marginTop: 10,
+  },
+  reviewImage: {
+    width: 72,
+    height: 72,
+    borderRadius: 10,
+    marginRight: 8,
+    backgroundColor: '#F0F0F0',
+  },
 });

@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { DeviceEventEmitter } from "react-native";
 
 // TODO: 환경 변수 연동
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://make-a-wish-env.eba-dvjn7a8x.ap-northeast-2.elasticbeanstalk.com";
@@ -49,42 +50,40 @@ async function refreshAccessToken(): Promise<string | null> {
 /**
  * 인증(Authorization) 헤더를 자동으로 추가하고, 401 응답 시 토큰 재발급 후 재시도하는 fetch 래퍼 함수입니다.
  */
-export async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<Response> {
-  const url = endpoint.startsWith("http") ? endpoint : `${API_BASE_URL}${endpoint}`;
-  let token = await AsyncStorage.getItem("auth_token");
+export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+  const token = await AsyncStorage.getItem("auth_token");
+  
+  const headers = {
+    ...options.headers,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
 
-  // 기본 헤더 세팅
-  const headers = new Headers(options.headers || {});
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-  // ngrok 경고 무시 헤더 (필요시)
-  headers.set("ngrok-skip-browser-warning", "true");
+  try {
+    let response = await fetch(`${API_BASE_URL}${url}`, { ...options, headers });
 
-  let response = await fetch(url, {
-    ...options,
-    headers,
-  });
+    // 토큰 만료 처리 (401 Unauthorized)
+    if (response.status === 401) {
+      console.log("Access token expired (401). Attempting to refresh...");
+      const newAccessToken = await refreshAccessToken();
 
-  // 401 Unauthorized 에러 발생 시 토큰 재발급 로직 수행
-  if (response.status === 401) {
-    console.log("Access token expired (401). Attempting to refresh...");
-    const newToken = await refreshAccessToken();
-
-    if (newToken) {
-      console.log("Token successfully refreshed. Retrying request...");
-      // 새 토큰으로 헤더 업데이트
-      headers.set("Authorization", `Bearer ${newToken}`);
-      // 기존 요청 다시 보내기
-      response = await fetch(url, {
-        ...options,
-        headers,
-      });
-    } else {
-      console.error("Token refresh failed. User needs to login again.");
-      // 프론트엔드에서 강제 로그아웃을 처리하기 위해 401을 그대로 반환
+      if (newAccessToken) {
+        console.log("Token successfully refreshed. Retrying request...");
+        // 새 토큰으로 헤더 업데이트
+        const newHeaders = { ...headers, Authorization: `Bearer ${newAccessToken}` };
+        // 기존 요청 다시 보내기
+        response = await fetch(`${API_BASE_URL}${url}`, {
+          ...options,
+          headers: newHeaders,
+        });
+      } else {
+        console.error("Token refresh failed. User needs to login again.");
+        DeviceEventEmitter.emit('EXPIRED_SESSION');
+        return response;
+      }
     }
-  }
 
-  return response;
+    return response;
+  } catch (error) {
+    throw error;
+  }
 }

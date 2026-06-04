@@ -62,6 +62,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
     initAuth();
+
+    // 세션 만료 글로벌 이벤트 리스너 등록
+    const { DeviceEventEmitter, Alert } = require('react-native');
+    const subscription = DeviceEventEmitter.addListener('EXPIRED_SESSION', () => {
+      signOut();
+      Alert.alert('로그아웃', '세션이 만료되었습니다. 다시 로그인해주세요.');
+    });
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   // 네이티브 구글 로그인
