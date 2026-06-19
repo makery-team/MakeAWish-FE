@@ -13,6 +13,7 @@
       "bundleIdentifier": "com.makery.makeawish"
     },
     "android": {
+      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
