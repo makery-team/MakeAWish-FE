@@ -7,13 +7,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
-  StatusBar as RNStatusBar
+  StatusBar as RNStatusBar,
+  Alert
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { ArrowLeft, MapPin, Calendar, CreditCard, ChevronRight } from 'lucide-react-native';
 import { orderService } from '@/services/order';
+import { mapService } from '@/services/map';
 import { OrderDetail } from '@/types';
 import { theme } from '@/constants/theme';
 import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
@@ -44,6 +46,22 @@ export default function OrderDetailScreen() {
 
   const handleBack = () => {
     router.back();
+  };
+
+  const handleViewShop = async () => {
+    if (!order) return;
+    try {
+      const stores = await mapService.searchStores(order.storeName);
+      if (stores && stores.length > 0) {
+        const targetStore = stores.find(s => s.name === order.storeName) || stores[0];
+        router.push(`/shop/${targetStore.id}`);
+      } else {
+        Alert.alert('알림', '매장 정보를 찾을 수 없습니다.');
+      }
+    } catch (error) {
+      console.error('Failed to search store:', error);
+      Alert.alert('알림', '매장 정보를 가져오는 중 오류가 발생했습니다.');
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -123,14 +141,14 @@ export default function OrderDetailScreen() {
         {/* Item Card */}
         {orderItem && (
           <Animated.View entering={FadeInUp.delay(200)} style={styles.card}>
-            <View style={styles.cardHeader}>
+            <TouchableOpacity style={styles.cardHeader} onPress={handleViewShop}>
               <Text style={styles.storeNameText}>{order.storeName}</Text>
-              <ChevronRight size={18} color="#9CA3AF" />
-            </View>
+              <ChevronRight size={18} color="#111827" />
+            </TouchableOpacity>
             <View style={styles.itemRow}>
-              {orderItem.customizedImageUrl ? (
+              {(orderItem.customizedImageUrl || order.orderData?.cakeImage || order.orderData?.selectedCakeImage) ? (
                 <Image 
-                  source={{ uri: orderItem.customizedImageUrl }}
+                  source={{ uri: orderItem.customizedImageUrl || order.orderData?.cakeImage || order.orderData?.selectedCakeImage }}
                   style={styles.itemImage}
                   contentFit="cover"
                 />
@@ -147,13 +165,15 @@ export default function OrderDetailScreen() {
             </View>
 
             {/* Custom Options (orderData) */}
-            {order.orderData && Object.keys(order.orderData).length > 0 && (
+            {order.orderData && Object.entries(order.orderData).filter(([key]) => !['storeId', 'productId', 'portfolioId', 'cakeImage', 'selectedCakeImage', 'photoUrl', 'shopName', 'tags'].includes(key)).length > 0 && (
               <View style={styles.optionsContainer}>
                 <Text style={styles.optionsTitle}>요청 사항 및 옵션</Text>
-                {Object.entries(order.orderData).map(([key, value]) => (
+                {Object.entries(order.orderData)
+                  .filter(([key]) => !['storeId', 'productId', 'portfolioId', 'cakeImage', 'selectedCakeImage', 'photoUrl', 'shopName', 'tags'].includes(key))
+                  .map(([key, value]) => (
                   <View key={key} style={styles.optionRow}>
                     <Text style={styles.optionKey}>{key}</Text>
-                    <Text style={styles.optionValue}>{value}</Text>
+                    <Text style={styles.optionValue}>{String(value)}</Text>
                   </View>
                 ))}
               </View>
