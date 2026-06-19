@@ -144,6 +144,10 @@ export function AISearchBar({
     Keyboard.dismiss();
     setSheetState("closed");
     translateY.value = withSpring(CLOSED_Y);
+    
+    // 백엔드 AI 대화 기록 초기화 (Fire and forget)
+    aiService.clearChatHistory().catch(e => console.error('Failed to clear backend chat history', e));
+
     setTimeout(() => {
       setMessages([INITIAL_AI_MESSAGE]);
       setChatMode("search");
@@ -444,6 +448,7 @@ export function AISearchBar({
                 <View style={{ flexDirection: "row", gap: 8 }}>
                   <TouchableOpacity 
                     onPress={() => {
+                      aiService.clearChatHistory().catch(e => console.error('Failed to clear backend chat history', e));
                       setMessages([INITIAL_AI_MESSAGE]);
                       setChatMode("search");
                       setInputValue("");

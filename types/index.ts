@@ -216,7 +216,38 @@ export interface Store {
   reviewCount: number;
   latitude: number;
   longitude: number;
+  address?: string;
+  thumbnailUrl?: string;
   categories: StoreCategory[];
+}
+
+export interface MapStore {
+  id: number;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  thumbnailUrl?: string;
+  rating: number;
+  reviewCount: number;
+  tags: string[];
+}
+
+export interface StoreReview {
+  id: number;
+  nickname: string;
+  rating: number;
+  content: string;
+  imageUrls: string[];
+  createdAt: string;
+}
+
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
 }
 
 export interface OrderItemRequest {
