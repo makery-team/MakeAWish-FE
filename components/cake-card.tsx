@@ -146,6 +146,15 @@ export function CakeCard({
               exiting={FadeOut.duration(200)}
               style={styles.actionsOverlay}
             >
+              {storeId && (
+                <TouchableOpacity
+                  onPress={() => { setShowActions(false); router.push(`/shop/${storeId}`); }}
+                  style={[styles.actionButton, styles.shopButton]}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.shopButtonText}>매장 보기</Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
                 onPress={handleEdit}
                 style={[styles.actionButton, styles.editButton]}
@@ -254,6 +263,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
+  },
+  shopButton: {
+    backgroundColor: '#000',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  shopButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '800',
   },
   editButton: {
     backgroundColor: '#fff',

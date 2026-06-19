@@ -239,7 +239,7 @@ export interface StoreReview {
   nickname: string;
   rating: number;
   content: string;
-  imageUrls: string[];
+  imageUrl?: string;
   createdAt: string;
 }
 
@@ -324,4 +324,38 @@ export interface OrderItemDetail {
 export interface OrderDetail extends OrderListItem {
   orderData: Record<string, string>;
   items: OrderItemDetail[];
+}
+
+// --- Review Types ---
+
+export interface ReviewRequest {
+  content: string;
+  rating: number; // 1 ~ 5
+  imageUrl?: string | null;
+}
+
+export interface ReviewResponse {
+  id: number;
+  storeId: number;
+  orderId: number;
+  userId: number;
+  userNickname?: string;
+  content: string;
+  rating: number;
+  imageUrl?: string;
+  createdAt: string;
+}
+
+export interface ReviewPageResponse {
+  content: ReviewResponse[];
+  pageable: any;
+  last: boolean;
+  totalPages: number;
+  totalElements: number;
+  first: boolean;
+  size: number;
+  number: number;
+  sort: any;
+  numberOfElements: number;
+  empty: boolean;
 }
