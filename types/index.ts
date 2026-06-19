@@ -120,6 +120,7 @@ export interface SelectedCake {
 
 // Order data for inquiry completion
 export interface OrderData {
+  [key: string]: any; // Allow dynamic Korean keys from AI schema
   cakeImage: string;
   shopName?: string;
   portfolioId?: number;
