@@ -5,7 +5,6 @@
 export type AIActionType = 
   | 'SIMPLE_CHAT' 
   | 'PORTFOLIO_LIST' 
-  | 'EDIT_IMAGE' 
   | 'SHOW_SCHEMA' 
   | 'CONFIRM_SLOTS' 
   | 'ORDER_SUMMARY'
