@@ -219,10 +219,10 @@ export default function HomeScreen() {
 
       {/* AI Search Bar - Bottom Sheet */}
       <AISearchBar
-        onCakeSelect={(image: string, shopName: string) => {
+        onCakeSelect={(image: string, shopName: string, portfolioId?: number) => {
           router.push({
             pathname: "/editor/[id]",
-            params: { id: "ai", image, shopName },
+            params: { id: portfolioId ? portfolioId.toString() : "ai", image, shopName },
           });
         }}
         inquiryMode={inquiryMode || undefined}
