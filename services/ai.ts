@@ -102,7 +102,7 @@ export const aiService = {
   /**
    * 포트폴리오 이미지 기반 인페인팅(디자인 수정) 요청
    */
-  async inpaint(portfolioId: number, prompt: string, maskImage: string): Promise<any> {
+  async inpaint(portfolioId: number, prompt: string, maskImage: string, currentImage?: string): Promise<any> {
     try {
       const token = await AsyncStorage.getItem("auth_token");
       const headers: Record<string, string> = {
@@ -115,7 +115,7 @@ export const aiService = {
       const response = await fetch(`${BACKEND_API_URL}/api/ai-agent/inpaint/${portfolioId}`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ prompt, maskImage }),
+        body: JSON.stringify({ prompt, maskImage, currentImage }),
       });
 
       if (!response.ok) {

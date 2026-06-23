@@ -140,7 +140,7 @@ export function EditorView({
 
       // 2. AI API 호출 (비동기 202 응답)
       const pId = portfolioId || 1;
-      const initialResponse = await aiService.inpaint(pId, command, maskB64);
+      const initialResponse = await aiService.inpaint(pId, command, maskB64, currentImage);
       
       const inpaintingId = initialResponse.id;
       if (!inpaintingId) {
