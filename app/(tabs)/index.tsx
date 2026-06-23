@@ -131,6 +131,13 @@ export default function HomeScreen() {
           console.warn("Date parsing fallback:", e);
         }
 
+        // 백엔드(Spring) 400 에러 방어: ISO 8601 형식인지 검사. (YYYY-MM-DDTHH:mm:ss)
+        const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
+        if (!isoRegex.test(formattedDate)) {
+            console.warn("Invalid formattedDate:", formattedDate, "Falling back to current date.");
+            formattedDate = new Date().toISOString().split('.')[0];
+        }
+
         const requestPayload: OrderCreateRequest = {
           storeId,
           pickupDate: formattedDate,
