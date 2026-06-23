@@ -302,12 +302,10 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
                   <Text style={reviewStyles.date}>{review.createdAt.slice(0, 10)}</Text>
                 </View>
                 <Text style={reviewStyles.content}>{review.content}</Text>
-                {review.imageUrls && review.imageUrls.length > 0 && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={reviewStyles.imageRow}>
-                    {review.imageUrls.map((uri, i) => (
-                      <Image key={i} source={{ uri }} style={reviewStyles.reviewImage} />
-                    ))}
-                  </ScrollView>
+                {review.imageUrl && (
+                  <View style={reviewStyles.imageRow}>
+                    <Image source={{ uri: review.imageUrl }} style={reviewStyles.reviewImage} />
+                  </View>
                 )}
               </View>
             ))}

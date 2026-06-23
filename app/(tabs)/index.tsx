@@ -109,22 +109,32 @@ export default function HomeScreen() {
         const productId = orderData.productId || 1;
         const portfolioId = orderData.portfolioId;
         
-        // 날짜/시간 포맷 맞추기 (예: "2024-10-10T14:00:00")
-        let formattedDate = new Date().toISOString().split('.')[0]; // 기본값
-        if (orderData.pickupDate && orderData.pickupTime) {
-           formattedDate = `${orderData.pickupDate}T${orderData.pickupTime}:00`;
+        // 날짜/시간 동적 추출 로직 (AI가 뱉은 한국어 키 파싱)
+        let formattedDate = new Date().toISOString().split('.')[0]; // 기본값: 현재 시간
+        const dateKey = Object.keys(orderData).find(k => k.includes('날짜') || k.includes('일') || k.includes('date'));
+        const timeKey = Object.keys(orderData).find(k => k.includes('시간') || k.includes('시') || k.includes('time'));
+        
+        try {
+          if (dateKey && timeKey) {
+             const d = orderData[dateKey];
+             const t = orderData[timeKey];
+             formattedDate = `${d}T${t}:00`;
+          } else if (dateKey) {
+             const d = orderData[dateKey];
+             if (d.includes(' ')) {
+                formattedDate = d.replace(' ', 'T') + ':00';
+             } else {
+                formattedDate = `${d}T00:00:00`;
+             }
+          }
+        } catch (e) {
+          console.warn("Date parsing fallback:", e);
         }
 
         const requestPayload: OrderCreateRequest = {
           storeId,
           pickupDate: formattedDate,
-          orderData: {
-            flavor: orderData.flavor || "초코",
-            size: orderData.size || "1호",
-            design: orderData.design || "",
-            lettering: orderData.lettering || "",
-            additionalRequests: orderData.additionalRequests || "",
-          },
+          orderData: { ...orderData }, // 동적 키(맛, 사이즈 등) 원형 그대로 전송
           items: [
             {
               productId,
@@ -209,10 +219,10 @@ export default function HomeScreen() {
 
       {/* AI Search Bar - Bottom Sheet */}
       <AISearchBar
-        onCakeSelect={(image: string, shopName: string) => {
+        onCakeSelect={(image: string, shopName: string, portfolioId?: number) => {
           router.push({
             pathname: "/editor/[id]",
-            params: { id: "ai", image, shopName },
+            params: { id: portfolioId ? portfolioId.toString() : "ai", image, shopName },
           });
         }}
         inquiryMode={inquiryMode || undefined}

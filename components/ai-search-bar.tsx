@@ -42,7 +42,7 @@ const SHEET_HEIGHT = SCREEN_HEIGHT * 0.9;
 const HANDLE_HEIGHT = 24; // 핸들 영역도 약간 줄임
 
 interface AISearchBarProps {
-  onCakeSelect?: (image: string, shopName: string) => void;
+  onCakeSelect?: (image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number) => void;
   inquiryMode?: InquiryMode | null;
   onInquiryComplete?: (orderData?: OrderData) => void;
 }
@@ -369,7 +369,7 @@ export function AISearchBar({
             {item.viewMode === 'grid' ? (
               <View style={styles.gridContainer}>
                 {item.cakeDetails ? item.cakeDetails.map((cake, imgIdx) => (
-                  <TouchableOpacity key={imgIdx} style={styles.gridItem} onPress={() => onCakeSelect?.(cake.image, cake.shopName)}>
+                  <TouchableOpacity key={imgIdx} style={styles.gridItem} onPress={() => onCakeSelect?.(cake.image, cake.shopName, cake.portfolioId, cake.storeId, cake.productId)}>
                     <Image source={{ uri: cake.image }} style={styles.gridImage} contentFit="cover" />
                     <View style={styles.gridOverlay}><View style={styles.gridEditBtn}><Sparkles size={10} color="white" strokeWidth={1.5} /><Text style={styles.gridBtnText}>편집</Text></View></View>
                   </TouchableOpacity>

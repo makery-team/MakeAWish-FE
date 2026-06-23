@@ -8,6 +8,12 @@ export const mapService = {
     return response.json();
   },
 
+  async searchStores(query: string): Promise<MapStore[]> {
+    const response = await fetchWithAuth(`/api/stores?query=${encodeURIComponent(query)}`);
+    if (!response.ok) throw new Error(`searchStores failed: ${response.status}`);
+    return response.json();
+  },
+
   async getStoreDetail(storeId: number): Promise<Store> {
     const response = await fetchWithAuth(`/api/stores/${storeId}`);
     if (!response.ok) throw new Error(`getStoreDetail failed: ${response.status}`);

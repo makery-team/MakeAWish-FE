@@ -1,11 +1,68 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import { Search as SearchIcon, Filter } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Search as SearchIcon, Filter, MapPin, Star } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
+import { mapService } from '@/services/map';
+import { MapStore } from '@/types';
+import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const [query, setQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [results, setResults] = useState<MapStore[] | null>(null);
+
+  const handleSearch = async () => {
+    if (!query.trim()) {
+      setResults(null);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const stores = await mapService.searchStores(query.trim());
+      setResults(stores);
+    } catch (error) {
+      console.error('Search failed:', error);
+      setResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const renderStoreItem = (store: MapStore) => {
+    const imageUrl = store.categories && store.categories.length > 0 && store.categories[0].imageUrl
+      ? store.categories[0].imageUrl
+      : 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80';
+
+    return (
+      <TouchableOpacity 
+        key={store.id} 
+        style={styles.storeCard}
+        onPress={() => router.push(`/shop/${store.id}`)}
+      >
+        <Image source={{ uri: imageUrl }} style={styles.storeImage} />
+        <View style={styles.storeInfo}>
+          <Text style={styles.storeName} numberOfLines={1}>{store.name || '매장 이름 없음'}</Text>
+          <Text style={styles.storeAddress} numberOfLines={1}>{store.address || '주소 정보 없음'}</Text>
+          
+          <View style={styles.storeStats}>
+            <View style={styles.statItem}>
+              <Star size={14} color="#FBBF24" fill="#FBBF24" />
+              <Text style={styles.statText}>{store.rating?.toFixed(1) || '0.0'}</Text>
+              <Text style={styles.statSubText}>({store.reviewCount || 0})</Text>
+            </View>
+            <View style={styles.statItem}>
+              <MapPin size={14} color={theme.colors.gray} />
+              <Text style={styles.statSubText}>서울</Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -17,25 +74,55 @@ export default function SearchScreen() {
             placeholder="케이크, 가게 또는 키워드 검색" 
             style={styles.input}
             placeholderTextColor="#9CA3AF"
+            value={query}
+            onChangeText={setQuery}
+            onSubmitEditing={handleSearch}
+            returnKeyType="search"
           />
-          <TouchableOpacity>
-            <Filter size={20} color={theme.colors.primary} />
+          <TouchableOpacity onPress={handleSearch}>
+            {isSearching ? (
+              <ActivityIndicator size="small" color={theme.colors.primary} />
+            ) : (
+              <Filter size={20} color={theme.colors.primary} />
+            )}
           </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Categories Grid (Mock) */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>카테고리별 탐색</Text>
-          <View style={styles.categoryGrid}>
-            {['🎂 생일', '💘 기념일', '💐 꽃/플라워', '🎀 리본', '🎨 드로잉', '🐰 캐릭터'].map((cat, i) => (
-              <TouchableOpacity key={i} style={styles.categoryItem}>
-                <Text style={styles.categoryText}>{cat}</Text>
-              </TouchableOpacity>
-            ))}
+        {results === null ? (
+          // 기본 카테고리 뷰
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>카테고리별 탐색</Text>
+            <View style={styles.categoryGrid}>
+              {['🎂 생일', '💘 기념일', '💐 꽃/플라워', '🎀 리본', '🎨 드로잉', '🐰 캐릭터'].map((cat, i) => (
+                <TouchableOpacity key={i} style={styles.categoryItem} onPress={() => {
+                  setQuery(cat.split(' ')[1]);
+                  setTimeout(() => handleSearch(), 100);
+                }}>
+                  <Text style={styles.categoryText}>{cat}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
+        ) : (
+          // 검색 결과 뷰
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              검색 결과 <Text style={{ color: theme.colors.primary }}>{results.length}</Text>건
+            </Text>
+            {results.length === 0 && !isSearching ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>검색 결과가 없습니다.</Text>
+                <Text style={styles.emptySubText}>다른 키워드로 검색해 보세요.</Text>
+              </View>
+            ) : (
+              <View style={styles.resultList}>
+                {results.map(renderStoreItem)}
+              </View>
+            )}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -148,36 +235,73 @@ const styles = StyleSheet.create({
   listContainer: {
     flex: 1,
   },
-  toggleWrapper: {
-    position: 'absolute',
-    alignSelf: 'center',
-    zIndex: 100,
+  resultList: {
+    marginTop: 16,
+    gap: 16,
   },
-  toggleContainer: {
+  storeCard: {
     flexDirection: 'row',
-    backgroundColor: 'white',
-    padding: 4,
-    borderRadius: 30,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  toggleBtn: {
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 26,
+  storeImage: {
+    width: 100,
+    height: 100,
   },
-  activeToggleBtn: {
-    backgroundColor: theme.colors.primary,
+  storeInfo: {
+    flex: 1,
+    padding: 12,
+    justifyContent: 'center',
   },
-  toggleText: {
-    fontSize: 15,
+  storeName: {
+    fontSize: 16,
     fontWeight: '700',
-    color: '#666',
+    color: '#111827',
+    marginBottom: 4,
   },
-  activeToggleText: {
-    color: 'white',
+  storeAddress: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  storeStats: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  statSubText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#9CA3AF',
   },
 });

@@ -7,9 +7,12 @@ import {
   ScrollView, 
   Dimensions,
   Platform,
-  StatusBar as RNStatusBar
+  StatusBar as RNStatusBar,
+  Alert
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { mapService } from '@/services/map';
 import { 
   ArrowLeft, 
   Clock, 
@@ -30,6 +33,7 @@ interface OrderStatusProps {
   orders: OrderListItem[];
   onBack: () => void;
   onOrderPress: (orderId: number) => void;
+  onReviewPress?: (orderId: number) => void;
 }
 
 const statusSteps = [
@@ -39,7 +43,24 @@ const statusSteps = [
   { key: 'COMPLETED', label: '픽업 완료', icon: Gift },
 ];
 
-function OrderCard({ order, onPress }: { order: OrderListItem, onPress: () => void }) {
+function OrderCard({ order, onPress, onReviewPress }: { order: OrderListItem, onPress: () => void, onReviewPress?: (orderId: number) => void }) {
+  const router = useRouter();
+
+  const handleViewShop = async () => {
+    try {
+      const stores = await mapService.searchStores(order.storeName);
+      if (stores && stores.length > 0) {
+        const targetStore = stores.find(s => s.name === order.storeName) || stores[0];
+        router.push(`/shop/${targetStore.id}`);
+      } else {
+        Alert.alert('알림', '매장 정보를 찾을 수 없습니다.');
+      }
+    } catch (error) {
+      console.error('Failed to search store:', error);
+      Alert.alert('알림', '매장 정보를 가져오는 중 오류가 발생했습니다.');
+    }
+  };
+
   const currentStepIndex = statusSteps.findIndex(step => step.key === order.status);
 
   const progressWidth = useMemo(() => {
@@ -73,7 +94,10 @@ function OrderCard({ order, onPress }: { order: OrderListItem, onPress: () => vo
             </View>
             
             <View style={styles.orderMainInfo}>
-              <Text style={styles.shopNameText}>{order.storeName}</Text>
+              <TouchableOpacity style={styles.shopNameRow} onPress={handleViewShop} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                <Text style={styles.shopNameText}>{order.storeName}</Text>
+                <ChevronRight size={18} color="#111827" />
+              </TouchableOpacity>
               <Text style={styles.priceText}>{formatCurrency(order.totalPrice)}</Text>
             </View>
             
@@ -166,11 +190,20 @@ function OrderCard({ order, onPress }: { order: OrderListItem, onPress: () => vo
           </View>
         </View>
       </TouchableOpacity>
+
+      {order.status === 'COMPLETED' && (
+        <TouchableOpacity 
+          style={styles.reviewButton}
+          onPress={() => onReviewPress?.(order.id)}
+        >
+          <Text style={styles.reviewButtonText}>⭐ 리뷰 작성하기</Text>
+        </TouchableOpacity>
+      )}
     </Animated.View>
   );
 }
 
-export const OrderStatus: React.FC<OrderStatusProps> = ({ orders, onBack, onOrderPress }) => {
+export const OrderStatus: React.FC<OrderStatusProps> = ({ orders, onBack, onOrderPress, onReviewPress }) => {
   const insets = useSafeAreaInsets();
   const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 0) : insets.top;
   return (
@@ -199,7 +232,7 @@ export const OrderStatus: React.FC<OrderStatusProps> = ({ orders, onBack, onOrde
           </View>
         ) : (
           orders.map((order) => (
-            <OrderCard key={order.id} order={order} onPress={() => onOrderPress(order.id)} />
+            <OrderCard key={order.id} order={order} onPress={() => onOrderPress(order.id)} onReviewPress={onReviewPress} />
           ))
         )}
       </ScrollView>
@@ -258,9 +291,25 @@ const styles = StyleSheet.create({
   },
   emptySub: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#9CA3AF',
     textAlign: 'center',
-    paddingHorizontal: 40,
+    lineHeight: 22,
+  },
+  reviewButton: {
+    backgroundColor: '#FFF0F5',
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 12,
+    marginHorizontal: 24,
+    marginBottom: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFE4E1',
+  },
+  reviewButtonText: {
+    color: '#FF6B6B',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   orderCard: {
     backgroundColor: 'white',
@@ -298,6 +347,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     marginBottom: 12,
+  },
+  shopNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   shopNameText: {
     fontSize: 18,

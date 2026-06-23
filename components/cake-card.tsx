@@ -160,6 +160,15 @@ export function CakeCard({
               >
                 <Text style={styles.inquiryButtonText}>문의하기</Text>
               </TouchableOpacity>
+              {storeId && (
+                <TouchableOpacity
+                  onPress={() => { setShowActions(false); router.push(`/shop/${storeId}`); }}
+                  style={[styles.actionButton, styles.shopButton]}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.shopButtonText}>매장 보기</Text>
+                </TouchableOpacity>
+              )}
             </Animated.View>
           )}
         </View>
@@ -254,6 +263,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
+  },
+  shopButton: {
+    backgroundColor: '#000',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    width: '85%',
+    paddingVertical: 10,
+    marginTop: 4,
+  },
+  shopButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
   },
   editButton: {
     backgroundColor: '#fff',
