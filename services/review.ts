@@ -56,4 +56,50 @@ export const reviewService = {
       throw error;
     }
   },
+
+  /**
+   * 내 리뷰 목록(마이페이지)을 조회합니다.
+   * @param page 페이지 번호 (기본값 0)
+   * @param size 페이지 크기 (기본값 10)
+   */
+  async getMyReviews(page: number = 0, size: number = 10): Promise<ReviewPageResponse> {
+    try {
+      const response = await fetchWithAuth(`/api/reviews/me?page=${page}&size=${size}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Review API Error: ${response.status} - ${errorText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('getMyReviews error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * 리뷰를 삭제합니다.
+   * @param reviewId 리뷰 ID
+   */
+  async deleteReview(reviewId: number): Promise<void> {
+    try {
+      const response = await fetchWithAuth(`/api/reviews/${reviewId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Review API Error: ${response.status} - ${errorText}`);
+      }
+    } catch (error) {
+      console.error('deleteReview error:', error);
+      throw error;
+    }
+  },
 };

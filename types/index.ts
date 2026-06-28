@@ -340,6 +340,7 @@ export interface ReviewResponse {
   orderId: number;
   userId: number;
   userNickname?: string;
+  storeName?: string;
   content: string;
   rating: number;
   imageUrl?: string;
