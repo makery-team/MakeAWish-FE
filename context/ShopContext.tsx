@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { favoriteService } from '@/services/favorite';
+import { reviewService } from '@/services/review';
 import type { Order, FavoriteCake, Review, OrderData } from '@/types';
 
 interface ShopContextType {
@@ -41,7 +42,38 @@ export function ShopProvider({ children }: { children: ReactNode }) {
         console.error('Failed to load favorites:', error);
       }
     };
+
+    const loadReviews = async () => {
+      try {
+        // 1. Load from AsyncStorage (Cache)
+        const cached = await AsyncStorage.getItem('@reviews_cache');
+        if (cached) {
+          setReviews(JSON.parse(cached));
+        }
+
+        // 2. Fetch from backend and sync
+        const backendReviews = await reviewService.getMyReviews(0, 50); // Get recent 50 reviews
+        
+        // Map ReviewResponse to frontend Review type
+        const mappedReviews: Review[] = backendReviews.content.map(res => ({
+          id: res.id.toString(),
+          cakeImage: res.imageUrl || '',
+          shopName: res.storeName || 'MakeAWish 샵',
+          rating: res.rating,
+          comment: res.content,
+          date: new Date(res.createdAt).toLocaleDateString(),
+          images: res.imageUrl ? [res.imageUrl] : [],
+        }));
+
+        setReviews(mappedReviews);
+        await AsyncStorage.setItem('@reviews_cache', JSON.stringify(mappedReviews));
+      } catch (error) {
+        console.error('Failed to load reviews:', error);
+      }
+    };
+
     loadFavorites();
+    loadReviews();
   }, []);
 
   // Order actions
@@ -120,8 +152,20 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   }, [favorites]);
 
   // Review actions
-  const deleteReview = useCallback((reviewId: string) => {
-    setReviews(prev => prev.filter(r => r.id !== reviewId));
+  const deleteReview = useCallback(async (reviewId: string) => {
+    // Optimistic UI update
+    setReviews(prev => {
+      const updated = prev.filter(r => r.id !== reviewId);
+      AsyncStorage.setItem('@reviews_cache', JSON.stringify(updated)).catch(console.error);
+      return updated;
+    });
+
+    // API Sync
+    try {
+      await reviewService.deleteReview(parseInt(reviewId, 10));
+    } catch (error) {
+      console.error('Failed to delete review:', error);
+    }
   }, []);
 
   return (
