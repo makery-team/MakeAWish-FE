@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { favoriteService } from '@/services/favorite';
 import type { Order, FavoriteCake, Review, OrderData } from '@/types';
 
 interface ShopContextType {
@@ -20,6 +22,27 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [favorites, setFavorites] = useState<FavoriteCake[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]); // Initialized with empty for now
+
+  // Load initial favorites (Cache + Backend Sync)
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        // 1. Load from AsyncStorage for immediate UI (Cache)
+        const cached = await AsyncStorage.getItem('@favorites_cache');
+        if (cached) {
+          setFavorites(JSON.parse(cached));
+        }
+        
+        // 2. Fetch from backend and sync
+        const backendFavorites = await favoriteService.getMyFavorites();
+        setFavorites(backendFavorites);
+        await AsyncStorage.setItem('@favorites_cache', JSON.stringify(backendFavorites));
+      } catch (error) {
+        console.error('Failed to load favorites:', error);
+      }
+    };
+    loadFavorites();
+  }, []);
 
   // Order actions
   const addOrder = useCallback((orderData: OrderData) => {
@@ -49,24 +72,47 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Favorite actions
-  const toggleFavorite = useCallback((cakeId: number, image: string, shopName: string, tag?: string) => {
+  const toggleFavorite = useCallback(async (cakeId: number, image: string, shopName: string, tag?: string) => {
+    const isExist = favorites.some(f => f.id === cakeId.toString());
+    
+    // Optimistic UI update
     setFavorites(prev => {
-      const isExist = prev.some(f => f.id === cakeId.toString());
-      if (isExist) {
-        return prev.filter(f => f.id !== cakeId.toString());
-      } else {
-        return [...prev, {
-          id: cakeId.toString(),
-          image,
-          shopName,
-          description: tag
-        }];
-      }
+      const updated = isExist 
+        ? prev.filter(f => f.id !== cakeId.toString())
+        : [...prev, { id: cakeId.toString(), image, shopName, description: tag }];
+      
+      // Update cache in background
+      AsyncStorage.setItem('@favorites_cache', JSON.stringify(updated)).catch(console.error);
+      return updated;
     });
-  }, []);
 
-  const removeFavorite = useCallback((cakeId: string) => {
-    setFavorites(prev => prev.filter(f => f.id !== cakeId));
+    // API Sync
+    try {
+      if (isExist) {
+        await favoriteService.removeFavorite(cakeId);
+      } else {
+        await favoriteService.addFavorite(cakeId);
+      }
+    } catch (error) {
+      console.error('Failed to sync favorite with server:', error);
+      // NOTE: In a robust app, we would revert the optimistic update here if the API fails
+    }
+  }, [favorites]);
+
+  const removeFavorite = useCallback(async (cakeId: string) => {
+    // Optimistic UI
+    setFavorites(prev => {
+      const updated = prev.filter(f => f.id !== cakeId);
+      AsyncStorage.setItem('@favorites_cache', JSON.stringify(updated)).catch(console.error);
+      return updated;
+    });
+    
+    // API Sync
+    try {
+      await favoriteService.removeFavorite(parseInt(cakeId, 10));
+    } catch (error) {
+      console.error('Failed to remove favorite:', error);
+    }
   }, []);
 
   const isFavorited = useCallback((cakeId: number) => {
