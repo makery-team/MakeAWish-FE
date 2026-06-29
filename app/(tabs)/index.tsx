@@ -202,7 +202,15 @@ export default function HomeScreen() {
               onCakeInquiry={handleCakeInquiry}
               selectedCategory={selectedCategory}
               favorites={favorites}
-              onToggleFavorite={toggleFavorite}
+              onToggleFavorite={(cakeId, image, shopName, tag) => {
+                const currentlyFavorited = favorites.some(f => f.id === cakeId.toString());
+                toggleFavorite(cakeId, image, shopName, tag);
+                setCakes(prev => prev.map(cake => 
+                  cake.id === cakeId 
+                    ? { ...cake, likeCount: currentlyFavorited ? Math.max(0, cake.likeCount - 1) : cake.likeCount + 1 }
+                    : cake
+                ));
+              }}
               contentContainerStyle={{ paddingBottom: dynamicPaddingBottom }}
             />
           </View>

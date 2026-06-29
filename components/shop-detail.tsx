@@ -101,12 +101,17 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
     ? storeData.categories.flatMap(c => c.portfolios || []).map(p => p.imageUrl)
     : [];
 
+  // 샵의 총 좋아요 수 (각 포트폴리오의 likeCount 합산)
+  const totalLikes = storeData.categories
+    ? storeData.categories.flatMap(c => c.portfolios || []).reduce((sum, p) => sum + (p.likeCount || 0), 0)
+    : 0;
+
   const shop = {
     id: storeData.id,
     name: storeData.name || '이름 없음',
     rating: storeData.rating || 0,
     reviews: storeData.reviewCount || 0,
-    likes: 0, // API에 likes 없으므로 0
+    likes: totalLikes,
     specialty: storeData.categories && storeData.categories.length > 0 ? storeData.categories[0].name : '커스텀 케이크',
     address: storeData.address || '',
     phone: storeData.phone || '',

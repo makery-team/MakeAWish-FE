@@ -138,9 +138,18 @@ export function EditorView({
       // 1. 마스크 이미지 캡처 (SVG 영역)
       const maskB64 = await captureViewToBase64(svgContainerRef);
 
+      // 백엔드의 URL 쿼리스트링 절삭 버그(split("\\?")[0])를 우회하기 위해
+      // URL 방식 대신 Base64로 직접 변환해서 전송
+      let currentImageToSend = currentImage;
+      if (currentImage.startsWith("http")) {
+        // 프리픽스(data:image/png;base64,) 강제 추가로 백엔드의 http 체크(startsWith("http")) 우회
+        const rawB64 = await uriToBase64(currentImage);
+        currentImageToSend = `data:image/jpeg;base64,${rawB64}`;
+      }
+
       // 2. AI API 호출 (비동기 202 응답)
       const pId = portfolioId || 1;
-      const initialResponse = await aiService.inpaint(pId, command, maskB64, currentImage);
+      const initialResponse = await aiService.inpaint(pId, command, maskB64, currentImageToSend);
       
       const inpaintingId = initialResponse.id;
       if (!inpaintingId) {
