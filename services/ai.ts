@@ -2,6 +2,7 @@ import { AIActionType } from '@/types/ai';
 
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import fetchWithAuth from '../utils/api';
 
 export interface AiAgentRequest {
   message: string;
@@ -45,17 +46,11 @@ export const aiService = {
       }
       // ----------------------------------------------
 
-      const token = await AsyncStorage.getItem("auth_token");
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await fetch(`${BACKEND_API_URL}/api/ai-agent/chat`, {
+      const response = await fetchWithAuth(`${BACKEND_API_URL}/api/ai-agent/chat`, {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ message, productId }),
       });
 
@@ -77,17 +72,8 @@ export const aiService = {
    */
   async clearChatHistory(): Promise<void> {
     try {
-      const token = await AsyncStorage.getItem("auth_token");
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await fetch(`${BACKEND_API_URL}/api/ai-agent/chat`, {
+      const response = await fetchWithAuth(`${BACKEND_API_URL}/api/ai-agent/chat`, {
         method: 'DELETE',
-        headers,
       });
 
       if (!response.ok) {
@@ -104,17 +90,11 @@ export const aiService = {
    */
   async inpaint(portfolioId: number, prompt: string, maskImage: string, currentImage?: string): Promise<any> {
     try {
-      const token = await AsyncStorage.getItem("auth_token");
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await fetch(`${BACKEND_API_URL}/api/ai-agent/inpaint/${portfolioId}`, {
+      const response = await fetchWithAuth(`${BACKEND_API_URL}/api/ai-agent/inpaint/${portfolioId}`, {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ prompt, maskImage, currentImage }),
       });
 
@@ -134,17 +114,8 @@ export const aiService = {
    */
   async getInpaintingDetail(portfolioId: number, inpaintingId: number): Promise<any> {
     try {
-      const token = await AsyncStorage.getItem("auth_token");
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await fetch(`${BACKEND_API_URL}/api/ai-agent/inpaint/${portfolioId}/${inpaintingId}`, {
+      const response = await fetchWithAuth(`${BACKEND_API_URL}/api/ai-agent/inpaint/${portfolioId}/${inpaintingId}`, {
         method: 'GET',
-        headers,
       });
 
       if (!response.ok) {
