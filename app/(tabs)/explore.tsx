@@ -4,7 +4,8 @@ import { Search as SearchIcon, Filter, MapPin, Star } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
 import { mapService } from '@/services/map';
-import { MapStore } from '@/types';
+import { portfolioService } from '@/services/portfolio';
+import { MapStore, FeedItem } from '@/types';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 
@@ -13,7 +14,8 @@ export default function SearchScreen() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [results, setResults] = useState<MapStore[] | null>(null);
+  const [results, setResults] = useState<{ stores: MapStore[]; portfolios: FeedItem[] } | null>(null);
+  const [activeTab, setActiveTab] = useState<'store' | 'portfolio'>('store');
 
   const handleSearch = async () => {
     if (!query.trim()) {
@@ -22,11 +24,19 @@ export default function SearchScreen() {
     }
     setIsSearching(true);
     try {
-      const stores = await mapService.searchStores(query.trim());
-      setResults(stores);
+      const [stores, portfolios] = await Promise.all([
+        mapService.searchStores(query.trim()),
+        portfolioService.searchPortfolios(query.trim())
+      ]);
+      setResults({ stores, portfolios });
+      if (stores.length === 0 && portfolios.length > 0) {
+        setActiveTab('portfolio');
+      } else {
+        setActiveTab('store');
+      }
     } catch (error) {
       console.error('Search failed:', error);
-      setResults([]);
+      setResults({ stores: [], portfolios: [] });
     } finally {
       setIsSearching(false);
     }
@@ -60,6 +70,18 @@ export default function SearchScreen() {
             </View>
           </View>
         </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderPortfolioItem = (item: FeedItem) => {
+    return (
+      <TouchableOpacity 
+        key={item.id} 
+        style={styles.portfolioCard}
+        onPress={() => item.storeId ? router.push(`/shop/${item.storeId}`) : null}
+      >
+        <Image source={{ uri: item.imageUrl }} style={styles.portfolioImage} />
       </TouchableOpacity>
     );
   };
@@ -108,18 +130,49 @@ export default function SearchScreen() {
         ) : (
           // 검색 결과 뷰
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              검색 결과 <Text style={{ color: theme.colors.primary }}>{results.length}</Text>건
-            </Text>
-            {results.length === 0 && !isSearching ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>검색 결과가 없습니다.</Text>
-                <Text style={styles.emptySubText}>다른 키워드로 검색해 보세요.</Text>
-              </View>
-            ) : (
-              <View style={styles.resultList}>
-                {results.map(renderStoreItem)}
-              </View>
+            <View style={styles.tabContainer}>
+              <TouchableOpacity 
+                style={[styles.tabButton, activeTab === 'store' && styles.activeTabButton]}
+                onPress={() => setActiveTab('store')}
+              >
+                <Text style={[styles.tabText, activeTab === 'store' && styles.activeTabText]}>
+                  가게 {results.stores.length}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.tabButton, activeTab === 'portfolio' && styles.activeTabButton]}
+                onPress={() => setActiveTab('portfolio')}
+              >
+                <Text style={[styles.tabText, activeTab === 'portfolio' && styles.activeTabText]}>
+                  디자인 {results.portfolios.length}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {activeTab === 'store' && (
+              results.stores.length === 0 && !isSearching ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyText}>가게 검색 결과가 없습니다.</Text>
+                  <Text style={styles.emptySubText}>다른 키워드로 검색해 보세요.</Text>
+                </View>
+              ) : (
+                <View style={styles.resultList}>
+                  {results.stores.map(renderStoreItem)}
+                </View>
+              )
+            )}
+
+            {activeTab === 'portfolio' && (
+              results.portfolios.length === 0 && !isSearching ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyText}>디자인 검색 결과가 없습니다.</Text>
+                  <Text style={styles.emptySubText}>다른 키워드로 검색해 보세요.</Text>
+                </View>
+              ) : (
+                <View style={styles.portfolioGrid}>
+                  {results.portfolios.map(renderPortfolioItem)}
+                </View>
+              )
             )}
           </View>
         )}
@@ -303,5 +356,44 @@ const styles = StyleSheet.create({
   emptySubText: {
     fontSize: 14,
     color: '#9CA3AF',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    gap: 8,
+  },
+  tabButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+  },
+  activeTabButton: {
+    backgroundColor: theme.colors.primary,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  activeTabText: {
+    color: '#fff',
+  },
+  portfolioGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 16,
+  },
+  portfolioCard: {
+    width: '48%',
+    aspectRatio: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F3F4F6',
+  },
+  portfolioImage: {
+    width: '100%',
+    height: '100%',
   },
 });
