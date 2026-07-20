@@ -2,7 +2,7 @@ import { AIActionType } from '@/types/ai';
 
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import fetchWithAuth from '../utils/api';
+import { fetchWithAuth } from '../utils/api';
 
 export interface AiAgentRequest {
   message: string;
@@ -46,7 +46,7 @@ export const aiService = {
       }
       // ----------------------------------------------
 
-      const response = await fetchWithAuth(`${BACKEND_API_URL}/api/ai-agent/chat`, {
+      const response = await fetchWithAuth('/api/ai-agent/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ export const aiService = {
    */
   async clearChatHistory(): Promise<void> {
     try {
-      const response = await fetchWithAuth(`${BACKEND_API_URL}/api/ai-agent/chat`, {
+      const response = await fetchWithAuth('/api/ai-agent/chat', {
         method: 'DELETE',
       });
 
@@ -90,7 +90,7 @@ export const aiService = {
    */
   async inpaint(portfolioId: number, prompt: string, maskImage: string, currentImage?: string): Promise<any> {
     try {
-      const response = await fetchWithAuth(`${BACKEND_API_URL}/api/ai-agent/inpaint/${portfolioId}`, {
+      const response = await fetchWithAuth(`/api/ai-agent/inpaint/${portfolioId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ export const aiService = {
    */
   async getInpaintingDetail(portfolioId: number, inpaintingId: number): Promise<any> {
     try {
-      const response = await fetchWithAuth(`${BACKEND_API_URL}/api/ai-agent/inpaint/${portfolioId}/${inpaintingId}`, {
+      const response = await fetchWithAuth(`/api/ai-agent/inpaint/${portfolioId}/${inpaintingId}`, {
         method: 'GET',
       });
 
