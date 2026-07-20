@@ -325,7 +325,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   headerButton: {
     padding: 8,
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
   shopInfo: {
     padding: 20,
     borderBottomWidth: 8,
-    borderBottomColor: '#F8F8F8',
+    borderBottomColor: 'rgba(0,0,0,0.03)',
   },
   shopHeader: {
     flexDirection: 'row',
@@ -542,9 +542,9 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   chipBarWrapper: {
-    backgroundColor: 'white',
+    backgroundColor: theme.colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   chipBar: {
     paddingHorizontal: 16,
@@ -576,13 +576,18 @@ const reviewStyles = StyleSheet.create({
   section: {
     padding: 20,
     borderTopWidth: 8,
-    borderTopColor: '#F8F8F8',
+    borderTopColor: 'rgba(0,0,0,0.03)',
   },
   card: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: 'white',
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   header: {
     flexDirection: 'row',

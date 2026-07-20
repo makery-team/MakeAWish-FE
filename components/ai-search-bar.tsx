@@ -535,12 +535,12 @@ const styles = StyleSheet.create({
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.3)", zIndex: 99 },
   sheet: {
     position: "absolute", left: 0, right: 0, bottom: 0, height: SHEET_HEIGHT,
-    backgroundColor: theme.colors.background, borderTopLeftRadius: 32, borderTopRightRadius: 32,
+    backgroundColor: theme.colors.surface, borderTopLeftRadius: 32, borderTopRightRadius: 32,
     shadowColor: theme.colors.primary, shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.08, shadowRadius: 30, elevation: 25, zIndex: 1000,
   },
   dragHandleArea: { 
     width: "100%", height: HANDLE_HEIGHT, alignItems: "center", justifyContent: "center", 
-    backgroundColor: theme.colors.background, borderTopLeftRadius: 32, borderTopRightRadius: 32 
+    backgroundColor: theme.colors.surface, borderTopLeftRadius: 32, borderTopRightRadius: 32 
   },
   dragHandle: { width: 36, height: 4, backgroundColor: theme.colors.border, borderRadius: 2 },
   collapsedWrapper: { position: 'absolute', top: HANDLE_HEIGHT, left: 0, right: 0, height: COLLAPSED_BAR_HEIGHT - HANDLE_HEIGHT },
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
   optionText: { fontSize: 14, color: theme.colors.text, letterSpacing: -0.3 },
   typingIndicator: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, gap: 10, marginBottom: 20 },
   typingText: { fontSize: 13, color: theme.colors.textMuted, letterSpacing: -0.3 },
-  inputArea: { paddingHorizontal: 20, paddingTop: 16, backgroundColor: theme.colors.background, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border },
+  inputArea: { paddingHorizontal: 20, paddingTop: 16, backgroundColor: theme.colors.surface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border },
   inputContainerGradient: { flexDirection: "row", alignItems: "center", borderRadius: 32, paddingHorizontal: 20, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.03, shadowRadius: 10 },
   input: { flex: 1, paddingVertical: 14, fontSize: 15, color: theme.colors.text, letterSpacing: -0.5 },
   sendBtnGradient: { width: 40, height: 40, borderRadius: 20, backgroundColor: theme.colors.primary, alignItems: "center", justifyContent: "center", marginLeft: 8, shadowColor: theme.colors.primary, shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 8 },

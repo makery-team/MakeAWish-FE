@@ -161,7 +161,7 @@ export function Header({
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     zIndex: 999,
     position: 'relative',
   },

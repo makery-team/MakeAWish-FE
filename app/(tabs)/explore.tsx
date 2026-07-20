@@ -8,8 +8,9 @@ import { portfolioService } from '@/services/portfolio';
 import { MapStore, FeedItem } from '@/types';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { API_URL, fetchWithRetry } from '@/services/api';
 
-export default function SearchScreen() {
+export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [query, setQuery] = useState('');
@@ -184,7 +185,7 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.background,
   },
   header: {
     paddingHorizontal: 20,
