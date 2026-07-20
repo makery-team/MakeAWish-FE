@@ -1,7 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "expo-router";
-import { Heart, Sparkles } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,18 +12,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
+import { theme } from "@/constants/theme";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const GoogleGLogo = ({ size = 18 }: { size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 48 48">
@@ -48,153 +39,40 @@ const GoogleGLogo = ({ size = 18 }: { size?: number }) => (
   </Svg>
 );
 
-const IS_MOCK = false; // 💡 실제 Google OAuth 흐름을 테스트하기 위해 false로 설정합니다.
+const IS_MOCK = false;
 
-const Particle = ({
-  delay,
-  startPos,
-}: {
-  delay: number;
-  startPos: { x: number; y: number };
-}) => {
-  const translateY = useSharedValue(0);
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0);
-
-  useEffect(() => {
-    translateY.value = withRepeat(
-      withDelay(
-        delay,
-        withTiming(-100 - Math.random() * 100, {
-          duration: 3000 + Math.random() * 2000,
-          easing: Easing.out(Easing.quad),
-        }),
-      ),
-      -1,
-      false,
-    );
-    opacity.value = withRepeat(
-      withDelay(
-        delay,
-        withSequence(
-          withTiming(0.6, { duration: 1000 }),
-          withTiming(0.6, { duration: 1000 }),
-          withTiming(0, { duration: 1000 }),
-        ),
-      ),
-      -1,
-      false,
-    );
-    scale.value = withRepeat(
-      withDelay(
-        delay,
-        withSequence(
-          withTiming(1, { duration: 1000 }),
-          withTiming(0.5, { duration: 2000 }),
-        ),
-      ),
-      -1,
-      false,
-    );
-  }, [delay]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }, { scale: scale.value }],
-    opacity: opacity.value,
-    left: startPos.x,
-    top: startPos.y,
-  }));
-
-  return (
-    <Animated.View style={[styles.particle, animatedStyle]}>
-      <Sparkles size={12} color="#D88A80" fill="#D88A80" />
-    </Animated.View>
-  );
-};
-
-const CakeIllustration = () => (
-  <View style={styles.cakeScene}>
-    <View style={styles.cakeGlow} />
-    <View style={styles.sparkleOrbTopLeft}>
-      <Sparkles size={12} color="#E7A55C" fill="#E7A55C" />
-    </View>
-    <View style={styles.sparkleOrbTopRight}>
-      <Sparkles size={12} color="#E7A55C" fill="#E7A55C" />
-    </View>
-    <View style={styles.heartOrbLeft}>
-      <Heart size={14} color="#C86A72" fill="#C86A72" />
-    </View>
-    <View style={styles.heartOrbRight}>
-      <Heart size={12} color="#C86A72" fill="#C86A72" />
-    </View>
-    <View style={styles.cakePole} />
-    <View style={styles.cakeStar}>
-      <Sparkles size={20} color="#FFE9A8" fill="#FFE9A8" />
-    </View>
-    <View style={styles.cakeBottomCloud} />
-    <View style={styles.cakeBottomTier}>
-      <View style={styles.cakeBottomFrosting} />
-      <View style={styles.cakeBottomCream} />
-    </View>
-    <View style={styles.cakeTopTier}>
-      <View style={styles.cakeTopFrosting} />
-      <View style={styles.cakeTopCream} />
+const OwnerSplashGraphic = () => (
+  <View style={styles.graphicContainer}>
+    <View style={styles.graphicCircle}>
+      <Text style={styles.emojiCenter}>🍰</Text>
+      <Text style={styles.emojiRight}>✨</Text>
+      <Text style={styles.emojiLeft}>🧁</Text>
     </View>
   </View>
 );
 
 export default function LoginScreen() {
   const router = useRouter();
-
-  // 💡 [수정 포인트] AuthContext에 정의된 정확한 함수명(signInWithGoogle)과 사용자 상태(user)를 가져옵니다.
   const { signInWithGoogle, user } = useAuth();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const logoScale = useSharedValue(1);
-
-  useEffect(() => {
-    logoScale.value = withRepeat(
-      withSequence(
-        withTiming(1.05, { duration: 2000, easing: Easing.inOut(Easing.quad) }),
-        withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.quad) }),
-      ),
-      -1,
-      true,
-    );
-  }, [logoScale]);
-
-  const logoAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: logoScale.value }],
-  }));
-
-  // 💡 [추가 포인트] 로그인이 완료되어 전역 context의 user 상태가 업데이트되면 목적지로 리다이렉트합니다.
-  useEffect(() => {
-    if (user) {
-      if (user.nickname && user.phoneNumber) {
-        router.replace("/(tabs)");
-      } else {
-        router.replace("/(auth)/signup");
-      }
-    }
-  }, [user, router]);
+  // 리다이렉트 로직은 _layout.tsx 에서 처리하도록 단순화 가능, 여기서는 안전장치로 유지
+  if (user && user.nickname && user.phoneNumber) {
+    router.replace("/(tabs)");
+  } else if (user) {
+    router.replace("/(auth)/signup");
+  }
 
   const handleGoogleLogin = async () => {
     try {
       setIsGoogleLoading(true);
-
       if (IS_MOCK) {
-        // 모의 로그인 흐름 (테스트용)
         setTimeout(() => {
-          Alert.alert(
-            "알림",
-            "모의 로그인은 작동하지 않도록 세팅을 교체했습니다.",
-          );
+          Alert.alert("알림", "모의 로그인은 작동하지 않습니다.");
           setIsGoogleLoading(false);
         }, 1000);
         return;
       }
-
-      // 💡 [핵심 교체] 꼬여있던 내부 훅 대신, AuthContext가 제공하는 우회 브라우저 로그인 함수를 직접 호출합니다.
       await signInWithGoogle();
     } catch (error) {
       Alert.alert("로그인 오류", "Google 로그인을 완료할 수 없습니다.");
@@ -208,27 +86,24 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.bgGlowTopLeft} />
-      <View style={styles.bgGlowTopRight} />
-      <View style={styles.bgGlowBottomLeft} />
-
-      <Particle delay={0} startPos={{ x: width * 0.18, y: height * 0.26 }} />
-      <Particle delay={700} startPos={{ x: width * 0.76, y: height * 0.2 }} />
-      <Particle delay={1400} startPos={{ x: width * 0.62, y: height * 0.42 }} />
+      {/* Background Glow Effects to match Owner App exactly */}
+      <View style={styles.bgGlowYellow} />
+      <View style={styles.bgGlowLavender} />
 
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
-          <Animated.View style={[styles.heroSection, logoAnimatedStyle]}>
-            <CakeIllustration />
-
-            <View style={styles.titleBlock}>
-              <Text style={styles.appName}>Make a Wish</Text>
-              <Text style={styles.appSubtitle}>AI Custom Cake Platform</Text>
-              <Text style={styles.appDescription}>
-                특별한 날의 케이크를 더 예쁘고, 더 쉽게.
-              </Text>
+          <View style={styles.heroSection}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>✨ 특별한 하루를 위한</Text>
             </View>
-          </Animated.View>
+            <Text style={styles.appName}>
+              달콤한 주문,{"\n"}한눈에 확인해요
+            </Text>
+            <Text style={styles.appDescription}>
+              케이크 탐색부터 주문 접수까지 소비자 전용 앱
+            </Text>
+            <OwnerSplashGraphic />
+          </View>
 
           <View style={styles.bottomSection}>
             <TouchableOpacity
@@ -252,14 +127,14 @@ export default function LoginScreen() {
                   />
                 ) : (
                   <Text style={styles.googleBrandedText}>
-                    Sign up with Google
+                    Sign in with Google
                   </Text>
                 )}
               </View>
             </TouchableOpacity>
 
             <Text style={styles.footerText}>
-              가입 시 <Text style={styles.footerLink}>이용약관</Text> 및{" "}
+              로그인 시 <Text style={styles.footerLink}>이용약관</Text> 및{" "}
               <Text style={styles.footerLink}>개인정보 처리방침</Text>에
               동의하게 됩니다.
             </Text>
@@ -271,215 +146,123 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFF8EF" },
-  bgGlowTopLeft: {
+  container: { flex: 1, backgroundColor: theme.colors.background, position: 'relative' },
+  bgGlowYellow: {
     position: "absolute",
-    top: -height * 0.18,
-    left: -width * 0.28,
-    width: width * 0.95,
-    height: width * 0.95,
-    borderRadius: width,
+    top: 40,
+    left: -40,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
     backgroundColor: "#FFF2DA",
-    opacity: 0.95,
+    opacity: 0.6,
   },
-  bgGlowTopRight: {
+  bgGlowLavender: {
     position: "absolute",
-    top: -height * 0.08,
-    right: -width * 0.18,
-    width: width * 0.7,
-    height: width * 0.7,
-    borderRadius: width,
-    backgroundColor: "#FCE7E0",
-    opacity: 0.95,
+    top: 120,
+    right: -30,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: "#EBE5F7",
+    opacity: 0.6,
   },
-  bgGlowBottomLeft: {
-    position: "absolute",
-    bottom: -height * 0.16,
-    left: -width * 0.22,
-    width: width * 0.85,
-    height: width * 0.85,
-    borderRadius: width,
-    backgroundColor: "#FFF1E5",
-    opacity: 0.9,
-  },
-  safeArea: { flex: 1 },
+  safeArea: { flex: 1, zIndex: 10 },
   content: {
     flex: 1,
     paddingHorizontal: 24,
     justifyContent: "space-between",
-    paddingTop: 28,
-    paddingBottom: 28,
+    paddingTop: 80,
+    paddingBottom: 40,
   },
   heroSection: {
     alignItems: "center",
-    justifyContent: "center",
     flex: 1,
-    paddingTop: 12,
   },
-  cakeScene: {
-    width: 260,
-    height: 240,
-    alignItems: "center",
-    justifyContent: "flex-end",
-    position: "relative",
-    marginBottom: 28,
+  badge: {
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 20,
   },
-  cakeGlow: {
-    position: "absolute",
-    bottom: 18,
-    width: 220,
-    height: 100,
-    borderRadius: 120,
-    backgroundColor: "#FFE9CB",
-    opacity: 0.55,
+  badgeText: {
+    color: theme.colors.primary,
+    fontSize: 12,
+    fontFamily: "GowunDodum_400Regular",
   },
-  cakeBottomCloud: {
-    position: "absolute",
-    bottom: 0,
-    width: 210,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#E5B5A8",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-  },
-  cakeBottomTier: {
-    position: "absolute",
-    bottom: 36,
-    width: 206,
-    height: 64,
-    borderRadius: 30,
-    backgroundColor: "#D96E72",
-    shadowColor: "#B76161",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-  },
-  cakeBottomFrosting: {
-    position: "absolute",
-    top: 14,
-    left: 10,
-    right: 10,
-    height: 16,
-    borderRadius: 10,
-    backgroundColor: "#E98785",
-  },
-  cakeBottomCream: {
-    position: "absolute",
-    top: 24,
-    left: 0,
-    right: 0,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: "#F8D9C2",
-  },
-  cakeTopTier: {
-    position: "absolute",
-    bottom: 90,
-    width: 156,
-    height: 54,
-    borderRadius: 26,
-    backgroundColor: "#DA7072",
-    shadowColor: "#B76161",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-  },
-  cakeTopFrosting: {
-    position: "absolute",
-    top: 12,
-    left: 8,
-    right: 8,
-    height: 14,
-    borderRadius: 8,
-    backgroundColor: "#E08A84",
-  },
-  cakeTopCream: {
-    position: "absolute",
-    top: 22,
-    left: 0,
-    right: 0,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: "#F8D5BC",
-  },
-  cakePole: {
-    position: "absolute",
-    bottom: 136,
-    width: 8,
-    height: 32,
-    borderRadius: 4,
-    backgroundColor: "#DFA772",
-  },
-  cakeStar: {
-    position: "absolute",
-    bottom: 158,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#FFE8B9",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#E8B35A",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-  },
-  sparkleOrbTopLeft: { position: "absolute", top: 34, left: 54, opacity: 0.65 },
-  sparkleOrbTopRight: {
-    position: "absolute",
-    top: 46,
-    right: 48,
-    opacity: 0.65,
-  },
-  heartOrbLeft: { position: "absolute", top: 92, left: 24, opacity: 0.55 },
-  heartOrbRight: { position: "absolute", top: 106, right: 22, opacity: 0.55 },
-  titleBlock: { alignItems: "center" },
   appName: {
-    fontSize: 40,
+    fontSize: 34,
     lineHeight: 44,
-    fontWeight: "900",
-    color: "#C95D61",
-    letterSpacing: -1.4,
+    color: theme.colors.primary,
+    fontFamily: "GowunDodum_400Regular",
     textAlign: "center",
-    textShadowColor: "rgba(236, 171, 112, 0.55)",
-    textShadowOffset: { width: 0, height: 6 },
-    textShadowRadius: 12,
-  },
-  appSubtitle: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#8D4A4C",
-    textAlign: "center",
+    marginBottom: 12,
   },
   appDescription: {
-    marginTop: 10,
     fontSize: 14,
-    lineHeight: 20,
-    color: "#9A6D61",
+    color: theme.colors.textMuted,
+    fontFamily: "GowunDodum_400Regular",
     textAlign: "center",
-    paddingHorizontal: 12,
-    maxWidth: 280,
+    marginBottom: 40,
   },
-  bottomSection: { width: "100%", alignItems: "center", gap: 14 },
+  graphicContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+    width: "100%",
+  },
+  graphicCircle: {
+    width: width * 0.6,
+    height: width * 0.6,
+    backgroundColor: theme.colors.surface,
+    borderRadius: width,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+    position: "relative",
+  },
+  emojiCenter: {
+    fontSize: 100,
+    lineHeight: 110,
+  },
+  emojiRight: {
+    position: "absolute",
+    right: -10,
+    top: 20,
+    fontSize: 40,
+  },
+  emojiLeft: {
+    position: "absolute",
+    left: -10,
+    bottom: 20,
+    fontSize: 40,
+  },
+  bottomSection: { width: "100%", alignItems: "center", gap: 16 },
   googleBrandedButton: {
     backgroundColor: "#FFFFFF",
-    height: 40,
+    height: 48,
     borderWidth: 1,
-    borderColor: "#747775",
-    borderRadius: 20,
-    paddingHorizontal: 12,
+    borderColor: "#E2E8F0", // softer border to match the elegant style while keeping it a border
+    borderRadius: 24,
+    paddingHorizontal: 16,
     overflow: "hidden",
     alignSelf: "center",
     width: "100%",
     maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   googleBrandedButtonDisabled: {
-    backgroundColor: "#FFFFFF61",
-    borderColor: "#1F1F1F1F",
+    backgroundColor: "#F8FAFC",
+    borderColor: "#E2E8F0",
   },
   googleBrandedContentWrapper: {
     flexDirection: "row",
@@ -487,18 +270,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     height: "100%",
     width: "100%",
-    position: "relative",
   },
   googleBrandedIconWrapper: {
-    width: 20,
-    height: 20,
-    minWidth: 20,
-    marginRight: 10,
+    width: 24,
+    height: 24,
+    marginRight: 12,
   },
   googleBrandedText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#1F1F1F",
+    fontSize: 16,
+    color: "#334155",
     fontFamily: Platform.select({
       ios: "Roboto",
       android: "Roboto",
@@ -509,10 +289,10 @@ const styles = StyleSheet.create({
   googleLoadingIndicator: { marginLeft: 2 },
   footerText: {
     fontSize: 12,
-    color: "rgba(141, 74, 76, 0.78)",
+    color: theme.colors.textMuted,
     textAlign: "center",
     lineHeight: 18,
+    fontFamily: "GowunDodum_400Regular",
   },
-  footerLink: { textDecorationLine: "underline", fontWeight: "700" },
-  particle: { position: "absolute", zIndex: 1, opacity: 0.55 },
+  footerLink: { textDecorationLine: "underline" },
 });

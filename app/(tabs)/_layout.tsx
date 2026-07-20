@@ -29,8 +29,7 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: '500',
-        },
+          },
         tabBarHideOnKeyboard: true, // Hide tab bar when keyboard is active
       }}>
       <Tabs.Screen

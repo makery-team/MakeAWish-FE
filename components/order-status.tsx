@@ -260,7 +260,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
     color: '#111827',
     marginLeft: 8,
   },
@@ -285,7 +284,6 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: '#374151',
     marginBottom: 8,
   },
@@ -309,8 +307,7 @@ const styles = StyleSheet.create({
   reviewButtonText: {
     color: '#FF6B6B',
     fontSize: 14,
-    fontWeight: 'bold',
-  },
+    },
   orderCard: {
     backgroundColor: 'white',
     borderRadius: 24,
@@ -339,7 +336,6 @@ const styles = StyleSheet.create({
   },
   orderDateText: {
     fontSize: 14,
-    fontWeight: '600',
     color: '#4B5563',
   },
   orderMainInfo: {
@@ -355,12 +351,10 @@ const styles = StyleSheet.create({
   },
   shopNameText: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: '#111827',
   },
   priceText: {
     fontSize: 16,
-    fontWeight: 'bold',
     color: '#DB2777',
   },
   orderIdBadge: {
@@ -376,12 +370,10 @@ const styles = StyleSheet.create({
   },
   orderIdLabel: {
     fontSize: 11,
-    fontWeight: '500',
     color: '#6B7280',
   },
   orderIdText: {
     fontSize: 11,
-    fontWeight: '600',
     color: '#4B5563',
   },
   pickupInfoBadge: {
@@ -398,7 +390,6 @@ const styles = StyleSheet.create({
   },
   pickupInfoText: {
     fontSize: 12,
-    fontWeight: '500',
     color: '#DB2777',
   },
   progressSection: {
@@ -464,12 +455,10 @@ const styles = StyleSheet.create({
   },
   stepLabelActive: {
     color: '#111827',
-    fontWeight: 'bold',
-  },
+    },
   stepLabelInactive: {
     color: '#9CA3AF',
-    fontWeight: '500',
-  },
+    },
   statusMessageCard: {
     padding: 12,
     borderRadius: 12,
@@ -498,8 +487,7 @@ const styles = StyleSheet.create({
   },
   statusMessageTitle: {
     fontSize: 13,
-    fontWeight: 'bold',
-  },
+    },
   textBlue: { color: '#1D4ED8' },
   textOrange: { color: '#C2410C' },
   textGreen: { color: '#15803D' },

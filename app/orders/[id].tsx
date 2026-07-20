@@ -249,8 +249,7 @@ const styles = StyleSheet.create({
   },
   backToHomeText: {
     color: 'white',
-    fontWeight: 'bold',
-  },
+    },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -266,7 +265,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: '#111827',
     marginLeft: 8,
   },
@@ -303,11 +301,9 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 14,
-    fontWeight: 'bold',
-  },
+    },
   orderNumberText: {
     fontSize: 14,
-    fontWeight: '600',
     color: '#4B5563',
   },
   card: {
@@ -332,7 +328,6 @@ const styles = StyleSheet.create({
   },
   storeNameText: {
     fontSize: 16,
-    fontWeight: 'bold',
     color: '#111827',
   },
   itemRow: {
@@ -363,7 +358,6 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 15,
-    fontWeight: '600',
     color: '#111827',
     marginBottom: 4,
   },
@@ -374,7 +368,6 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     fontSize: 15,
-    fontWeight: 'bold',
     color: '#DB2777',
   },
   optionsContainer: {
@@ -385,7 +378,6 @@ const styles = StyleSheet.create({
   },
   optionsTitle: {
     fontSize: 13,
-    fontWeight: 'bold',
     color: '#4B5563',
     marginBottom: 12,
   },
@@ -400,12 +392,10 @@ const styles = StyleSheet.create({
   },
   optionValue: {
     fontSize: 13,
-    fontWeight: '500',
     color: '#111827',
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
     color: '#111827',
     marginBottom: 16,
   },
@@ -435,7 +425,6 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 14,
-    fontWeight: '500',
     color: '#111827',
   },
   paymentRow: {
@@ -459,12 +448,10 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 15,
-    fontWeight: 'bold',
     color: '#111827',
   },
   totalValue: {
     fontSize: 18,
-    fontWeight: '900',
     color: '#DB2777',
   },
 });

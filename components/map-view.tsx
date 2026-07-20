@@ -413,7 +413,6 @@ const cardStyles = StyleSheet.create({
   },
   shopName: {
     fontSize: 14,
-    fontWeight: '700',
     color: '#222',
     marginBottom: 2,
     marginRight: 24,
@@ -435,7 +434,6 @@ const cardStyles = StyleSheet.create({
   },
   statText: {
     fontSize: 12,
-    fontWeight: '600',
     color: '#333',
   },
   statSub: {
@@ -454,7 +452,6 @@ const cardStyles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 10,
-    fontWeight: '600',
     color: theme.colors.primary,
   },
   detailButton: {
@@ -465,7 +462,6 @@ const cardStyles = StyleSheet.create({
   },
   detailButtonText: {
     fontSize: 12,
-    fontWeight: '600',
     color: theme.colors.primary,
   },
 });
@@ -625,7 +621,6 @@ const sheetStyles = StyleSheet.create({
   },
   title: {
     fontSize: 17,
-    fontWeight: '700',
     color: '#222',
   },
   closeBtn: {
@@ -664,7 +659,6 @@ const sheetStyles = StyleSheet.create({
   },
   guName: {
     fontSize: 15,
-    fontWeight: '600',
     color: '#333',
   },
   chevronDown: {
@@ -740,7 +734,6 @@ const styles = StyleSheet.create({
   regionBarText: {
     flex: 1,
     fontSize: 14,
-    fontWeight: '600',
     color: '#222',
   },
   locationButton: {

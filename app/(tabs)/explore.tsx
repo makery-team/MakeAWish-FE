@@ -206,7 +206,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '600',
     color: theme.colors.text,
   },
   content: {
@@ -228,14 +227,12 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '800',
     color: theme.colors.text,
   },
   clearBtn: {
     fontSize: 12,
     color: theme.colors.gray,
-    fontWeight: '600',
-  },
+    },
   tagCloud: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -250,8 +247,7 @@ const styles = StyleSheet.create({
   recentTagText: {
     fontSize: 13,
     color: '#4B5563',
-    fontWeight: '600',
-  },
+    },
   trendingTag: {
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -263,8 +259,7 @@ const styles = StyleSheet.create({
   trendingTagText: {
     fontSize: 13,
     color: theme.colors.primary,
-    fontWeight: '700',
-  },
+    },
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -282,7 +277,6 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 14,
-    fontWeight: '700',
     color: theme.colors.text,
   },
   listContainer: {
@@ -316,7 +310,6 @@ const styles = StyleSheet.create({
   },
   storeName: {
     fontSize: 16,
-    fontWeight: '700',
     color: '#111827',
     marginBottom: 4,
   },
@@ -336,7 +329,6 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 13,
-    fontWeight: '600',
     color: '#374151',
   },
   statSubText: {
@@ -349,7 +341,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    fontWeight: '700',
     color: '#374151',
     marginBottom: 8,
   },
@@ -373,7 +364,6 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '600',
     color: '#6B7280',
   },
   activeTabText: {

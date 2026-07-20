@@ -341,7 +341,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
     color: '#333',
   },
   scrollContent: {
@@ -369,7 +368,6 @@ const styles = StyleSheet.create({
   },
   shopName: {
     fontSize: 22,
-    fontWeight: '800',
     color: '#333',
     marginBottom: 6,
   },
@@ -385,7 +383,6 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 15,
-    fontWeight: '700',
     color: '#333',
   },
   statCount: {
@@ -401,7 +398,6 @@ const styles = StyleSheet.create({
   },
   specialtyText: {
     fontSize: 12,
-    fontWeight: '600',
     color: theme.colors.primary,
   },
   description: {
@@ -442,8 +438,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-  },
+    },
   primaryButtonText: {
     color: 'white',
   },
@@ -455,7 +450,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
     color: '#333',
     marginBottom: 16,
   },
@@ -496,7 +490,6 @@ const styles = StyleSheet.create({
   },
   imageActionOutlineText: {
     fontSize: 10,
-    fontWeight: '700',
     color: 'white',
   },
   imageActionFill: {
@@ -507,7 +500,6 @@ const styles = StyleSheet.create({
   },
   imageActionFillText: {
     fontSize: 10,
-    fontWeight: '700',
     color: 'white',
   },
   tagsSection: {
@@ -517,7 +509,6 @@ const styles = StyleSheet.create({
   },
   tagsTitle: {
     fontSize: 14,
-    fontWeight: '700',
     color: '#777',
     marginBottom: 12,
   },
@@ -548,7 +539,6 @@ const styles = StyleSheet.create({
   },
   chatButtonText: {
     fontSize: 16,
-    fontWeight: '700',
     color: 'white',
   },
   chipBarWrapper: {
@@ -575,7 +565,6 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
-    fontWeight: '500',
     color: '#444',
   },
   chipTextActive: {
@@ -603,7 +592,6 @@ const reviewStyles = StyleSheet.create({
   },
   nickname: {
     fontSize: 13,
-    fontWeight: '700',
     color: '#333',
     flex: 1,
   },

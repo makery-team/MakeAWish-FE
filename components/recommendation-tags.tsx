@@ -87,8 +87,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 14,
-    fontWeight: '700',
-  },
+    },
   selectedTagText: {
     color: theme.colors.primary,
   },

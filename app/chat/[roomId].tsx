@@ -84,7 +84,7 @@ export default function ChatRoomScreen() {
         options={{
           headerShown: true,
           headerTitle: storeName || '매장 채팅',
-          headerTitleStyle: { fontSize: 18, fontWeight: '600' },
+          headerTitleStyle: { fontSize: 18, },
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginLeft: -8 }}>
               <ChevronLeft size={24} color="#111827" />
@@ -156,8 +156,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 12,
     color: '#D97706',
-    fontWeight: '500',
-  },
+    },
   messageList: {
     padding: 16,
     paddingBottom: 24,
@@ -184,7 +183,6 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 14,
-    fontWeight: '600',
     color: '#4B5563',
   },
   messageBubble: {

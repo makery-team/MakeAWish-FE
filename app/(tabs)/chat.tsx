@@ -141,7 +141,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: '700',
     color: '#111827',
   },
   listContent: {
@@ -181,7 +180,6 @@ const styles = StyleSheet.create({
   },
   storeName: {
     fontSize: 16,
-    fontWeight: '600',
     color: '#1F2937',
   },
   dateText: {
@@ -204,7 +202,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    fontWeight: '600',
     color: '#4B5563',
     marginBottom: 8,
   },
