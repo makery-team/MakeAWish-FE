@@ -47,7 +47,7 @@ export default function EditorScreen() {
     <EditorView
       image={safeImage}
       shopName={safeShopName}
-      portfolioId={id ? parseInt(id, 10) : 1}
+      portfolioId={id && !isNaN(parseInt(id, 10)) ? parseInt(id, 10) : 1}
       onBack={handleBack}
       onInquiry={handleInquiry}
     />
