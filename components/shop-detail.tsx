@@ -140,6 +140,8 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
     hours: '매일 10:00 - 20:00',
   };
 
+  // TODO(BACKEND): 매장 평점(rating)과 리뷰 수(reviewCount)가 현재 DB stores 테이블의 초기 고정값으로 전달됨.
+  // 추후 백엔드에서 리뷰 작성/수정/삭제 시 실시간 집계(AVG/COUNT) 로직이 구현되면 동적 반영 테스트 필요!
   const shop = {
     id: storeData.id,
     name: storeData.name || '이름 없음',
