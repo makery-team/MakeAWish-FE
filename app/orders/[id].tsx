@@ -109,6 +109,30 @@ export default function OrderDetailScreen() {
     );
   }
 
+  const IGNORED_ORDER_DATA_KEYS = [
+    'storeId', 'productId', 'portfolioId', 'cakeImage', 'selectedCakeImage', 'photoUrl', 'shopName', 'tags',
+    '픽업 희망 날짜', '픽업 희망 시간', '픽업 날짜', '픽업 시간', 'pickupDate', 'pickupTime'
+  ];
+
+  const getDisplayPickupTime = () => {
+    if (order.orderData) {
+      const dateVal = order.orderData['픽업 희망 날짜'] || order.orderData['픽업 날짜'] || order.orderData['pickupDate'];
+      const timeVal = order.orderData['픽업 희망 시간'] || order.orderData['픽업 시간'] || order.orderData['pickupTime'];
+      if (dateVal && timeVal) {
+        return `${dateVal} ${timeVal}`;
+      }
+      if (dateVal) {
+        return `${dateVal}`;
+      }
+    }
+    if (order.pickupDate) {
+      return new Date(order.pickupDate).toLocaleString('ko-KR', {
+        month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    }
+    return '미정';
+  };
+
   const statusColor = getStatusColor(order.status);
   const orderItem = order.items?.[0]; // 명세서상 1개의 케이크로 가정
 
@@ -165,11 +189,11 @@ export default function OrderDetailScreen() {
             </View>
 
             {/* Custom Options (orderData) */}
-            {order.orderData && Object.entries(order.orderData).filter(([key]) => !['storeId', 'productId', 'portfolioId', 'cakeImage', 'selectedCakeImage', 'photoUrl', 'shopName', 'tags'].includes(key)).length > 0 && (
+            {order.orderData && Object.entries(order.orderData).filter(([key]) => !IGNORED_ORDER_DATA_KEYS.includes(key)).length > 0 && (
               <View style={styles.optionsContainer}>
                 <Text style={styles.optionsTitle}>요청 사항 및 옵션</Text>
                 {Object.entries(order.orderData)
-                  .filter(([key]) => !['storeId', 'productId', 'portfolioId', 'cakeImage', 'selectedCakeImage', 'photoUrl', 'shopName', 'tags'].includes(key))
+                  .filter(([key]) => !IGNORED_ORDER_DATA_KEYS.includes(key))
                   .map(([key, value]) => (
                   <View key={key} style={styles.optionRow}>
                     <Text style={styles.optionKey}>{key}</Text>
@@ -189,11 +213,7 @@ export default function OrderDetailScreen() {
             </View>
             <View style={styles.infoTextContainer}>
               <Text style={styles.infoLabel}>픽업 일시</Text>
-              <Text style={styles.infoValue}>
-                {order.pickupDate ? new Date(order.pickupDate).toLocaleString('ko-KR', {
-                  month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                }) : '미정'}
-              </Text>
+              <Text style={styles.infoValue}>{getDisplayPickupTime()}</Text>
             </View>
           </View>
           <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
