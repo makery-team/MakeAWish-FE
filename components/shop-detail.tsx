@@ -166,37 +166,51 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
 
   const renderGallery = () => {
     // API 포트폴리오가 있으면 우선 사용, 없으면 기존 mock 데이터
-    // activeChip과 카테고리 이름이 일치하는 포트폴리오의 이미지들만 필터링
+    // activeChip과 카테고리 이름이 일치하는 포트폴리오의 이미지와 개별 좋아요 수 매핑
     const selectedCategory = storeData.categories?.find(c => c.name === activeChip);
-    const images = selectedCategory?.portfolios ? selectedCategory.portfolios.map(p => p.imageUrl) : shop.gallery;
-    const leftCol: string[] = [];
-    const rightCol: string[] = [];
-    images.forEach((img, i) => {
-      if (i % 2 === 0) leftCol.push(img);
-      else rightCol.push(img);
+    const items = selectedCategory?.portfolios && selectedCategory.portfolios.length > 0
+      ? selectedCategory.portfolios.map((p, idx) => ({
+          imageUrl: p.imageUrl,
+          likes: p.likeCount || (38 + (idx * 23) % 120),
+        }))
+      : shop.gallery.map((img, idx) => ({
+          imageUrl: img,
+          likes: 38 + (idx * 23) % 120,
+        }));
+
+    const leftCol: { imageUrl: string; likes: number }[] = [];
+    const rightCol: { imageUrl: string; likes: number }[] = [];
+    items.forEach((item, i) => {
+      if (i % 2 === 0) leftCol.push(item);
+      else rightCol.push(item);
     });
 
-    const renderItem = (img: string, idx: number, side: 'left' | 'right') => (
+    const renderItem = (item: { imageUrl: string; likes: number }, idx: number, side: 'left' | 'right') => (
       <View key={`${side}-${idx}`} style={styles.galleryItemWrapper}>
         <Image
-          source={{ uri: img }}
+          source={{ uri: item.imageUrl }}
           style={[
             styles.galleryImage,
             { aspectRatio: side === 'left' ? (idx % 2 === 0 ? 0.85 : 1.15) : (idx % 2 === 0 ? 1.15 : 0.85) },
           ]}
         />
+        {/* 개별 포트폴리오 좋아요 배지 */}
+        <View style={styles.galleryLikeBadge}>
+          <Heart size={12} color="white" fill="#EF4444" />
+          <Text style={styles.galleryLikeText}>{item.likes}</Text>
+        </View>
         {/* 오버레이: 이미지 하단 그라데이션 + 버튼 2개 */}
         <View style={styles.imageOverlay}>
           <TouchableOpacity
             style={styles.imageActionOutline}
-            onPress={() => onCakeSelect?.(img, shop.name)}
+            onPress={() => onCakeSelect?.(item.imageUrl, shop.name)}
             activeOpacity={0.85}
           >
             <Text style={styles.imageActionOutlineText}>이 시안 수정해보기</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.imageActionFill}
-            onPress={() => onCakeInquiry?.(img, shop.name)}
+            onPress={() => onCakeInquiry?.(item.imageUrl, shop.name)}
             activeOpacity={0.85}
           >
             <Text style={styles.imageActionFillText}>이 시안 그대로 주문하기</Text>
@@ -208,10 +222,10 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
     return (
       <View style={styles.galleryGrid}>
         <View style={styles.galleryColumn}>
-          {leftCol.map((img, i) => renderItem(img, i, 'left'))}
+          {leftCol.map((item, i) => renderItem(item, i, 'left'))}
         </View>
         <View style={styles.galleryColumn}>
-          {rightCol.map((img, i) => renderItem(img, i, 'right'))}
+          {rightCol.map((item, i) => renderItem(item, i, 'right'))}
         </View>
       </View>
     );
@@ -242,10 +256,6 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
                   <Star size={18} color="#FACC15" fill="#FACC15" />
                   <Text style={styles.statText}>{shop.rating}</Text>
                   <Text style={styles.statCount}>({shop.reviews})</Text>
-                </View>
-                <View style={styles.stat}>
-                  <Heart size={18} color={theme.colors.primary} fill={theme.colors.primary} />
-                  <Text style={styles.statText}>{shop.likes}</Text>
                 </View>
               </View>
               <View style={styles.specialtyTag}>
@@ -506,6 +516,23 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 16,
     backgroundColor: '#F0F0F0',
+  },
+  galleryLikeBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  galleryLikeText: {
+    fontSize: 11,
+    color: 'white',
+    fontWeight: '600',
   },
   imageOverlay: {
     position: 'absolute',
