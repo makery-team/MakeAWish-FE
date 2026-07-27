@@ -43,7 +43,50 @@ const SHOP_DETAIL_OVERRIDES: Record<number, {
   },
 };
 
-// (Mock data builder removed)
+// [Option A 규격화] 요일별 운영시간 JSON 문자열 또는 일반 텍스트를 파싱하여 렌더링하는 헬퍼 함수
+function renderOperatingHours(hoursStr: string) {
+  if (!hoursStr) return <Text style={styles.contactText}>영업시간 문의</Text>;
+
+  try {
+    if (hoursStr.trim().startsWith('{') && hoursStr.trim().endsWith('}')) {
+      const parsed = JSON.parse(hoursStr);
+      const dayMap: Record<string, string> = {
+        mon: '월', tue: '화', wed: '수', thu: '목', fri: '금', sat: '토', sun: '일',
+        '월': '월', '화': '화', '수': '수', '목': '목', '금': '금', '토': '토', '일': '일',
+      };
+      const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+      return (
+        <View style={styles.hoursTableContainer}>
+          {days.map((key) => {
+            const timeVal = parsed[key] || parsed[dayMap[key]];
+            if (!timeVal) return null;
+            const isClosed = timeVal.includes('휴무') || timeVal.includes('Closed');
+            return (
+              <View key={key} style={styles.hoursTableRow}>
+                <Text style={[styles.hoursDayText, isClosed && styles.hoursClosedText]}>{dayMap[key]}</Text>
+                <Text style={[styles.hoursTimeText, isClosed && styles.hoursClosedText]}>{timeVal}</Text>
+              </View>
+            );
+          })}
+        </View>
+      );
+    }
+  } catch (e) {
+    // JSON 파싱 실패 시 일반 문자열로 표시
+  }
+
+  if (hoursStr.includes('\n')) {
+    return (
+      <View style={styles.hoursTableContainer}>
+        {hoursStr.split('\n').map((line, idx) => (
+          <Text key={idx} style={styles.contactText}>{line}</Text>
+        ))}
+      </View>
+    );
+  }
+
+  return <Text style={styles.contactText}>{hoursStr}</Text>;
+}
 
 interface ShopDetailProps {
   shopId: number;
@@ -241,7 +284,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
             </View>
             <View style={styles.contactItem}>
               <Clock size={18} color="#999" />
-              <Text style={styles.contactText}>{shop.hours}</Text>
+              {renderOperatingHours(shop.hours)}
             </View>
             <View style={styles.contactItem}>
               <Phone size={18} color="#999" />
@@ -433,6 +476,31 @@ const styles = StyleSheet.create({
   contactText: {
     fontSize: 14,
     color: '#444',
+  },
+  hoursTableContainer: {
+    flex: 1,
+    backgroundColor: '#FFF5F8',
+    padding: 10,
+    borderRadius: 10,
+    gap: 4,
+  },
+  hoursTableRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  hoursDayText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#666',
+  },
+  hoursTimeText: {
+    fontSize: 13,
+    color: '#333',
+  },
+  hoursClosedText: {
+    color: '#FF4D4F',
+    fontWeight: '700',
   },
   actionButtons: {
     flexDirection: 'row',
