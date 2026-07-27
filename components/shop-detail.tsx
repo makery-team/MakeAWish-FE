@@ -319,7 +319,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
                   <Text style={reviewStyles.date}>{review.createdAt.slice(0, 10)}</Text>
                 </View>
                 <Text style={reviewStyles.content}>{review.content}</Text>
-                {review.imageUrl && review.imageUrl.startsWith('http') && !review.imageUrl.includes('localhost') && (
+                {review.imageUrl && review.imageUrl.startsWith('http') && !review.imageUrl.includes('localhost') && !review.imageUrl.includes('review.img') && (
                   <View style={reviewStyles.imageRow}>
                     <Image
                       source={{ uri: review.imageUrl }}
