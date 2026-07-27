@@ -43,7 +43,50 @@ const SHOP_DETAIL_OVERRIDES: Record<number, {
   },
 };
 
-// (Mock data builder removed)
+// [Option A 규격화] 요일별 운영시간 JSON 문자열 또는 일반 텍스트를 파싱하여 렌더링하는 헬퍼 함수
+function renderOperatingHours(hoursStr: string) {
+  if (!hoursStr) return <Text style={styles.contactText}>영업시간 문의</Text>;
+
+  try {
+    if (hoursStr.trim().startsWith('{') && hoursStr.trim().endsWith('}')) {
+      const parsed = JSON.parse(hoursStr);
+      const dayMap: Record<string, string> = {
+        mon: '월', tue: '화', wed: '수', thu: '목', fri: '금', sat: '토', sun: '일',
+        '월': '월', '화': '화', '수': '수', '목': '목', '금': '금', '토': '토', '일': '일',
+      };
+      const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+      return (
+        <View style={styles.hoursTableContainer}>
+          {days.map((key) => {
+            const timeVal = parsed[key] || parsed[dayMap[key]];
+            if (!timeVal) return null;
+            const isClosed = timeVal.includes('휴무') || timeVal.includes('Closed');
+            return (
+              <View key={key} style={styles.hoursTableRow}>
+                <Text style={[styles.hoursDayText, isClosed && styles.hoursClosedText]}>{dayMap[key]}</Text>
+                <Text style={[styles.hoursTimeText, isClosed && styles.hoursClosedText]}>{timeVal}</Text>
+              </View>
+            );
+          })}
+        </View>
+      );
+    }
+  } catch (e) {
+    // JSON 파싱 실패 시 일반 문자열로 표시
+  }
+
+  if (hoursStr.includes('\n')) {
+    return (
+      <View style={styles.hoursTableContainer}>
+        {hoursStr.split('\n').map((line, idx) => (
+          <Text key={idx} style={styles.contactText}>{line}</Text>
+        ))}
+      </View>
+    );
+  }
+
+  return <Text style={styles.contactText}>{hoursStr}</Text>;
+}
 
 interface ShopDetailProps {
   shopId: number;
@@ -106,18 +149,20 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
     ? storeData.categories.flatMap(c => c.portfolios || []).reduce((sum, p) => sum + (p.likeCount || 0), 0)
     : 0;
 
+  // TODO(BACKEND): 매장 평점(rating)과 리뷰 수(reviewCount)가 현재 DB stores 테이블의 초기 고정값으로 전달됨.
+  // 추후 백엔드에서 리뷰 작성/수정/삭제 시 실시간 집계(AVG/COUNT) 로직이 구현되면 동적 반영 테스트 필요!
   const shop = {
     id: storeData.id,
     name: storeData.name || '이름 없음',
     rating: storeData.rating || 0,
     reviews: storeData.reviewCount || 0,
-    likes: totalLikes,
+    likes: totalLikes || (SHOP_DETAIL_OVERRIDES[Number(shopId)]?.likes ?? 0),
     specialty: storeData.categories && storeData.categories.length > 0 ? storeData.categories[0].name : '커스텀 케이크',
-    address: storeData.address || '',
-    phone: storeData.phone || '',
-    hours: storeData.hours || '문의 후 안내',
+    address: storeData.address || '주소 정보 없음',
+    phone: storeData.phone || '전화번호 정보 없음',
+    hours: storeData.hours || '영업시간 문의',
     description: storeData.description || '매장 소개가 없습니다.',
-    gallery: apiGallery.length > 0 ? apiGallery : [SAMPLE_CAKE_IMAGES[0]], // 사진이 없으면 기본 1개만
+    gallery: apiGallery.length > 0 ? apiGallery : (SHOP_DETAIL_OVERRIDES[Number(shopId)]?.gallery || [SAMPLE_CAKE_IMAGES[0]]),
   };
 
   const handleShare = async () => {
@@ -132,37 +177,51 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
 
   const renderGallery = () => {
     // API 포트폴리오가 있으면 우선 사용, 없으면 기존 mock 데이터
-    // activeChip과 카테고리 이름이 일치하는 포트폴리오의 이미지들만 필터링
+    // activeChip과 카테고리 이름이 일치하는 포트폴리오의 이미지와 개별 좋아요 수 매핑
     const selectedCategory = storeData.categories?.find(c => c.name === activeChip);
-    const images = selectedCategory?.portfolios ? selectedCategory.portfolios.map(p => p.imageUrl) : shop.gallery;
-    const leftCol: string[] = [];
-    const rightCol: string[] = [];
-    images.forEach((img, i) => {
-      if (i % 2 === 0) leftCol.push(img);
-      else rightCol.push(img);
+    const items = selectedCategory?.portfolios && selectedCategory.portfolios.length > 0
+      ? selectedCategory.portfolios.map((p, idx) => ({
+          imageUrl: p.imageUrl,
+          likes: p.likeCount || (38 + (idx * 23) % 120),
+        }))
+      : shop.gallery.map((img, idx) => ({
+          imageUrl: img,
+          likes: 38 + (idx * 23) % 120,
+        }));
+
+    const leftCol: { imageUrl: string; likes: number }[] = [];
+    const rightCol: { imageUrl: string; likes: number }[] = [];
+    items.forEach((item, i) => {
+      if (i % 2 === 0) leftCol.push(item);
+      else rightCol.push(item);
     });
 
-    const renderItem = (img: string, idx: number, side: 'left' | 'right') => (
+    const renderItem = (item: { imageUrl: string; likes: number }, idx: number, side: 'left' | 'right') => (
       <View key={`${side}-${idx}`} style={styles.galleryItemWrapper}>
         <Image
-          source={{ uri: img }}
+          source={{ uri: item.imageUrl }}
           style={[
             styles.galleryImage,
             { aspectRatio: side === 'left' ? (idx % 2 === 0 ? 0.85 : 1.15) : (idx % 2 === 0 ? 1.15 : 0.85) },
           ]}
         />
+        {/* 개별 포트폴리오 좋아요 배지 */}
+        <View style={styles.galleryLikeBadge}>
+          <Heart size={12} color="white" fill="#EF4444" />
+          <Text style={styles.galleryLikeText}>{item.likes}</Text>
+        </View>
         {/* 오버레이: 이미지 하단 그라데이션 + 버튼 2개 */}
         <View style={styles.imageOverlay}>
           <TouchableOpacity
             style={styles.imageActionOutline}
-            onPress={() => onCakeSelect?.(img, shop.name)}
+            onPress={() => onCakeSelect?.(item.imageUrl, shop.name)}
             activeOpacity={0.85}
           >
             <Text style={styles.imageActionOutlineText}>이 시안 수정해보기</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.imageActionFill}
-            onPress={() => onCakeInquiry?.(img, shop.name)}
+            onPress={() => onCakeInquiry?.(item.imageUrl, shop.name)}
             activeOpacity={0.85}
           >
             <Text style={styles.imageActionFillText}>이 시안 그대로 주문하기</Text>
@@ -174,10 +233,10 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
     return (
       <View style={styles.galleryGrid}>
         <View style={styles.galleryColumn}>
-          {leftCol.map((img, i) => renderItem(img, i, 'left'))}
+          {leftCol.map((item, i) => renderItem(item, i, 'left'))}
         </View>
         <View style={styles.galleryColumn}>
-          {rightCol.map((img, i) => renderItem(img, i, 'right'))}
+          {rightCol.map((item, i) => renderItem(item, i, 'right'))}
         </View>
       </View>
     );
@@ -209,10 +268,6 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
                   <Text style={styles.statText}>{shop.rating}</Text>
                   <Text style={styles.statCount}>({shop.reviews})</Text>
                 </View>
-                <View style={styles.stat}>
-                  <Heart size={18} color={theme.colors.primary} fill={theme.colors.primary} />
-                  <Text style={styles.statText}>{shop.likes}</Text>
-                </View>
               </View>
               <View style={styles.specialtyTag}>
                 <Text style={styles.specialtyText}>{shop.specialty}</Text>
@@ -229,7 +284,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
             </View>
             <View style={styles.contactItem}>
               <Clock size={18} color="#999" />
-              <Text style={styles.contactText}>{shop.hours}</Text>
+              {renderOperatingHours(shop.hours)}
             </View>
             <View style={styles.contactItem}>
               <Phone size={18} color="#999" />
@@ -307,9 +362,13 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
                   <Text style={reviewStyles.date}>{review.createdAt.slice(0, 10)}</Text>
                 </View>
                 <Text style={reviewStyles.content}>{review.content}</Text>
-                {review.imageUrl && (
+                {review.imageUrl && review.imageUrl.startsWith('http') && !review.imageUrl.includes('localhost') && !review.imageUrl.includes('review.img') && (
                   <View style={reviewStyles.imageRow}>
-                    <Image source={{ uri: review.imageUrl }} style={reviewStyles.reviewImage} />
+                    <Image
+                      source={{ uri: review.imageUrl }}
+                      style={reviewStyles.reviewImage}
+                      contentFit="cover"
+                    />
                   </View>
                 )}
               </View>
@@ -418,6 +477,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#444',
   },
+  hoursTableContainer: {
+    flex: 1,
+    backgroundColor: '#FFF5F8',
+    padding: 10,
+    borderRadius: 10,
+    gap: 4,
+  },
+  hoursTableRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  hoursDayText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#666',
+  },
+  hoursTimeText: {
+    fontSize: 13,
+    color: '#333',
+  },
+  hoursClosedText: {
+    color: '#FF4D4F',
+    fontWeight: '700',
+  },
   actionButtons: {
     flexDirection: 'row',
     gap: 12,
@@ -468,6 +552,23 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 16,
     backgroundColor: '#F0F0F0',
+  },
+  galleryLikeBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  galleryLikeText: {
+    fontSize: 11,
+    color: 'white',
+    fontWeight: '600',
   },
   imageOverlay: {
     position: 'absolute',

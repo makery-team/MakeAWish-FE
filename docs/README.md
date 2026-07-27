@@ -34,6 +34,7 @@
 * [`2026-06-02_arch_frontend_directory_and_state_architecture.md`](./2026-06-02_arch_frontend_directory_and_state_architecture.md) : 전체 프로젝트 구조 및 디렉토리/상태관리 아키텍처 안내
 * [`2026-06-02_arch_ai_service_integration_and_flow.md`](./2026-06-02_arch_ai_service_integration_and_flow.md) : AI 서비스 기능 연동 및 프론트엔드 아키텍처 명세
 * [`2026-07-20_arch_backend_api_sync_and_interface_update.md`](./2026-07-20_arch_backend_api_sync_and_interface_update.md) : 백엔드 API 변경에 따른 프론트엔드 동기화 및 인터페이스 명세
+* [`2026-07-27_arch_store_operating_hours_specification.md`](./2026-07-27_arch_store_operating_hours_specification.md) : 매장 요일별 운영시간 명세 및 리뷰 데이터 무결성 아키텍처 (Option A)
 
 ### 3. 📝 개발 로그 & 마이그레이션 (`devlog_`)
 * [`2026-06-01_devlog_mypage_migration.md`](./2026-06-01_devlog_mypage_migration.md) : 마이페이지 개편 및 리팩토링 개발 로그
