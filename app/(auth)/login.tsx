@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -56,12 +56,14 @@ export default function LoginScreen() {
   const { signInWithGoogle, user } = useAuth();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  // 리다이렉트 로직은 _layout.tsx 에서 처리하도록 단순화 가능, 여기서는 안전장치로 유지
-  if (user && user.nickname && user.phoneNumber) {
-    router.replace("/(tabs)");
-  } else if (user) {
-    router.replace("/(auth)/signup");
-  }
+  // 리다이렉트 로직은 렌더링 중 실행되지 않도록 useEffect 내에서 실행
+  useEffect(() => {
+    if (user && user.nickname && user.phoneNumber) {
+      router.replace("/(tabs)");
+    } else if (user) {
+      router.replace("/(auth)/signup");
+    }
+  }, [user, router]);
 
   const handleGoogleLogin = async () => {
     try {
