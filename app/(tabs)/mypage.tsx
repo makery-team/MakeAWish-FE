@@ -141,6 +141,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -152,7 +153,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: '700',
     color: theme.colors.text,
   },
   profileCard: {
@@ -189,14 +189,12 @@ const styles = StyleSheet.create({
   avatarText: {
     color: '#fff',
     fontSize: 24,
-    fontWeight: 'bold',
-  },
+    },
   profileInfo: {
     flex: 1,
   },
   nickname: {
     fontSize: 20,
-    fontWeight: '700',
     color: theme.colors.text,
     marginBottom: 4,
   },
@@ -213,7 +211,6 @@ const styles = StyleSheet.create({
   },
   editProfileButtonText: {
     fontSize: 12,
-    fontWeight: '600',
     color: theme.colors.gray,
   },
   statsContainer: {
@@ -233,7 +230,6 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 18,
-    fontWeight: '700',
     color: theme.colors.text,
     marginBottom: 4,
   },
@@ -247,7 +243,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
     color: theme.colors.text,
     marginLeft: 20,
     marginBottom: 10,
@@ -277,7 +272,6 @@ const styles = StyleSheet.create({
   },
   menuTitle: {
     fontSize: 16,
-    fontWeight: '500',
     color: theme.colors.text,
   },
   menuSubtitle: {
@@ -295,7 +289,6 @@ const styles = StyleSheet.create({
   logoutText: {
     color: theme.colors.error,
     fontSize: 16,
-    fontWeight: '600',
     marginLeft: 8,
   },
 });

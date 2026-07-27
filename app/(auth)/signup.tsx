@@ -246,7 +246,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
     color: theme.colors.text,
     marginBottom: 12,
   },
@@ -263,7 +262,6 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
     color: theme.colors.text,
     marginBottom: 10,
   },
@@ -306,8 +304,7 @@ const styles = StyleSheet.create({
   },
   languageTextSelected: {
     color: theme.colors.primary,
-    fontWeight: '600',
-  },
+    },
   completeButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -327,7 +324,6 @@ const styles = StyleSheet.create({
   },
   completeButtonText: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: '#fff',
     marginRight: 8,
   },
@@ -345,8 +341,7 @@ const styles = StyleSheet.create({
   checkButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: 'bold',
-  },
+    },
   successMessage: {
     color: '#4CAF50',
     fontSize: 12,

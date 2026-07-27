@@ -234,7 +234,6 @@ const styles = StyleSheet.create({
   actionButtonTextPrimary: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '700',
     letterSpacing: -0.5,
   },
   actionButtonSecondary: {
@@ -249,7 +248,6 @@ const styles = StyleSheet.create({
   actionButtonTextSecondary: {
     color: theme.colors.text,
     fontSize: 13,
-    fontWeight: '700',
     letterSpacing: -0.3,
   },
   dotsContainer: {

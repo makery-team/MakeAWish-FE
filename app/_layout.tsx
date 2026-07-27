@@ -10,6 +10,17 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "react-native-reanimated";
 import * as SplashScreen from "expo-splash-screen";
+import { useFonts, GowunDodum_400Regular } from "@expo-google-fonts/gowun-dodum";
+import { Text, TextInput } from "react-native";
+
+// @ts-ignore
+if (Text.defaultProps == null) Text.defaultProps = {};
+// @ts-ignore
+Text.defaultProps.style = { fontFamily: 'GowunDodum_400Regular' };
+// @ts-ignore
+if (TextInput.defaultProps == null) TextInput.defaultProps = {};
+// @ts-ignore
+TextInput.defaultProps.style = { fontFamily: 'GowunDodum_400Regular' };
 
 SplashScreen.preventAutoHideAsync();
 import { InquiryProvider } from "@/context/InquiryContext";
@@ -75,6 +86,14 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    GowunDodum_400Regular,
+  });
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>

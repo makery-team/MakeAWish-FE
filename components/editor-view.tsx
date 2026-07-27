@@ -452,7 +452,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: "700",
     color: "#333",
   },
   saveButton: {
@@ -461,7 +460,6 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: 16,
-    fontWeight: "600",
     color: theme.colors.primary,
   },
   content: {
@@ -499,7 +497,6 @@ const styles = StyleSheet.create({
   },
   hintText: {
     fontSize: 12,
-    fontWeight: "600",
     color: "#666",
   },
   loadingOverlay: {
@@ -511,7 +508,6 @@ const styles = StyleSheet.create({
   },
   loadingTitle: {
     fontSize: 18,
-    fontWeight: "700",
     color: "#333",
     marginTop: 16,
   },
@@ -579,7 +575,6 @@ const styles = StyleSheet.create({
   },
   panelTitle: {
     fontSize: 14,
-    fontWeight: "600",
     color: "#333",
     marginBottom: 8,
   },
@@ -608,7 +603,6 @@ const styles = StyleSheet.create({
   },
   generateButtonText: {
     fontSize: 15,
-    fontWeight: "700",
     color: "white",
   },
   ctaButton: {
@@ -621,7 +615,6 @@ const styles = StyleSheet.create({
   },
   ctaButtonText: {
     fontSize: 16,
-    fontWeight: "700",
     color: "white",
   },
 });

@@ -209,7 +209,6 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 10,
-    fontWeight: '700',
     color: theme.colors.text,
   },
   infoOverlay: {
@@ -227,7 +226,6 @@ const styles = StyleSheet.create({
     flex: 1,
     color: '#fff',
     fontSize: 13,
-    fontWeight: '700',
     marginRight: 6,
   },
   statsContainer: {
@@ -242,8 +240,7 @@ const styles = StyleSheet.create({
   statText: {
     color: '#fff',
     fontSize: 11,
-    fontWeight: '500',
-  },
+    },
   actionsOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
@@ -275,22 +272,19 @@ const styles = StyleSheet.create({
   shopButtonText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: '700',
-  },
+    },
   editButton: {
     backgroundColor: '#fff',
   },
   editButtonText: {
     color: theme.colors.text,
     fontSize: 13,
-    fontWeight: '800',
-  },
+    },
   inquiryButton: {
     backgroundColor: theme.colors.primary,
   },
   inquiryButtonText: {
     color: '#fff',
     fontSize: 13,
-    fontWeight: '800',
-  },
+    },
 });

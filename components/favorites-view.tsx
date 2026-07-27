@@ -141,7 +141,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
     color: '#1F2937',
   },
   headerSub: {
@@ -196,7 +195,6 @@ const styles = StyleSheet.create({
   },
   shopName: {
     fontSize: 14,
-    fontWeight: 'bold',
     color: '#1F2937',
     marginBottom: 4,
   },
@@ -214,7 +212,6 @@ const styles = StyleSheet.create({
   },
   price: {
     fontSize: 14,
-    fontWeight: 'bold',
     color: '#FF69B4',
   },
   trashIcon: {
@@ -237,7 +234,6 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: '#374151',
     marginBottom: 8,
   },

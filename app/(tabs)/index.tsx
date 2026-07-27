@@ -25,6 +25,7 @@ import { useOrders } from "@/hooks/use-orders";
 import type { OrderData, FeedItem, OrderCreateRequest } from "@/types";
 import { feedService } from "@/services/feed";
 import { orderService } from "@/services/order";
+import { theme } from "@/constants/theme";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -250,7 +251,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.background,
   },
   content: {
     flex: 1,

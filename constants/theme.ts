@@ -29,15 +29,15 @@ export const Colors = {
 
 export const theme = {
   colors: {
-    primary: '#FF7B9C', // Soft Coral Pink
-    secondary: '#A3D2CA', // Soft mint
-    background: '#FAFAFA', // Warm off-white
+    primary: '#ff6aa3', // cake-pink-500
+    secondary: '#7fd8ac', // cake-mint-400
+    background: '#fffaf3', // cake-cream
     surface: '#FFFFFF', // Pure white for cards
-    text: '#212529', // Dark grey for typography
-    textMuted: '#868E96', // Light grey text
-    border: '#F1F3F5', // Very light border
-    gray: '#868E96',
-    lightGray: '#F8F9FA', // Very light background
-    error: '#FF4D4F', // Red for errors/danger
+    text: '#4a3b3f', // cake-ink
+    textMuted: '#8a7a7e', // cake-ink-soft
+    border: '#ffd0e0', // cake-pink-200
+    gray: '#8a7a7e',
+    lightGray: '#ffe6ee', // cake-pink-100
+    error: '#f14a89', // cake-pink-600
   },
 };

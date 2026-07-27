@@ -161,7 +161,7 @@ export function Header({
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     zIndex: 999,
     position: 'relative',
   },
@@ -181,7 +181,6 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 20,
-    fontWeight: '900',
     color: theme.colors.primary,
     letterSpacing: -0.5,
   },
@@ -200,7 +199,6 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     fontSize: 12,
-    fontWeight: '700',
     color: theme.colors.primary,
   },
   rightIcons: {
@@ -262,7 +260,6 @@ const styles = StyleSheet.create({
   },
   notificationHeaderTitle: {
     fontSize: 16,
-    fontWeight: '800',
     color: theme.colors.text,
   },
   notificationList: {
@@ -283,7 +280,6 @@ const styles = StyleSheet.create({
   },
   notificationTitle: {
     fontSize: 15,
-    fontWeight: '700',
     color: theme.colors.text,
   },
   notificationTime: {
@@ -311,6 +307,5 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 13,
     color: theme.colors.primary,
-    fontWeight: '700',
-  },
+    },
 });

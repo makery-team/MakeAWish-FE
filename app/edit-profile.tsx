@@ -240,11 +240,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   backButton: { width: 40, height: 40, justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: theme.colors.text },
+  headerTitle: { fontSize: 18, color: theme.colors.text },
   scrollContent: { padding: 24, paddingBottom: 40 },
   form: { marginBottom: 20 },
   inputGroup: { marginBottom: 24 },
-  label: { fontSize: 16, fontWeight: '600', color: theme.colors.text, marginBottom: 10 },
+  label: { fontSize: 16, color: theme.colors.text, marginBottom: 10 },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   checkButtonDisabled: { backgroundColor: theme.colors.gray },
-  checkButtonText: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
+  checkButtonText: { color: '#fff', fontSize: 14, },
   successMessage: { color: '#4CAF50', fontSize: 12, marginTop: 8, marginLeft: 4 },
   errorMessage: { color: theme.colors.error, fontSize: 12, marginTop: 8, marginLeft: 4 },
   languageContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary + '10',
   },
   languageText: { fontSize: 14, color: theme.colors.gray },
-  languageTextSelected: { color: theme.colors.primary, fontWeight: '600' },
+  languageTextSelected: { color: theme.colors.primary, },
   footer: {
     padding: 24,
     backgroundColor: '#fff',
@@ -297,5 +297,5 @@ const styles = StyleSheet.create({
     borderRadius: 28,
   },
   saveButtonDisabled: { backgroundColor: '#E0E0E0' },
-  saveButtonText: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
+  saveButtonText: { fontSize: 18, color: '#fff' },
 });

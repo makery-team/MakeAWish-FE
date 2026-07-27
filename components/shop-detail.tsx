@@ -325,7 +325,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -334,14 +334,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   headerButton: {
     padding: 8,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
     color: '#333',
   },
   scrollContent: {
@@ -350,7 +349,7 @@ const styles = StyleSheet.create({
   shopInfo: {
     padding: 20,
     borderBottomWidth: 8,
-    borderBottomColor: '#F8F8F8',
+    borderBottomColor: 'rgba(0,0,0,0.03)',
   },
   shopHeader: {
     flexDirection: 'row',
@@ -369,7 +368,6 @@ const styles = StyleSheet.create({
   },
   shopName: {
     fontSize: 22,
-    fontWeight: '800',
     color: '#333',
     marginBottom: 6,
   },
@@ -385,7 +383,6 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 15,
-    fontWeight: '700',
     color: '#333',
   },
   statCount: {
@@ -401,7 +398,6 @@ const styles = StyleSheet.create({
   },
   specialtyText: {
     fontSize: 12,
-    fontWeight: '600',
     color: theme.colors.primary,
   },
   description: {
@@ -442,8 +438,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-  },
+    },
   primaryButtonText: {
     color: 'white',
   },
@@ -455,7 +450,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
     color: '#333',
     marginBottom: 16,
   },
@@ -496,7 +490,6 @@ const styles = StyleSheet.create({
   },
   imageActionOutlineText: {
     fontSize: 10,
-    fontWeight: '700',
     color: 'white',
   },
   imageActionFill: {
@@ -507,7 +500,6 @@ const styles = StyleSheet.create({
   },
   imageActionFillText: {
     fontSize: 10,
-    fontWeight: '700',
     color: 'white',
   },
   tagsSection: {
@@ -517,7 +509,6 @@ const styles = StyleSheet.create({
   },
   tagsTitle: {
     fontSize: 14,
-    fontWeight: '700',
     color: '#777',
     marginBottom: 12,
   },
@@ -548,13 +539,12 @@ const styles = StyleSheet.create({
   },
   chatButtonText: {
     fontSize: 16,
-    fontWeight: '700',
     color: 'white',
   },
   chipBarWrapper: {
-    backgroundColor: 'white',
+    backgroundColor: theme.colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   chipBar: {
     paddingHorizontal: 16,
@@ -575,7 +565,6 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
-    fontWeight: '500',
     color: '#444',
   },
   chipTextActive: {
@@ -587,13 +576,18 @@ const reviewStyles = StyleSheet.create({
   section: {
     padding: 20,
     borderTopWidth: 8,
-    borderTopColor: '#F8F8F8',
+    borderTopColor: 'rgba(0,0,0,0.03)',
   },
   card: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: 'white',
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   header: {
     flexDirection: 'row',
@@ -603,7 +597,6 @@ const reviewStyles = StyleSheet.create({
   },
   nickname: {
     fontSize: 13,
-    fontWeight: '700',
     color: '#333',
     flex: 1,
   },

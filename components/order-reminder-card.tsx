@@ -174,7 +174,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontWeight: 'bold',
     fontSize: 14,
     color: '#333',
   },
@@ -212,7 +211,6 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     fontSize: 12,
-    fontWeight: '500',
     color: '#1F2937',
   },
   buttonContainer: {
@@ -230,8 +228,7 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     color: '#374151',
     fontSize: 14,
-    fontWeight: '500',
-  },
+    },
   confirmButton: {
     flex: 1,
     backgroundColor: '#FF69B4',
@@ -248,6 +245,5 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '500',
-  },
+    },
 });

@@ -195,7 +195,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
     color: '#1F2937',
   },
   headerSub: {
@@ -239,7 +238,6 @@ const styles = StyleSheet.create({
   },
   shopName: {
     fontSize: 16,
-    fontWeight: 'bold',
     color: '#1F2937',
     marginBottom: 4,
   },
@@ -273,8 +271,7 @@ const styles = StyleSheet.create({
   actionTextRed: {
     fontSize: 14,
     color: '#EF4444',
-    fontWeight: '500',
-  },
+    },
   cardContent: {
     padding: 16,
   },
@@ -320,7 +317,6 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: '#374151',
     marginBottom: 8,
   },

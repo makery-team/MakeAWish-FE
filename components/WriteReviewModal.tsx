@@ -145,7 +145,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
     color: '#333',
   },
   closeButton: {
@@ -191,6 +190,5 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
-  },
+    },
 });
