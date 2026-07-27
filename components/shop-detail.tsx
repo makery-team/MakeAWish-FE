@@ -106,18 +106,52 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
     ? storeData.categories.flatMap(c => c.portfolios || []).reduce((sum, p) => sum + (p.likeCount || 0), 0)
     : 0;
 
+  const STORE_INFO_FALLBACKS: Record<number, { address: string; phone: string; hours: string }> = {
+    1: {
+      address: '서울 마포구 연희로 1 1층 어드민베이커리',
+      phone: '02-332-1234',
+      hours: '매일 10:00 - 20:00 (월요일 휴무)',
+    },
+    2: {
+      address: '서울 강남구 테헤란로 456 2층 달콤달콤케이크',
+      phone: '02-555-5678',
+      hours: '월-토 11:00 - 21:00 (일요일 휴무)',
+    },
+    3: {
+      address: '서울 성동구 서울숲2길 18 1층 위시케이크',
+      phone: '02-468-9012',
+      hours: '매일 12:00 - 22:00',
+    },
+    4: {
+      address: '서울 송파구 올림픽로 300 1층 해피베이킹',
+      phone: '02-411-3456',
+      hours: '매일 09:00 - 19:00',
+    },
+    5: {
+      address: '서울 용산구 이태원로 150 1층 러블리디저트',
+      phone: '02-790-7890',
+      hours: '화-일 10:00 - 18:00',
+    },
+  };
+
+  const fallbackInfo = STORE_INFO_FALLBACKS[Number(shopId)] || {
+    address: '서울 마포구 연남동 239-20 1층',
+    phone: '02-1234-5678',
+    hours: '매일 10:00 - 20:00',
+  };
+
   const shop = {
     id: storeData.id,
     name: storeData.name || '이름 없음',
     rating: storeData.rating || 0,
     reviews: storeData.reviewCount || 0,
-    likes: totalLikes,
+    likes: totalLikes || (SHOP_DETAIL_OVERRIDES[Number(shopId)]?.likes ?? 0),
     specialty: storeData.categories && storeData.categories.length > 0 ? storeData.categories[0].name : '커스텀 케이크',
-    address: storeData.address || '',
-    phone: storeData.phone || '',
-    hours: storeData.hours || '문의 후 안내',
+    address: storeData.address || fallbackInfo.address,
+    phone: storeData.phone || fallbackInfo.phone,
+    hours: storeData.hours || fallbackInfo.hours,
     description: storeData.description || '매장 소개가 없습니다.',
-    gallery: apiGallery.length > 0 ? apiGallery : [SAMPLE_CAKE_IMAGES[0]], // 사진이 없으면 기본 1개만
+    gallery: apiGallery.length > 0 ? apiGallery : (SHOP_DETAIL_OVERRIDES[Number(shopId)]?.gallery || [SAMPLE_CAKE_IMAGES[0]]),
   };
 
   const handleShare = async () => {
@@ -307,9 +341,13 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
                   <Text style={reviewStyles.date}>{review.createdAt.slice(0, 10)}</Text>
                 </View>
                 <Text style={reviewStyles.content}>{review.content}</Text>
-                {review.imageUrl && (
+                {review.imageUrl && review.imageUrl.startsWith('http') && !review.imageUrl.includes('localhost') && (
                   <View style={reviewStyles.imageRow}>
-                    <Image source={{ uri: review.imageUrl }} style={reviewStyles.reviewImage} />
+                    <Image
+                      source={{ uri: review.imageUrl }}
+                      style={reviewStyles.reviewImage}
+                      contentFit="cover"
+                    />
                   </View>
                 )}
               </View>
