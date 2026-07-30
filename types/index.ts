@@ -83,6 +83,7 @@ export interface ConversationState {
   size?: string;
   design?: string;
   selectedCakeImage?: string;
+  customizedImageUrl?: string;
   shopName?: string;
   portfolioId?: number;
   storeId?: number;
@@ -122,6 +123,8 @@ export interface SelectedCake {
 export interface OrderData {
   [key: string]: any; // Allow dynamic Korean keys from AI schema
   cakeImage: string;
+  customizedImageUrl?: string;
+  customized_image_url?: string;
   shopName?: string;
   portfolioId?: number;
   storeId?: number;
@@ -218,6 +221,7 @@ export interface Store {
   latitude: number;
   longitude: number;
   address?: string;
+  phone?: string;
   thumbnailUrl?: string;
   categories: StoreCategory[];
 }
@@ -230,6 +234,7 @@ export interface MapStore {
   longitude: number;
   thumbnailUrl?: string;
   rating: number;
+  categories?: any[];
   reviewCount: number;
   tags: string[];
 }

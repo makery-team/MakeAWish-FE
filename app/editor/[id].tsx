@@ -35,6 +35,7 @@ export default function EditorScreen() {
       image: editedImage || safeImage,
       shopName: safeShopName,
       design: conversationHistory.design || "에디터에서 수정된 디자인",
+      customizedImageUrl: editedImage || safeImage,
     });
     
     // 에디터를 닫고 AI 채팅(홈 화면)으로 다이렉트 이동

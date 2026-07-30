@@ -8,7 +8,6 @@ import { portfolioService } from '@/services/portfolio';
 import { MapStore, FeedItem } from '@/types';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { API_URL, fetchWithRetry } from '@/services/api';
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();

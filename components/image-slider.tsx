@@ -19,7 +19,7 @@ interface ImageSliderProps {
   images: string[];
   cakeDetails?: { image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number }[];
   onCakeSelect?: (image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number) => void;
-  onInquiry?: (image: string, shopName?: string, portfolioId?: number, storeId?: number, productId?: number) => void;
+  onInquiry?: (image: string, shopName?: string, portfolioId?: number, storeId?: number, productId?: number, tags?: string[]) => void;
   onMinimize?: () => void;
 }
 
