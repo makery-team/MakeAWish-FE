@@ -1,34 +1,54 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, SafeAreaView, Alert } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, SafeAreaView, Alert, RefreshControl } from 'react-native';
 import { useAuth } from '@/hooks/use-auth';
 import { theme } from '@/constants/theme';
 import { Settings, Heart, Clock, MessageSquare, ChevronRight, LogOut, Info } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { authService } from '@/services/auth';
 import { orderService } from '@/services/order';
+import { favoriteService } from '@/services/favorite';
+import { reviewService } from '@/services/review';
 
 export default function MyPageScreen() {
   const { user, signOut, updateUser } = useAuth();
   const router = useRouter();
   const [orderCount, setOrderCount] = useState(0);
+  const [favoriteCount, setFavoriteCount] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    // 마이페이지 진입 시마다 최신 유저 정보와 주문 건수 업데이트
-    const fetchLatestData = async () => {
-      try {
-        const userData = await authService.getCurrentUser();
-        if (userData) {
-          updateUser(userData);
-        }
-        
-        const orders = await orderService.getMyOrders();
-        setOrderCount(orders.length);
-      } catch (error) {
-        console.error('Failed to fetch mypage data:', error);
+  const fetchLatestData = useCallback(async () => {
+    try {
+      const userData = await authService.getCurrentUser();
+      if (userData) {
+        updateUser(userData);
       }
-    };
-    fetchLatestData();
-  }, []);
+      
+      const [orders, favorites, reviewsRes] = await Promise.all([
+        orderService.getMyOrders().catch(() => []),
+        favoriteService.getMyFavorites().catch(() => []),
+        reviewService.getMyReviews(0, 1).catch(() => ({ totalElements: 0, content: [] }))
+      ]);
+      setOrderCount((orders || []).length || 0);
+      setFavoriteCount((favorites || []).length || 0);
+      const rCount = (reviewsRes as any)?.totalElements || (reviewsRes as any)?.content?.length || 0;
+      setReviewCount(rCount);
+    } catch (error) {
+      console.error('Failed to fetch mypage data:', error);
+    }
+  }, [updateUser]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchLatestData();
+    }, [fetchLatestData])
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchLatestData();
+    setRefreshing(false);
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -65,7 +85,13 @@ export default function MyPageScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
+        }
+      >
         {/* 헤더 타이틀 */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>마이페이지</Text>
@@ -94,20 +120,20 @@ export default function MyPageScreen() {
           </View>
           
           <View style={styles.statsContainer}>
-            <View style={styles.statBox}>
+            <TouchableOpacity style={styles.statBox} onPress={() => router.push('/orders')}>
               <Text style={styles.statValue}>{orderCount}</Text>
               <Text style={styles.statLabel}>주문 내역</Text>
-            </View>
+            </TouchableOpacity>
             <View style={styles.statDivider} />
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>0</Text>
+            <TouchableOpacity style={styles.statBox} onPress={() => router.push('/favorites')}>
+              <Text style={styles.statValue}>{favoriteCount}</Text>
               <Text style={styles.statLabel}>찜한 가게</Text>
-            </View>
+            </TouchableOpacity>
             <View style={styles.statDivider} />
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>0</Text>
+            <TouchableOpacity style={styles.statBox} onPress={() => router.push('/reviews')}>
+              <Text style={styles.statValue}>{reviewCount}</Text>
               <Text style={styles.statLabel}>작성 리뷰</Text>
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
 

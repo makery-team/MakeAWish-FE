@@ -32,13 +32,14 @@ export const favoriteService = {
   getMyFavorites: async (): Promise<FavoriteCake[]> => {
     const response = await fetchWithAuth('/api/users/me/likes');
     if (!response.ok) throw new Error('Failed to get favorites');
-    const data: PortfolioResponse[] = await response.json();
+    const rawData = await response.json();
+    const data: PortfolioResponse[] = Array.isArray(rawData) ? rawData : (rawData?.content || []);
     
     // 백엔드의 PortfolioResponse를 프론트엔드의 FavoriteCake 형식으로 매핑
-    return data.map((portfolio) => ({
+    return data.map((portfolio: any) => ({
       id: portfolio.id.toString(),
       image: portfolio.imageUrl,
-      shopName: 'MakeAWish 샵', // 임시 기본값 (포트폴리오 자체에 샵 이름이 없는 상태)
+      shopName: portfolio.storeName || portfolio.shopName || 'MakeAWish 샵',
       description: portfolio.tags && portfolio.tags.length > 0 ? portfolio.tags.join(', ') : undefined
     }));
   }

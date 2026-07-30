@@ -15,6 +15,8 @@ interface ShopContextType {
   removeFavorite: (cakeId: string) => void;
   isFavorited: (cakeId: number) => boolean;
   deleteReview: (reviewId: string) => void;
+  refreshFavorites: () => Promise<void>;
+  refreshReviews: () => Promise<void>;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -24,57 +26,59 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<FavoriteCake[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]); // Initialized with empty for now
 
+  const loadFavorites = useCallback(async () => {
+    try {
+      // 1. Load from AsyncStorage for immediate UI (Cache)
+      const cached = await AsyncStorage.getItem('@favorites_cache');
+      if (cached) {
+        setFavorites(JSON.parse(cached));
+      }
+      
+      // 2. Fetch from backend and sync
+      const backendFavorites = await favoriteService.getMyFavorites();
+      const favList = Array.isArray(backendFavorites) ? backendFavorites : ((backendFavorites as any)?.content || []);
+      setFavorites(favList);
+      await AsyncStorage.setItem('@favorites_cache', JSON.stringify(favList));
+    } catch (error) {
+      console.error('Failed to load favorites:', error);
+    }
+  }, []);
+
+  const loadReviews = useCallback(async () => {
+    try {
+      // 1. Load from AsyncStorage (Cache)
+      const cached = await AsyncStorage.getItem('@reviews_cache');
+      if (cached) {
+        setReviews(JSON.parse(cached));
+      }
+
+      // 2. Fetch from backend and sync
+      const backendReviews = await reviewService.getMyReviews(0, 50); // Get recent 50 reviews
+      const rawList = Array.isArray(backendReviews) ? backendReviews : (backendReviews?.content || []);
+      
+      // Map ReviewResponse to frontend Review type
+      const mappedReviews: Review[] = rawList.map((res: any) => ({
+        id: res.id.toString(),
+        cakeImage: res.imageUrl || '',
+        shopName: res.storeName || 'MakeAWish 샵',
+        rating: res.rating,
+        comment: res.content,
+        date: new Date(res.createdAt).toLocaleDateString(),
+        images: res.imageUrl ? [res.imageUrl] : [],
+      }));
+
+      setReviews(mappedReviews);
+      await AsyncStorage.setItem('@reviews_cache', JSON.stringify(mappedReviews));
+    } catch (error) {
+      console.error('Failed to load reviews:', error);
+    }
+  }, []);
+
   // Load initial favorites (Cache + Backend Sync)
   useEffect(() => {
-    const loadFavorites = async () => {
-      try {
-        // 1. Load from AsyncStorage for immediate UI (Cache)
-        const cached = await AsyncStorage.getItem('@favorites_cache');
-        if (cached) {
-          setFavorites(JSON.parse(cached));
-        }
-        
-        // 2. Fetch from backend and sync
-        const backendFavorites = await favoriteService.getMyFavorites();
-        setFavorites(backendFavorites);
-        await AsyncStorage.setItem('@favorites_cache', JSON.stringify(backendFavorites));
-      } catch (error) {
-        console.error('Failed to load favorites:', error);
-      }
-    };
-
-    const loadReviews = async () => {
-      try {
-        // 1. Load from AsyncStorage (Cache)
-        const cached = await AsyncStorage.getItem('@reviews_cache');
-        if (cached) {
-          setReviews(JSON.parse(cached));
-        }
-
-        // 2. Fetch from backend and sync
-        const backendReviews = await reviewService.getMyReviews(0, 50); // Get recent 50 reviews
-        
-        // Map ReviewResponse to frontend Review type
-        const mappedReviews: Review[] = backendReviews.content.map(res => ({
-          id: res.id.toString(),
-          cakeImage: res.imageUrl || '',
-          shopName: res.storeName || 'MakeAWish 샵',
-          rating: res.rating,
-          comment: res.content,
-          date: new Date(res.createdAt).toLocaleDateString(),
-          images: res.imageUrl ? [res.imageUrl] : [],
-        }));
-
-        setReviews(mappedReviews);
-        await AsyncStorage.setItem('@reviews_cache', JSON.stringify(mappedReviews));
-      } catch (error) {
-        console.error('Failed to load reviews:', error);
-      }
-    };
-
     loadFavorites();
     loadReviews();
-  }, []);
+  }, [loadFavorites, loadReviews]);
 
   // Order actions
   const addOrder = useCallback((orderData: OrderData) => {
@@ -179,7 +183,9 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       toggleFavorite,
       removeFavorite,
       isFavorited,
-      deleteReview
+      deleteReview,
+      refreshFavorites: loadFavorites,
+      refreshReviews: loadReviews
     }}>
       {children}
     </ShopContext.Provider>

@@ -1,11 +1,19 @@
-import React from 'react';
-import { useRouter } from 'expo-router';
+import React, { useCallback } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { FavoritesView } from '@/components/favorites-view';
 import { useFavorites } from '@/hooks/use-favorites';
 
 export default function FavoritesScreen() {
-  const { favorites, removeFavorite } = useFavorites();
+  const { favorites, removeFavorite, refreshFavorites } = useFavorites();
   const router = useRouter();
+
+  useFocusEffect(
+    useCallback(() => {
+      if (refreshFavorites) {
+        refreshFavorites();
+      }
+    }, [refreshFavorites])
+  );
 
   const handleBack = () => {
     if (router.canGoBack()) {
