@@ -5,13 +5,15 @@ export const mapService = {
   async getNearbyStores(lat: number, lng: number, radius: number): Promise<MapStore[]> {
     const response = await fetchWithAuth(`/api/stores?lat=${lat}&lng=${lng}&radius=${radius}`);
     if (!response.ok) throw new Error(`getNearbyStores failed: ${response.status}`);
-    return response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? data : (data?.content || []);
   },
 
   async searchStores(query: string): Promise<MapStore[]> {
     const response = await fetchWithAuth(`/api/stores?query=${encodeURIComponent(query)}`);
     if (!response.ok) throw new Error(`searchStores failed: ${response.status}`);
-    return response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? data : (data?.content || []);
   },
 
   async getStoreDetail(storeId: number): Promise<Store> {
