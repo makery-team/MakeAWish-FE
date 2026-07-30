@@ -8,7 +8,8 @@ import {
   Dimensions,
   Platform,
   StatusBar as RNStatusBar,
-  Alert
+  Alert,
+  RefreshControl
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -34,6 +35,8 @@ interface OrderStatusProps {
   onBack: () => void;
   onOrderPress: (orderId: number) => void;
   onReviewPress?: (orderId: number) => void;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }
 
 const statusSteps = [
@@ -203,7 +206,7 @@ function OrderCard({ order, onPress, onReviewPress }: { order: OrderListItem, on
   );
 }
 
-export const OrderStatus: React.FC<OrderStatusProps> = ({ orders, onBack, onOrderPress, onReviewPress }) => {
+export const OrderStatus: React.FC<OrderStatusProps> = ({ orders, onBack, onOrderPress, onReviewPress, refreshing, onRefresh }) => {
   const insets = useSafeAreaInsets();
   const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 0) : insets.top;
   return (
@@ -219,6 +222,14 @@ export const OrderStatus: React.FC<OrderStatusProps> = ({ orders, onBack, onOrde
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={!!refreshing}
+            onRefresh={onRefresh}
+            colors={['#FFB6C1']}
+            tintColor="#FFB6C1"
+          />
+        }
       >
         {orders.length === 0 ? (
           <View style={styles.emptyContainer}>
