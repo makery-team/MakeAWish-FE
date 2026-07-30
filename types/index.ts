@@ -193,7 +193,8 @@ export interface OrderSchema {
 }
 
 export interface StorePortfolio {
-  id: number;
+  id?: number;
+  portfolioId?: number;
   imageUrl: string;
   tags: string[];
   isInpaintingAllowed: boolean;

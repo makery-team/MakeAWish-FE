@@ -98,7 +98,7 @@ interface ShopDetailProps {
 
 export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: ShopDetailProps) {
   const router = useRouter();
-  const { isFavorited, toggleFavorite } = useShop();
+  const { isFavorited, toggleFavorite, likeCounts } = useShop();
   const [localLikes, setLocalLikes] = useState<Record<number, number>>({});
   // API 상태
   const [storeData, setStoreData] = useState<Store | null>(null);
@@ -180,22 +180,25 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
 
   const renderGallery = () => {
     // API 포트폴리오가 있으면 우선 사용, 없으면 기존 mock 데이터
-    // activeChip과 카테고리 이름이 일치하는 포트폴리오의 이미지와 개별 좋아요 수 매핑
     const selectedCategory = storeData.categories?.find(c => c.name === activeChip);
-    const categoryPortfolios = selectedCategory?.portfolios && selectedCategory.portfolios.length > 0
+    const validCatPortfolios = selectedCategory?.portfolios && selectedCategory.portfolios.some(p => (p.id && p.id > 0) || (p.portfolioId && p.portfolioId > 0))
       ? selectedCategory.portfolios
-      : portfolios.length > 0
+      : [];
+    const categoryPortfolios = portfolios && portfolios.length > 0
       ? portfolios
+      : validCatPortfolios.length > 0
+      ? validCatPortfolios
       : [];
 
     const items = categoryPortfolios.length > 0
       ? categoryPortfolios.map((p, idx) => {
-          const cakeId = p.id || (Number(shopId) * 1000 + idx);
+          const cakeId = p.id || p.portfolioId || (Number(shopId) * 1000 + idx);
           const isFav = isFavorited(cakeId);
           const baseLikes = p.likeCount || (38 + (idx * 23) % 120);
-          const currentLikes = localLikes[cakeId] !== undefined
-            ? localLikes[cakeId]
-            : (isFav ? baseLikes + 1 : baseLikes);
+          const globalLikes = likeCounts[cakeId.toString()];
+          const currentLikes = globalLikes !== undefined
+            ? globalLikes
+            : (localLikes[cakeId] !== undefined ? localLikes[cakeId] : baseLikes);
           return {
             id: cakeId,
             imageUrl: p.imageUrl,
@@ -207,9 +210,10 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
           const cakeId = Number(shopId) * 1000 + idx;
           const isFav = isFavorited(cakeId);
           const baseLikes = 38 + (idx * 23) % 120;
-          const currentLikes = localLikes[cakeId] !== undefined
-            ? localLikes[cakeId]
-            : (isFav ? baseLikes + 1 : baseLikes);
+          const globalLikes = likeCounts[cakeId.toString()];
+          const currentLikes = globalLikes !== undefined
+            ? globalLikes
+            : (localLikes[cakeId] !== undefined ? localLikes[cakeId] : baseLikes);
           return {
             id: cakeId,
             imageUrl: img,
@@ -240,12 +244,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
           activeOpacity={0.7}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           onPress={() => {
-            const willBeFav = !item.isFav;
-            toggleFavorite(item.id, item.imageUrl, shop.name);
-            setLocalLikes(prev => ({
-              ...prev,
-              [item.id]: willBeFav ? item.likes + 1 : Math.max(0, item.likes - 1),
-            }));
+            toggleFavorite(item.id, item.imageUrl, shop.name, undefined, item.likes);
           }}
         >
           <Heart 

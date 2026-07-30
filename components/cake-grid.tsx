@@ -1,4 +1,5 @@
 import type { FavoriteCake, FeedItem } from "@/types";
+import { useShop } from "@/context/ShopContext";
 import React from "react";
 import { FlatList, StyleSheet, ViewStyle } from "react-native";
 import { CakeCard } from "./cake-card";
@@ -23,16 +24,17 @@ export function CakeGrid({
   cakes = [],
   onCakeSelect,
   onCakeInquiry,
-  selectedCategory,
   favorites = [],
   onToggleFavorite,
   contentContainerStyle,
   onEndReached,
 }: CakeGridProps) {
+  const { likeCounts } = useShop();
+
   return (
     <FlatList
       data={cakes}
-      keyExtractor={(item) => item.id.toString()}
+      keyExtractor={(item, index) => `${item.id}-${index}`}
       numColumns={2}
       columnWrapperStyle={styles.columnWrapper}
       contentContainerStyle={[styles.contentContainer, contentContainerStyle]}
@@ -43,13 +45,15 @@ export function CakeGrid({
           (fav) => fav.id === cake.id.toString(),
         );
         const primaryTag = cake.tags && cake.tags.length > 0 ? cake.tags[0] : undefined;
+        const globalLikes = likeCounts[cake.id.toString()];
+        const currentLikes = globalLikes !== undefined ? globalLikes : cake.likeCount;
         
         return (
           <CakeCard
             id={cake.id}
             image={cake.imageUrl}
             shopName={cake.storeName}
-            likes={cake.likeCount}
+            likes={currentLikes}
             rating={0} // API response doesn't include rating currently
             tag={primaryTag}
             tags={cake.tags}

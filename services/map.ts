@@ -26,23 +26,25 @@ export const mapService = {
     storeId: number,
     page = 0,
     size = 10
-  ): Promise<PaginatedResponse<StoreReview>> {
+  ): Promise<any> {
     const response = await fetchWithAuth(
       `/api/stores/${storeId}/reviews?page=${page}&size=${size}`
     );
     if (!response.ok) throw new Error(`getStoreReviews failed: ${response.status}`);
-    return response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? { content: data, totalElements: data.length } : (data || { content: [], totalElements: 0 });
   },
 
   async getStorePortfolios(
     storeId: number,
     page = 0,
     size = 20
-  ): Promise<PaginatedResponse<StorePortfolio>> {
+  ): Promise<any> {
     const response = await fetchWithAuth(
       `/api/stores/${storeId}/portfolios?page=${page}&size=${size}`
     );
     if (!response.ok) throw new Error(`getStorePortfolios failed: ${response.status}`);
-    return response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? { content: data, totalElements: data.length } : (data || { content: [], totalElements: 0 });
   },
 };
