@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { mapService } from '@/services/map';
 import { Store, StorePortfolio, StoreReview } from '@/types';
+import { useShop } from '@/context/ShopContext';
 
 // Mock 데이터 상수들 삭제됨
 
@@ -97,6 +98,8 @@ interface ShopDetailProps {
 
 export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: ShopDetailProps) {
   const router = useRouter();
+  const { isFavorited, toggleFavorite } = useShop();
+  const [localLikes, setLocalLikes] = useState<Record<number, number>>({});
   // API 상태
   const [storeData, setStoreData] = useState<Store | null>(null);
   const [portfolios, setPortfolios] = useState<StorePortfolio[]>([]);
@@ -179,24 +182,50 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
     // API 포트폴리오가 있으면 우선 사용, 없으면 기존 mock 데이터
     // activeChip과 카테고리 이름이 일치하는 포트폴리오의 이미지와 개별 좋아요 수 매핑
     const selectedCategory = storeData.categories?.find(c => c.name === activeChip);
-    const items = selectedCategory?.portfolios && selectedCategory.portfolios.length > 0
-      ? selectedCategory.portfolios.map((p, idx) => ({
-          imageUrl: p.imageUrl,
-          likes: p.likeCount || (38 + (idx * 23) % 120),
-        }))
-      : shop.gallery.map((img, idx) => ({
-          imageUrl: img,
-          likes: 38 + (idx * 23) % 120,
-        }));
+    const categoryPortfolios = selectedCategory?.portfolios && selectedCategory.portfolios.length > 0
+      ? selectedCategory.portfolios
+      : portfolios.length > 0
+      ? portfolios
+      : [];
 
-    const leftCol: { imageUrl: string; likes: number }[] = [];
-    const rightCol: { imageUrl: string; likes: number }[] = [];
+    const items = categoryPortfolios.length > 0
+      ? categoryPortfolios.map((p, idx) => {
+          const cakeId = p.id || (Number(shopId) * 1000 + idx);
+          const isFav = isFavorited(cakeId);
+          const baseLikes = p.likeCount || (38 + (idx * 23) % 120);
+          const currentLikes = localLikes[cakeId] !== undefined
+            ? localLikes[cakeId]
+            : (isFav ? baseLikes + 1 : baseLikes);
+          return {
+            id: cakeId,
+            imageUrl: p.imageUrl,
+            likes: currentLikes,
+            isFav,
+          };
+        })
+      : shop.gallery.map((img, idx) => {
+          const cakeId = Number(shopId) * 1000 + idx;
+          const isFav = isFavorited(cakeId);
+          const baseLikes = 38 + (idx * 23) % 120;
+          const currentLikes = localLikes[cakeId] !== undefined
+            ? localLikes[cakeId]
+            : (isFav ? baseLikes + 1 : baseLikes);
+          return {
+            id: cakeId,
+            imageUrl: img,
+            likes: currentLikes,
+            isFav,
+          };
+        });
+
+    const leftCol: { id: number; imageUrl: string; likes: number; isFav: boolean }[] = [];
+    const rightCol: { id: number; imageUrl: string; likes: number; isFav: boolean }[] = [];
     items.forEach((item, i) => {
       if (i % 2 === 0) leftCol.push(item);
       else rightCol.push(item);
     });
 
-    const renderItem = (item: { imageUrl: string; likes: number }, idx: number, side: 'left' | 'right') => (
+    const renderItem = (item: { id: number; imageUrl: string; likes: number; isFav: boolean }, idx: number, side: 'left' | 'right') => (
       <View key={`${side}-${idx}`} style={styles.galleryItemWrapper}>
         <Image
           source={{ uri: item.imageUrl }}
@@ -205,11 +234,29 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
             { aspectRatio: side === 'left' ? (idx % 2 === 0 ? 0.85 : 1.15) : (idx % 2 === 0 ? 1.15 : 0.85) },
           ]}
         />
-        {/* 개별 포트폴리오 좋아요 배지 */}
-        <View style={styles.galleryLikeBadge}>
-          <Heart size={12} color="white" fill="#EF4444" />
-          <Text style={styles.galleryLikeText}>{item.likes}</Text>
-        </View>
+        {/* 개별 포트폴리오 좋아요 배지 (클릭 가능 & 찜하기 실시간 동기화) */}
+        <TouchableOpacity
+          style={styles.galleryLikeBadge}
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={() => {
+            const willBeFav = !item.isFav;
+            toggleFavorite(item.id, item.imageUrl, shop.name);
+            setLocalLikes(prev => ({
+              ...prev,
+              [item.id]: willBeFav ? item.likes + 1 : Math.max(0, item.likes - 1),
+            }));
+          }}
+        >
+          <Heart 
+            size={12} 
+            color={item.isFav ? "#EF4444" : "white"} 
+            fill={item.isFav ? "#EF4444" : "transparent"} 
+          />
+          <Text style={[styles.galleryLikeText, item.isFav && { color: '#EF4444' }]}>
+            {item.likes}
+          </Text>
+        </TouchableOpacity>
         {/* 오버레이: 이미지 하단 그라데이션 + 버튼 2개 */}
         <View style={styles.imageOverlay}>
           <TouchableOpacity
