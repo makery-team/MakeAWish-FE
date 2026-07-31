@@ -15,7 +15,11 @@ export const favoriteService = {
    */
   addFavorite: async (portfolioId: number): Promise<void> => {
     const response = await fetchWithAuth(`/api/portfolios/${portfolioId}/likes`, { method: 'POST' });
-    if (!response.ok) throw new Error('Failed to add favorite');
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      console.warn(`[favoriteService] addFavorite failed (${response.status}) for id=${portfolioId}: ${errText}`);
+      throw new Error(`Failed to add favorite (${response.status})`);
+    }
   },
 
   /**
@@ -23,7 +27,11 @@ export const favoriteService = {
    */
   removeFavorite: async (portfolioId: number): Promise<void> => {
     const response = await fetchWithAuth(`/api/portfolios/${portfolioId}/likes`, { method: 'DELETE' });
-    if (!response.ok) throw new Error('Failed to remove favorite');
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      console.warn(`[favoriteService] removeFavorite failed (${response.status}) for id=${portfolioId}: ${errText}`);
+      throw new Error(`Failed to remove favorite (${response.status})`);
+    }
   },
 
   /**
@@ -32,14 +40,22 @@ export const favoriteService = {
   getMyFavorites: async (): Promise<FavoriteCake[]> => {
     const response = await fetchWithAuth('/api/users/me/likes');
     if (!response.ok) throw new Error('Failed to get favorites');
-    const data: PortfolioResponse[] = await response.json();
+    const rawData = await response.json();
+    const data: PortfolioResponse[] = Array.isArray(rawData) ? rawData : (rawData?.content || []);
     
     // 백엔드의 PortfolioResponse를 프론트엔드의 FavoriteCake 형식으로 매핑
-    return data.map((portfolio) => ({
-      id: portfolio.id.toString(),
-      image: portfolio.imageUrl,
-      shopName: 'MakeAWish 샵', // 임시 기본값 (포트폴리오 자체에 샵 이름이 없는 상태)
-      description: portfolio.tags && portfolio.tags.length > 0 ? portfolio.tags.join(', ') : undefined
-    }));
+    return data
+      .filter((portfolio: any) => portfolio && (portfolio.id !== undefined || portfolio.portfolioId !== undefined))
+      .map((portfolio: any) => {
+        const rawStoreName = portfolio.storeName || portfolio.store_name || portfolio.store?.name || portfolio.store?.storeName || portfolio.shopName || portfolio.shop_name || portfolio.shop?.name || portfolio.title || portfolio.name;
+        return {
+          id: String(portfolio.id ?? portfolio.portfolioId),
+          image: portfolio.imageUrl || '',
+          shopName: rawStoreName || 'MakeAWish 샵',
+          description: portfolio.tags && portfolio.tags.length > 0 
+            ? portfolio.tags.slice(0, 3).map((t: string) => t.startsWith('#') ? t : `#${t}`).join('  ') 
+            : undefined
+        };
+      });
   }
 };

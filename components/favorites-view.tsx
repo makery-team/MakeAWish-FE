@@ -62,7 +62,7 @@ export const FavoritesView: React.FC<FavoritesViewProps> = ({
       <View style={styles.infoContainer}>
         <Text style={styles.shopName} numberOfLines={1}>{item.shopName}</Text>
         {item.description && (
-          <Text style={styles.description} numberOfLines={2}>
+          <Text style={styles.description} numberOfLines={1}>
             {item.description}
           </Text>
         )}

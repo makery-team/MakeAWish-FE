@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { OrderStatus } from '@/components/order-status';
 import { WriteReviewModal } from '@/components/WriteReviewModal';
 import { orderService } from '@/services/order';
@@ -11,12 +11,16 @@ import { theme } from '@/constants/theme';
 export default function OrdersScreen() {
   const [orders, setOrders] = useState<OrderListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   
   const router = useRouter();
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async (isRefresh = false) => {
+    if (!isRefresh) {
+      setLoading(true);
+    }
     try {
       const data = await orderService.getMyOrders();
       setOrders(data);
@@ -24,12 +28,20 @@ export default function OrdersScreen() {
       console.error('Failed to fetch orders:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
-
-  useEffect(() => {
-    fetchOrders();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrders(false);
+    }, [fetchOrders])
+  );
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchOrders(true);
+  };
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -52,10 +64,10 @@ export default function OrdersScreen() {
     if (!selectedOrderId) return;
     await reviewService.createReview(selectedOrderId, { rating, content });
     alert('리뷰가 성공적으로 등록되었습니다!');
-    // 필요 시 fetchOrders() 를 다시 호출하여 상태 갱신
+    await fetchOrders(true);
   };
 
-  if (loading) {
+  if (loading && !refreshing) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -70,6 +82,8 @@ export default function OrdersScreen() {
         onBack={handleBack} 
         onOrderPress={handleOrderPress} 
         onReviewPress={handleReviewPress}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
       />
       
       <WriteReviewModal 

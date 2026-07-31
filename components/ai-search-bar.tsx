@@ -253,6 +253,7 @@ export function AISearchBar({
         setTimeout(() => {
           onInquiryComplete?.({ 
             cakeImage: conversationHistory.selectedCakeImage || "", 
+            customizedImageUrl: conversationHistory.customizedImageUrl || conversationHistory.selectedCakeImage || undefined,
             shopName: conversationHistory.shopName, 
             portfolioId: conversationHistory.portfolioId,
             storeId: conversationHistory.storeId,

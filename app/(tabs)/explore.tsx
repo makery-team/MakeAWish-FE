@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Search as SearchIcon, Filter, MapPin, Star } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,7 +8,6 @@ import { portfolioService } from '@/services/portfolio';
 import { MapStore, FeedItem } from '@/types';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { API_URL, fetchWithRetry } from '@/services/api';
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
@@ -17,20 +16,43 @@ export default function ExploreScreen() {
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<{ stores: MapStore[]; portfolios: FeedItem[] } | null>(null);
   const [activeTab, setActiveTab] = useState<'store' | 'portfolio'>('store');
+  const [initialStores, setInitialStores] = useState<MapStore[]>([]);
+  const [initialPortfolios, setInitialPortfolios] = useState<FeedItem[]>([]);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
 
-  const handleSearch = async () => {
-    if (!query.trim()) {
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setIsLoadingInitial(true);
+      try {
+        const [stores, portfolios] = await Promise.all([
+          mapService.getNearbyStores(37.5665, 126.9780, 10000).catch(() => []),
+          portfolioService.searchPortfolios('').catch(() => [])
+        ]);
+        setInitialStores(stores || []);
+        setInitialPortfolios(portfolios || []);
+      } catch (e) {
+        console.error('Failed to load initial explore data:', e);
+      } finally {
+        setIsLoadingInitial(false);
+      }
+    };
+    loadInitialData();
+  }, []);
+
+  const handleSearch = async (searchKeyword?: string | any) => {
+    const targetQuery = typeof searchKeyword === 'string' ? searchKeyword : query;
+    if (!targetQuery.trim()) {
       setResults(null);
       return;
     }
     setIsSearching(true);
     try {
       const [stores, portfolios] = await Promise.all([
-        mapService.searchStores(query.trim()),
-        portfolioService.searchPortfolios(query.trim())
+        mapService.searchStores(targetQuery.trim()).catch(() => []),
+        portfolioService.searchPortfolios(targetQuery.trim()).catch(() => [])
       ]);
-      setResults({ stores, portfolios });
-      if (stores.length === 0 && portfolios.length > 0) {
+      setResults({ stores: stores || [], portfolios: portfolios || [] });
+      if ((stores || []).length === 0 && (portfolios || []).length > 0) {
         setActiveTab('portfolio');
       } else {
         setActiveTab('store');
@@ -44,9 +66,9 @@ export default function ExploreScreen() {
   };
 
   const renderStoreItem = (store: MapStore) => {
-    const imageUrl = store.categories && store.categories.length > 0 && store.categories[0].imageUrl
-      ? store.categories[0].imageUrl
-      : 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80';
+    const imageUrl = store.thumbnailUrl 
+      || (store.categories && store.categories.length > 0 && store.categories[0].imageUrl)
+      || 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80';
 
     return (
       <TouchableOpacity 
@@ -99,10 +121,10 @@ export default function ExploreScreen() {
             placeholderTextColor="#9CA3AF"
             value={query}
             onChangeText={setQuery}
-            onSubmitEditing={handleSearch}
+            onSubmitEditing={() => handleSearch(query)}
             returnKeyType="search"
           />
-          <TouchableOpacity onPress={handleSearch}>
+          <TouchableOpacity onPress={() => handleSearch(query)}>
             {isSearching ? (
               <ActivityIndicator size="small" color={theme.colors.primary} />
             ) : (
@@ -114,19 +136,47 @@ export default function ExploreScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {results === null ? (
-          // 기본 카테고리 뷰
+          // 기본 카테고리 뷰 및 실시간 추천 서버 데이터 뷰
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>카테고리별 탐색</Text>
             <View style={styles.categoryGrid}>
               {['🎂 생일', '💘 기념일', '💐 꽃/플라워', '🎀 리본', '🎨 드로잉', '🐰 캐릭터'].map((cat, i) => (
                 <TouchableOpacity key={i} style={styles.categoryItem} onPress={() => {
-                  setQuery(cat.split(' ')[1]);
-                  setTimeout(() => handleSearch(), 100);
+                  const keyword = cat.split(' ')[1];
+                  setQuery(keyword);
+                  handleSearch(keyword);
                 }}>
                   <Text style={styles.categoryText}>{cat}</Text>
                 </TouchableOpacity>
               ))}
             </View>
+
+            {isLoadingInitial ? (
+              <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+                <Text style={{ marginTop: 8, fontSize: 13, color: '#6B7280' }}>실시간 매장 및 디자인 정보를 불러오는 중...</Text>
+              </View>
+            ) : (
+              <>
+                {initialStores.length > 0 && (
+                  <View style={[styles.section, { paddingHorizontal: 0, marginTop: 24 }]}>
+                    <Text style={[styles.sectionTitle, { marginBottom: 12 }]}>추천 매장</Text>
+                    <View style={styles.resultList}>
+                      {initialStores.map(renderStoreItem)}
+                    </View>
+                  </View>
+                )}
+
+                {initialPortfolios.length > 0 && (
+                  <View style={[styles.section, { paddingHorizontal: 0, marginTop: 24 }]}>
+                    <Text style={[styles.sectionTitle, { marginBottom: 12 }]}>인기 디자인</Text>
+                    <View style={styles.portfolioGrid}>
+                      {initialPortfolios.map(renderPortfolioItem)}
+                    </View>
+                  </View>
+                )}
+              </>
+            )}
           </View>
         ) : (
           // 검색 결과 뷰

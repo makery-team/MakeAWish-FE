@@ -4,12 +4,13 @@ import { useShop } from '@/context/ShopContext';
  * Custom hook for managing favorites - now consuming ShopContext
  */
 export function useFavorites() {
-  const { favorites, toggleFavorite, removeFavorite, isFavorited } = useShop();
+  const { favorites, toggleFavorite, removeFavorite, isFavorited, refreshFavorites } = useShop();
 
   return {
     favorites,
     toggleFavorite,
     removeFavorite,
     isFavorited,
+    refreshFavorites,
   };
 }

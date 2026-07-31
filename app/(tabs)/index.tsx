@@ -7,6 +7,7 @@ import {
   StatusBar as RNStatusBar,
   StyleSheet,
   View,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -148,6 +149,7 @@ export default function HomeScreen() {
               productId,
               quantity: 1,
               portfolioId: portfolioId,
+              customizedImageUrl: orderData.customizedImageUrl || orderData.customized_image_url || undefined,
             }
           ]
         };
@@ -156,11 +158,11 @@ export default function HomeScreen() {
         
         // 로컬 상태에도 추가 (UI 반영용)
         addOrder(orderData);
+        Alert.alert("안내", "🎉 주문서가 성공적으로 접수되었습니다!");
         router.push("/orders");
       } catch (error) {
         console.error("Failed to create order:", error);
-        // 에러 처리: Alert 띄우기 등 가능
-        // 실패하더라도 일단 화면 이동은 시켜줄지 선택 (여기선 그대로 이동)
+        Alert.alert("안내", "⚠️ 주문 접수 중 문제가 발생했습니다. 주문 내역에서 확인해주세요.");
         addOrder(orderData);
         router.push("/orders");
       }
@@ -204,13 +206,8 @@ export default function HomeScreen() {
               selectedCategory={selectedCategory}
               favorites={favorites}
               onToggleFavorite={(cakeId, image, shopName, tag) => {
-                const currentlyFavorited = favorites.some(f => f.id === cakeId.toString());
-                toggleFavorite(cakeId, image, shopName, tag);
-                setCakes(prev => prev.map(cake => 
-                  cake.id === cakeId 
-                    ? { ...cake, likeCount: currentlyFavorited ? Math.max(0, cake.likeCount - 1) : cake.likeCount + 1 }
-                    : cake
-                ));
+                const targetCake = cakes.find(c => c.id === cakeId);
+                toggleFavorite(cakeId, image, shopName, tag, targetCake?.likeCount);
               }}
               contentContainerStyle={{ paddingBottom: dynamicPaddingBottom }}
             />

@@ -10,6 +10,7 @@ interface StartInquiryData {
   productId?: number;
   design?: string;
   tags?: string[];
+  customizedImageUrl?: string;
 }
 
 export interface InquiryContextValue {
@@ -41,6 +42,7 @@ export function InquiryProvider({ children }: { children: React.ReactNode }) {
       });
       setConversationHistory({
         selectedCakeImage: data.image,
+        customizedImageUrl: data.customizedImageUrl || data.image,
         shopName: data.shopName,
         portfolioId: data.portfolioId,
         storeId: data.storeId,
