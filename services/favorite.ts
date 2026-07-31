@@ -46,11 +46,16 @@ export const favoriteService = {
     // 백엔드의 PortfolioResponse를 프론트엔드의 FavoriteCake 형식으로 매핑
     return data
       .filter((portfolio: any) => portfolio && (portfolio.id !== undefined || portfolio.portfolioId !== undefined))
-      .map((portfolio: any) => ({
-        id: String(portfolio.id ?? portfolio.portfolioId),
-        image: portfolio.imageUrl || '',
-        shopName: portfolio.storeName || portfolio.shopName || 'MakeAWish 샵',
-        description: portfolio.tags && portfolio.tags.length > 0 ? portfolio.tags.join(', ') : undefined
-      }));
+      .map((portfolio: any) => {
+        const rawStoreName = portfolio.storeName || portfolio.store_name || portfolio.store?.name || portfolio.store?.storeName || portfolio.shopName || portfolio.shop_name || portfolio.shop?.name || portfolio.title || portfolio.name;
+        return {
+          id: String(portfolio.id ?? portfolio.portfolioId),
+          image: portfolio.imageUrl || '',
+          shopName: rawStoreName || 'MakeAWish 샵',
+          description: portfolio.tags && portfolio.tags.length > 0 
+            ? portfolio.tags.slice(0, 3).map((t: string) => t.startsWith('#') ? t : `#${t}`).join('  ') 
+            : undefined
+        };
+      });
   }
 };

@@ -129,7 +129,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     setFavorites(prev => {
       const updated = isExist 
         ? prev.filter(f => f.id !== idStr)
-        : [...prev, { id: idStr, image, shopName, description: tag }];
+        : [...prev, { id: idStr, image, shopName, description: tag ? (tag.startsWith('#') ? tag : `#${tag}`) : undefined }];
       
       // Update cache in background
       AsyncStorage.setItem('@favorites_cache', JSON.stringify(updated)).catch(console.error);
