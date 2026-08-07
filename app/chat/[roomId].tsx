@@ -109,6 +109,13 @@ export default function ChatRoomScreen() {
         data={messages}
         keyExtractor={(_, index) => index.toString()}
         renderItem={renderMessage}
+        ListHeaderComponent={() => (
+          <View style={styles.systemMessageContainer}>
+            <Text style={styles.systemMessageText}>
+              안전한 거래를 위해 욕설이나 비방은 자제해주세요.
+            </Text>
+          </View>
+        )}
         contentContainerStyle={styles.messageList}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
       />
@@ -160,6 +167,20 @@ const styles = StyleSheet.create({
   messageList: {
     padding: 16,
     paddingBottom: 24,
+  },
+  systemMessageContainer: {
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  systemMessageText: {
+    backgroundColor: '#E5E7EB',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
+    fontSize: 12,
+    color: '#6B7280',
+    overflow: 'hidden',
+    textAlign: 'center',
   },
   messageRow: {
     flexDirection: 'row',
