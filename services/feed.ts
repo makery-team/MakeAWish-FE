@@ -18,7 +18,7 @@ export const feedService = {
       if (tags.length > 0) {
         url.searchParams.append('tags', tags.join(','));
       }
-      url.searchParams.append('sort', sort);
+      url.searchParams.append('sortType', sort);
       url.searchParams.append('page', page.toString());
       url.searchParams.append('size', size.toString());
 
