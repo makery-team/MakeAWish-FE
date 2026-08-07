@@ -198,16 +198,18 @@ export default function HomeScreen() {
             <View style={styles.tagsContainer}>
               <RecommendationTags onTagSelect={handleTagSelect} />
             </View>
-            <TouchableOpacity 
-              style={styles.sortButton} 
-              onPress={() => setSortModalVisible(true)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.sortButtonText}>
-                {sortType === 'latest' ? '최신순' : '인기순'}
-              </Text>
-              <ChevronDown size={14} color={theme.colors.gray} />
-            </TouchableOpacity>
+            <View style={styles.sortBarContainer}>
+              <TouchableOpacity 
+                style={styles.sortButton} 
+                onPress={() => setSortModalVisible(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.sortButtonText}>
+                  {sortType === 'latest' ? '최신순' : '인기순'}
+                </Text>
+                <ChevronDown size={14} color={theme.colors.gray} />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -320,22 +322,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topBarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingRight: 16,
     marginTop: 16,
   },
   tagsContainer: {
-    flex: 1,
+    width: '100%',
+  },
+  sortBarContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
   },
   sortButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     backgroundColor: '#F3F4F6',
     borderRadius: 20,
-    marginLeft: 8,
   },
   sortButtonText: {
     fontSize: 13,
