@@ -17,6 +17,8 @@ import { theme } from '@/constants/theme';
 import { mapService } from '@/services/map';
 import { Store, StorePortfolio, StoreReview } from '@/types';
 import { useShop } from '@/context/ShopContext';
+import { useAuth } from '@/context/AuthContext';
+import { chatService } from '@/services/chat';
 
 // Mock 데이터 상수들 삭제됨
 
@@ -98,6 +100,7 @@ interface ShopDetailProps {
 
 export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: ShopDetailProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const { isFavorited, toggleFavorite, likeCounts } = useShop();
   const [localLikes, setLocalLikes] = useState<Record<number, number>>({});
   // API 상태
@@ -340,10 +343,24 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
 
           <TouchableOpacity
             style={styles.chatButton}
-            onPress={() => {
-              import('react-native').then(rn => {
-                rn.Alert.alert('안내', '현재 1:1 사장님 채팅 기능은 점검 중입니다.\n시연 영상에서는 제외될 예정입니다.');
-              });
+            onPress={async () => {
+              if (!user) {
+                import('react-native').then(rn => {
+                  rn.Alert.alert('로그인 필요', '채팅을 시작하려면 로그인이 필요합니다.');
+                });
+                return;
+              }
+              try {
+                // 백엔드에 채팅방 생성 요청
+                const room = await chatService.createChatRoom(shopId);
+                // 생성된 채팅방으로 이동
+                router.push(`/chat/${room.roomNumber}?storeName=${encodeURIComponent(shop.name)}&myUserId=${user.id}` as any);
+              } catch (error) {
+                console.error('Failed to create chat room:', error);
+                import('react-native').then(rn => {
+                  rn.Alert.alert('오류', '채팅방을 생성하지 못했습니다.');
+                });
+              }
             }}
           >
             <MessageCircle size={18} color="white" />
