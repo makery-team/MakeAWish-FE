@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Search as SearchIcon, Filter, MapPin, Star } from 'lucide-react-native';
+import { Search as SearchIcon, Filter, MapPin, Star, XCircle } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
 import { mapService } from '@/services/map';
@@ -124,11 +124,16 @@ export default function ExploreScreen() {
             onSubmitEditing={() => handleSearch(query)}
             returnKeyType="search"
           />
+          {query.length > 0 && (
+            <TouchableOpacity onPress={() => { setQuery(''); setResults(null); }} style={{ paddingHorizontal: 4 }}>
+              <XCircle size={18} color="#9CA3AF" />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity onPress={() => handleSearch(query)}>
             {isSearching ? (
               <ActivityIndicator size="small" color={theme.colors.primary} />
             ) : (
-              <Filter size={20} color={theme.colors.primary} />
+              <SearchIcon size={20} color={theme.colors.primary} />
             )}
           </TouchableOpacity>
         </View>
