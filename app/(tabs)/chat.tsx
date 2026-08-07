@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { MessageSquare, Trash2 } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
 import { chatService } from '@/services/chat';
@@ -26,9 +26,11 @@ export default function ChatScreen() {
     }
   };
 
-  useEffect(() => {
-    loadRooms();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadRooms();
+    }, [])
+  );
 
   const handleRefresh = () => {
     setIsRefreshing(true);
