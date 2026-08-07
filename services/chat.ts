@@ -17,13 +17,12 @@ export const chatService = {
 
   /**
    * 매장과 새로운 채팅방을 생성합니다. (또는 기존 채팅방 정보 조회)
-   * @param userId 본인 ID
    * @param otherId 상대(매장) ID
    */
-  async createChatRoom(userId: number, otherId: number): Promise<DirectChatRoom> {
+  async createChatRoom(otherId: number): Promise<DirectChatRoom> {
     const res = await fetchWithAuth('/chatting/room', {
       method: 'POST',
-      body: JSON.stringify({ userId, otherId }),
+      body: JSON.stringify({ otherId }),
     });
     if (!res.ok) throw new Error('Failed to create chat room');
     return res.json();

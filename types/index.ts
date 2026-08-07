@@ -284,6 +284,7 @@ export interface DirectChatRoom {
   roomNumber: number;
   userId: number;
   otherId: number;
+  otherName?: string;
   messages: DirectChatMessage[];
 }
 

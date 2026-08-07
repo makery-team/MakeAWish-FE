@@ -19,10 +19,10 @@ export function useChatSocket(roomNumber?: number, myUserId?: number) {
         return;
       }
 
-      // HTTP URL을 WS URL로 변환하고 쿼리 파라미터(roomNumber, userId) 추가
+      // HTTP URL을 WS URL로 변환하고 쿼리 파라미터(roomNumber, userId, token) 추가
       let wsUrl = API_BASE_URL.replace(/^http/, 'ws') + `/chats`;
       if (roomNumber && myUserId) {
-        wsUrl += `?roomNumber=${roomNumber}&userId=${myUserId}`;
+        wsUrl += `?roomNumber=${roomNumber}&userId=${myUserId}&token=${encodeURIComponent(token)}`;
       }
       console.log(`Connecting to WebSocket: ${wsUrl}`);
       

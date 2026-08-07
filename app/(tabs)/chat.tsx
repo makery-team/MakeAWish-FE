@@ -67,8 +67,8 @@ export default function ChatScreen() {
       ? new Date(lastMessage.createdTime).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })
       : '';
       
-    // 임시로 매장 이름 대신 ID 사용 (백엔드 명세상 매장 이름이 반환되지 않음)
-    const displayStoreName = `매장 ${item.otherId}`;
+    // 백엔드에서 받아온 상대방 닉네임 사용 (없으면 기본값)
+    const displayStoreName = item.otherName || `매장 ${item.otherId}`;
     const previewMessage = lastMessage?.message || '대화를 시작해 보세요!';
     
     return (
