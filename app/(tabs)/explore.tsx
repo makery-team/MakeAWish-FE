@@ -133,7 +133,7 @@ export default function ExploreScreen() {
             {isSearching ? (
               <ActivityIndicator size="small" color={theme.colors.primary} />
             ) : (
-              <Filter size={20} color={theme.colors.primary} />
+              <SearchIcon size={20} color={theme.colors.primary} />
             )}
           </TouchableOpacity>
         </View>
