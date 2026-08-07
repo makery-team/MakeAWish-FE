@@ -8,8 +8,14 @@ import {
   StyleSheet,
   View,
   Alert,
+  Text,
+  TouchableOpacity,
+  Modal,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { theme } from "@/constants/theme";
+import { ChevronDown, Check } from "lucide-react-native";
 
 import { AISearchBar, COLLAPSED_BAR_HEIGHT } from "@/components/ai-search-bar";
 import { CakeGrid } from "@/components/cake-grid";
@@ -26,7 +32,6 @@ import { useOrders } from "@/hooks/use-orders";
 import type { OrderData, FeedItem, OrderCreateRequest } from "@/types";
 import { feedService } from "@/services/feed";
 import { orderService } from "@/services/order";
-import { theme } from "@/constants/theme";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -40,6 +45,10 @@ export default function HomeScreen() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
+  
+  // Sort State
+  const [sortType, setSortType] = useState<'latest' | 'popular'>('latest');
+  const [isSortModalVisible, setSortModalVisible] = useState(false);
 
   const fetchFeeds = async (pageNum: number, isRefresh: boolean = false) => {
     if (loading || (!hasMore && !isRefresh)) return;
@@ -48,7 +57,7 @@ export default function HomeScreen() {
       setLoading(true);
       // 'all' 태그는 전체 검색을 의미하므로 빈 배열로 변환
       const tags = selectedCategory && selectedCategory !== 'all' ? [selectedCategory] : [];
-      const response = await feedService.getFeeds(tags, pageNum, 12);
+      const response = await feedService.getFeeds(tags, sortType, pageNum, 12);
       
       if (isRefresh) {
         setCakes(response.content);
@@ -65,10 +74,10 @@ export default function HomeScreen() {
     }
   };
 
-  // 카테고리(태그)가 변경될 때마다 0페이지부터 다시 로드
+  // 카테고리(태그)나 정렬 기준(sortType)이 변경될 때마다 0페이지부터 다시 로드
   useEffect(() => {
     fetchFeeds(0, true);
-  }, [selectedCategory]);
+  }, [selectedCategory, sortType]);
 
   const handleLoadMore = () => {
     if (hasMore && !loading) {
@@ -183,10 +192,24 @@ export default function HomeScreen() {
 
       {/* Content Area */}
       <View style={styles.content}>
-        {/* AI Recommendation Tags */}
+        {/* AI Recommendation Tags & Sort Button */}
         {navigation.viewMode === "list" && (
-          <View style={styles.tagsContainer}>
-            <RecommendationTags onTagSelect={handleTagSelect} />
+          <View style={styles.topBarContainer}>
+            <View style={styles.tagsContainer}>
+              <RecommendationTags onTagSelect={handleTagSelect} />
+            </View>
+            <View style={styles.sortBarContainer}>
+              <TouchableOpacity 
+                style={styles.sortButton} 
+                onPress={() => setSortModalVisible(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.sortButtonText}>
+                  {sortType === 'latest' ? '최신순' : '인기순'}
+                </Text>
+                <ChevronDown size={14} color={theme.colors.gray} />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -241,6 +264,51 @@ export default function HomeScreen() {
         inquiryMode={inquiryMode || undefined}
         onInquiryComplete={handleInquiryComplete}
       />
+
+      {/* Sort Bottom Sheet Modal */}
+      <Modal
+        visible={isSortModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSortModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setSortModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={[styles.bottomSheet, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+                <View style={styles.bottomSheetHandle} />
+                <Text style={styles.bottomSheetTitle}>정렬 기준</Text>
+                
+                <TouchableOpacity 
+                  style={styles.sortOption}
+                  onPress={() => {
+                    setSortType('latest');
+                    setSortModalVisible(false);
+                  }}
+                >
+                  <Text style={[styles.sortOptionText, sortType === 'latest' && styles.sortOptionTextActive]}>
+                    🕒 최신순
+                  </Text>
+                  {sortType === 'latest' && <Check size={20} color={theme.colors.primary} />}
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.sortOption}
+                  onPress={() => {
+                    setSortType('popular');
+                    setSortModalVisible(false);
+                  }}
+                >
+                  <Text style={[styles.sortOptionText, sortType === 'popular' && styles.sortOptionTextActive]}>
+                    ❤️ 인기순
+                  </Text>
+                  {sortType === 'popular' && <Check size={20} color={theme.colors.primary} />}
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 }
@@ -253,8 +321,32 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  tagsContainer: {
+  topBarContainer: {
     marginTop: 16,
+  },
+  tagsContainer: {
+    width: '100%',
+  },
+  sortBarContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+  },
+  sortButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginRight: 4,
   },
   viewContainer: {
     flex: 1,
@@ -263,5 +355,47 @@ const styles = StyleSheet.create({
   },
   mapContainer: {
     flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheet: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 12,
+    paddingHorizontal: 20,
+  },
+  bottomSheetHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  bottomSheetTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: 16,
+  },
+  sortOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  sortOptionText: {
+    fontSize: 16,
+    color: '#4B5563',
+  },
+  sortOptionTextActive: {
+    fontWeight: '700',
+    color: theme.colors.primary,
   },
 });
