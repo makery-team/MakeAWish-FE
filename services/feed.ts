@@ -7,16 +7,18 @@ export const feedService = {
   /**
    * 태그 기반으로 피드를 조회합니다.
    * @param tags 필터링할 태그 배열
+   * @param sort 정렬 기준 ('latest' | 'popular')
    * @param page 조회할 페이지 (0부터 시작)
    * @param size 페이지당 개수 (기본값 12)
    */
-  async getFeeds(tags: string[] = [], page: number = 0, size: number = 12): Promise<PaginatedResponse<FeedItem>> {
+  async getFeeds(tags: string[] = [], sort: 'latest' | 'popular' = 'latest', page: number = 0, size: number = 12): Promise<PaginatedResponse<FeedItem>> {
     try {
       const url = new URL(`${API_BASE_URL}/api/portfolios/feeds`);
       
       if (tags.length > 0) {
         url.searchParams.append('tags', tags.join(','));
       }
+      url.searchParams.append('sort', sort);
       url.searchParams.append('page', page.toString());
       url.searchParams.append('size', size.toString());
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ScrollView,
   TouchableOpacity,
@@ -8,8 +8,9 @@ import {
 } from 'react-native';
 import { theme } from '@/constants/theme';
 import Animated, { Layout } from 'react-native-reanimated';
+import { tagService } from '@/services/tag';
 
-const tags = [
+const DEFAULT_TAGS = [
   { id: 1, label: '#전체', category: 'all' },
   { id: 2, label: '#생일', category: '생일' },
   { id: 3, label: '#기념일', category: '기념일' },
@@ -23,6 +24,29 @@ interface RecommendationTagsProps {
 
 export function RecommendationTags({ onTagSelect }: RecommendationTagsProps) {
   const [selectedTag, setSelectedTag] = useState(1);
+  const [tags, setTags] = useState(DEFAULT_TAGS);
+
+  useEffect(() => {
+    const loadTrendingTags = async () => {
+      try {
+        const trendingTagNames = await tagService.getTrendingTags(6);
+        if (trendingTagNames && trendingTagNames.length > 0) {
+          const dynamicTags = [
+            { id: 1, label: '#전체', category: 'all' },
+            ...trendingTagNames.map((name, index) => ({
+              id: index + 2,
+              label: `#${name}`,
+              category: name
+            }))
+          ];
+          setTags(dynamicTags);
+        }
+      } catch (error) {
+        console.error('Failed to load trending tags, using defaults', error);
+      }
+    };
+    loadTrendingTags();
+  }, []);
 
   const handleTagClick = (tagId: number, category: string) => {
     setSelectedTag(tagId);

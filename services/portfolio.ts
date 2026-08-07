@@ -12,8 +12,8 @@ export const portfolioService = {
   async searchPortfolios(tags: string): Promise<FeedItem[]> {
     try {
       const endpoint = tags 
-        ? `${API_BASE_URL}/api/portfolios/feeds?tags=${encodeURIComponent(tags)}&page=0&size=20`
-        : `${API_BASE_URL}/api/portfolios/feeds?page=0&size=20`;
+        ? `${API_BASE_URL}/api/portfolios/feeds?tags=${encodeURIComponent(tags)}&sort=popular&page=0&size=20`
+        : `${API_BASE_URL}/api/portfolios/feeds?sort=popular&page=0&size=20`;
       const response = await fetch(endpoint);
       if (!response.ok) {
         throw new Error(`Failed to fetch portfolios: ${response.status}`);
