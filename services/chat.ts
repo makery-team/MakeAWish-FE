@@ -22,6 +22,9 @@ export const chatService = {
   async createChatRoom(storeId: number): Promise<DirectChatRoom> {
     const res = await fetchWithAuth('/chatting/room', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ storeId }),
     });
     if (!res.ok) throw new Error('Failed to create chat room');
