@@ -51,6 +51,29 @@ function renderOperatingHours(hoursStr: string) {
   if (!hoursStr) return <Text style={styles.contactText}>영업시간 문의</Text>;
 
   try {
+    // 1. 새로운 스펙: 다차원 배열 파싱 (예: [{"day":"월","open":"09:00","close":"20:00","closed":false}])
+    if (hoursStr.trim().startsWith('[') && hoursStr.trim().endsWith(']')) {
+      const parsed = JSON.parse(hoursStr);
+      if (Array.isArray(parsed)) {
+        return (
+          <View style={styles.hoursTableContainer}>
+            {parsed.map((item: any, idx: number) => {
+              const isClosed = item.closed;
+              return (
+                <View key={idx} style={styles.hoursTableRow}>
+                  <Text style={[styles.hoursDayText, isClosed && styles.hoursClosedText]}>{item.day}</Text>
+                  <Text style={[styles.hoursTimeText, isClosed && styles.hoursClosedText]}>
+                    {isClosed ? '휴무' : `${item.open} - ${item.close}`}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        );
+      }
+    }
+
+    // 2. 레거시 스펙: 객체 형태 파싱 (혹시 모를 하위 호환성 유지)
     if (hoursStr.trim().startsWith('{') && hoursStr.trim().endsWith('}')) {
       const parsed = JSON.parse(hoursStr);
       const dayMap: Record<string, string> = {
