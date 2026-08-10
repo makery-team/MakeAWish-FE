@@ -220,7 +220,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
       ? categoryPortfolios.map((p, idx) => {
           const cakeId = p.id || p.portfolioId || (Number(shopId) * 1000 + idx);
           const isFav = isFavorited(cakeId);
-          const baseLikes = p.likeCount || (38 + (idx * 23) % 120);
+          const baseLikes = p.likeCount ?? (38 + (idx * 23) % 120);
           const globalLikes = likeCounts[cakeId.toString()];
           const currentLikes = globalLikes !== undefined
             ? globalLikes
