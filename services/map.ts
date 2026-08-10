@@ -9,6 +9,12 @@ export const mapService = {
     return Array.isArray(data) ? data : (data?.content || []);
   },
 
+  async getRegions(): Promise<any[]> {
+    const response = await fetchWithAuth(`/api/regions`);
+    if (!response.ok) throw new Error(`getRegions failed: ${response.status}`);
+    return response.json();
+  },
+
   async searchStores(query: string): Promise<MapStore[]> {
     const response = await fetchWithAuth(`/api/stores?query=${encodeURIComponent(query)}`);
     if (!response.ok) throw new Error(`searchStores failed: ${response.status}`);

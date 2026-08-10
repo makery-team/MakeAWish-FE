@@ -1,5 +1,4 @@
 import { CakeShop } from '@/constants/map-shops';
-import { KOREA_DISTRICTS, RegionGu } from '@/constants/korea-districts';
 import { theme } from '@/constants/theme';
 import { mapService } from '@/services/map';
 import { MapStore } from '@/types';
@@ -111,7 +110,8 @@ export function MapView({ onShopSelect }: MapViewProps) {
   const [isLocating, setIsLocating] = useState(false);
 
   // Region selection state
-  const [selectedGu, setSelectedGu] = useState<RegionGu | null>(null);
+  const [regions, setRegions] = useState<any[]>([]);
+  const [selectedGu, setSelectedGu] = useState<any | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedGu, setExpandedGu] = useState<string | null>(null);
@@ -129,14 +129,14 @@ export function MapView({ onShopSelect }: MapViewProps) {
 
   // Filtered districts for search
   const filteredDistricts = useMemo(() => {
-    if (!searchQuery.trim()) return KOREA_DISTRICTS;
+    if (!searchQuery.trim()) return regions;
     const q = searchQuery.trim().toLowerCase();
-    return KOREA_DISTRICTS.filter(
+    return regions.filter(
       (gu) =>
         gu.name.toLowerCase().includes(q) ||
-        gu.dongs.some((dong) => dong.name.toLowerCase().includes(q))
+        gu.dongs.some((dong: any) => dong.name.toLowerCase().includes(q))
     );
-  }, [searchQuery]);
+  }, [searchQuery, regions]);
 
   const requestLocation = async () => {
     setIsLocating(true);
@@ -169,6 +169,11 @@ export function MapView({ onShopSelect }: MapViewProps) {
 
   useEffect(() => {
     requestLocation();
+    
+    // Fetch regions from API
+    mapService.getRegions()
+      .then(data => setRegions(data))
+      .catch(err => console.error('[API 실패] Region API 에러:', err));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -197,7 +202,7 @@ export function MapView({ onShopSelect }: MapViewProps) {
       .catch(() => {});
   }, [selectedGu]);
 
-  const handleGuSelect = useCallback((gu: RegionGu) => {
+  const handleGuSelect = useCallback((gu: any) => {
     setSelectedGu(gu);
     setIsSheetOpen(false);
     setSearchQuery('');
@@ -211,7 +216,7 @@ export function MapView({ onShopSelect }: MapViewProps) {
   }, []);
 
   const handleDongSelect = useCallback(
-    (dong: { name: string; latitude: number; longitude: number }, gu: RegionGu) => {
+    (dong: { name: string; latitude: number; longitude: number }, gu: any) => {
       setSelectedGu(gu);
       setIsSheetOpen(false);
       setSearchQuery('');
@@ -471,14 +476,14 @@ const cardStyles = StyleSheet.create({
 interface RegionBottomSheetProps {
   visible: boolean;
   searchQuery: string;
-  filteredDistricts: RegionGu[];
+  filteredDistricts: any[];
   expandedGu: string | null;
   onSearchChange: (q: string) => void;
   onGuExpand: (name: string) => void;
-  onGuSelect: (gu: RegionGu) => void;
+  onGuSelect: (gu: any) => void;
   onDongSelect: (
     dong: { name: string; latitude: number; longitude: number },
-    gu: RegionGu
+    gu: any
   ) => void;
   onClose: () => void;
 }
