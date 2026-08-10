@@ -88,14 +88,14 @@ export const aiService = {
   /**
    * 포트폴리오 이미지 기반 인페인팅(디자인 수정) 요청
    */
-  async inpaint(portfolioId: number, prompt: string, maskImage: string, currentImage?: string): Promise<any> {
+  async inpaint(portfolioId: number, prompt: string, maskImage: string, currentImage?: string, referenceImage?: string): Promise<any> {
     try {
       const response = await fetchWithAuth(`/api/ai-agent/inpaint/${portfolioId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt, maskImage, currentImage }),
+        body: JSON.stringify({ prompt, maskImage, currentImage, referenceImage }),
       });
 
       if (!response.ok) {
