@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { CheckCircle2, MessageSquare } from 'lucide-react-native';
@@ -9,6 +9,7 @@ import Animated, {
   withTiming 
 } from 'react-native-reanimated';
 import type { ConversationState } from '@/types';
+import { mapService } from '@/services/map';
 
 interface OrderReminderCardProps {
   conversationState: ConversationState;
@@ -17,44 +18,21 @@ interface OrderReminderCardProps {
   onCancel: () => void;
 }
 
-/**
- * Helper function to get shop address
- */
-function getShopAddress(shopName?: string, region?: string): string {
-  // Map shop names to addresses
-  const shopAddresses: { [key: string]: string } = {
-    'Sweet Dreams': '서울시 강남구 테헤란로 123',
-    'Cake Heaven': '서울시 서초구 서초대로 456',
-    'Sugar & Spice': '서울시 송파구 올림픽로 789',
-    'The Cake Shop': '서울시 마포구 월드컵로 321',
-    'Patisserie Belle': '서울시 용산구 이태원로 654',
-    'Delicious Cakes': '서울시 강남구 논현로 987',
-  };
-
-  // If we have a shop name, return its address
-  if (shopName && shopAddresses[shopName]) {
-    return shopAddresses[shopName];
-  }
-
-  // Otherwise, fall back to region-based addresses
-  const regionAddresses: { [key: string]: string } = {
-    '강남구': '서울시 강남구 테헤란로 123',
-    '서초구': '서울시 서초구 서초대로 456',
-    '송파구': '서울시 송파구 올림픽로 789',
-    '마포구': '서울시 마포구 월드컵로 321',
-    '용산구': '서울시 용산구 이태원로 654',
-  };
-
-  if (region && regionAddresses[region]) {
-    return regionAddresses[region];
-  }
+function getShopAddressFallback(shopName?: string, region?: string, shopAddress?: string): string {
+  if (shopAddress) return shopAddress;
 
   // Fallback for demo
   if (shopName === '메이커리 강남점') {
     return '서울시 강남구 테헤란로 123';
   }
   if (shopName === '어드민 베이커리') {
-    return '서울시 마포구 월드컵로 321';
+    return '서울시 마포구 연남동 239-20 1층';
+  }
+  if (shopName === '위시 케이크') {
+    return '서울 성동구 서울숲2길 14';
+  }
+  if (shopName === '달콤달콤 케이크') {
+    return '서울 강남구 테헤란로 123 2층';
   }
 
   return '매장 주소 확인 중';
@@ -68,11 +46,24 @@ export const OrderReminderCard: React.FC<OrderReminderCardProps> = ({
 }) => {
   const scale = useSharedValue(0.9);
   const opacity = useSharedValue(0);
+  const [realAddress, setRealAddress] = useState<string | null>(null);
 
   useEffect(() => {
     scale.value = withSpring(1);
     opacity.value = withTiming(1, { duration: 500 });
   }, []);
+
+  useEffect(() => {
+    if (conversationState.storeId) {
+      mapService.getStoreDetail(conversationState.storeId)
+        .then(store => {
+          if (store && store.address) {
+            setRealAddress(store.address);
+          }
+        })
+        .catch(err => console.error("Failed to fetch store address:", err));
+    }
+  }, [conversationState.storeId]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -107,7 +98,7 @@ export const OrderReminderCard: React.FC<OrderReminderCardProps> = ({
           <View style={styles.detailTextContainer}>
             <Text style={styles.detailLabel}>매장 주소:</Text>
             <Text style={styles.detailValue}>
-              {getShopAddress(conversationState.shopName, conversationState.region)}
+              {realAddress || getShopAddressFallback(conversationState.shopName, conversationState.region, conversationState.shopAddress)}
             </Text>
           </View>
         </View>
