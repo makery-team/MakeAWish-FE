@@ -1,5 +1,5 @@
 import { CakeShop } from '@/constants/map-shops';
-import { SEOUL_DISTRICTS, SeoulGu } from '@/constants/seoul-districts';
+import { KOREA_DISTRICTS, RegionGu } from '@/constants/korea-districts';
 import { theme } from '@/constants/theme';
 import { mapService } from '@/services/map';
 import { MapStore } from '@/types';
@@ -111,7 +111,7 @@ export function MapView({ onShopSelect }: MapViewProps) {
   const [isLocating, setIsLocating] = useState(false);
 
   // Region selection state
-  const [selectedGu, setSelectedGu] = useState<SeoulGu | null>(null);
+  const [selectedGu, setSelectedGu] = useState<RegionGu | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedGu, setExpandedGu] = useState<string | null>(null);
@@ -129,9 +129,9 @@ export function MapView({ onShopSelect }: MapViewProps) {
 
   // Filtered districts for search
   const filteredDistricts = useMemo(() => {
-    if (!searchQuery.trim()) return SEOUL_DISTRICTS;
+    if (!searchQuery.trim()) return KOREA_DISTRICTS;
     const q = searchQuery.trim().toLowerCase();
-    return SEOUL_DISTRICTS.filter(
+    return KOREA_DISTRICTS.filter(
       (gu) =>
         gu.name.toLowerCase().includes(q) ||
         gu.dongs.some((dong) => dong.name.toLowerCase().includes(q))
@@ -197,7 +197,7 @@ export function MapView({ onShopSelect }: MapViewProps) {
       .catch(() => {});
   }, [selectedGu]);
 
-  const handleGuSelect = useCallback((gu: SeoulGu) => {
+  const handleGuSelect = useCallback((gu: RegionGu) => {
     setSelectedGu(gu);
     setIsSheetOpen(false);
     setSearchQuery('');
@@ -211,7 +211,7 @@ export function MapView({ onShopSelect }: MapViewProps) {
   }, []);
 
   const handleDongSelect = useCallback(
-    (dong: { name: string; latitude: number; longitude: number }, gu: SeoulGu) => {
+    (dong: { name: string; latitude: number; longitude: number }, gu: RegionGu) => {
       setSelectedGu(gu);
       setIsSheetOpen(false);
       setSearchQuery('');
@@ -230,7 +230,7 @@ export function MapView({ onShopSelect }: MapViewProps) {
     setSelectedShop((prev) => (prev?.id === shop.id ? null : shop));
   }, []);
 
-  const regionLabel = selectedGu ? `서울 ${selectedGu.name}` : '서울특별시';
+  const regionLabel = selectedGu ? selectedGu.name : '서울특별시';
 
   return (
     <View style={styles.container}>
@@ -471,14 +471,14 @@ const cardStyles = StyleSheet.create({
 interface RegionBottomSheetProps {
   visible: boolean;
   searchQuery: string;
-  filteredDistricts: SeoulGu[];
+  filteredDistricts: RegionGu[];
   expandedGu: string | null;
   onSearchChange: (q: string) => void;
   onGuExpand: (name: string) => void;
-  onGuSelect: (gu: SeoulGu) => void;
+  onGuSelect: (gu: RegionGu) => void;
   onDongSelect: (
     dong: { name: string; latitude: number; longitude: number },
-    gu: SeoulGu
+    gu: RegionGu
   ) => void;
   onClose: () => void;
 }

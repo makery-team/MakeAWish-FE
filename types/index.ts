@@ -85,6 +85,7 @@ export interface ConversationState {
   selectedCakeImage?: string;
   customizedImageUrl?: string;
   shopName?: string;
+  shopAddress?: string;
   portfolioId?: number;
   storeId?: number;
   productId?: number;
