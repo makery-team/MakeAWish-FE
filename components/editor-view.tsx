@@ -8,7 +8,9 @@ import {
   Redo,
   Sparkles,
   Undo,
+  Image as ImageIcon,
 } from "lucide-react-native";
+import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -71,6 +73,9 @@ export function EditorView({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   
+  // 새로 추가된 상태: 레퍼런스 이미지 (Base64)
+  const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  
   const currentPathRef = useRef<string>("");
   const scrollViewRef = useRef<ScrollView>(null);
   const svgContainerRef = useRef<View>(null);
@@ -116,6 +121,20 @@ export function EditorView({
     }
   };
 
+  const handlePickReferenceImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+      base64: true, // 백엔드 전송을 위해 Base64로 받기
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const b64 = result.assets[0].base64;
+      setReferenceImage(`data:image/jpeg;base64,${b64}`);
+    }
+  };
+
   const handleRedo = () => {
     if (redoPaths.length > 0) {
       const lastRedo = redoPaths[redoPaths.length - 1];
@@ -140,7 +159,7 @@ export function EditorView({
 
       // 2. AI API 호출 (비동기 202 응답)
       const pId = portfolioId || 1;
-      const initialResponse = await aiService.inpaint(pId, command, maskB64, currentImage);
+      const initialResponse = await aiService.inpaint(pId, command, maskB64, currentImage, referenceImage || undefined);
       
       const inpaintingId = initialResponse.id;
       if (!inpaintingId) {
@@ -179,6 +198,7 @@ export function EditorView({
       setUpdateKey(Date.now());
       setPaths([]); // 편집 완료 후 경로 초기화
       setCommand("");
+      setReferenceImage(null); // 레퍼런스 이미지 초기화
       Alert.alert("성공", "디자인이 수정되었습니다!");
     } catch (error) {
       console.error("Generation failed:", error);
@@ -385,19 +405,35 @@ export function EditorView({
             {/* AI Command Panel */}
             <View style={styles.aiPanel}>
               <Text style={styles.panelTitle}>AI 요청사항</Text>
-              <TextInput
-                value={command}
-                onChangeText={setCommand}
-                onFocus={() => {
-                  setTimeout(() => {
-                    scrollViewRef.current?.scrollToEnd({ animated: true });
-                  }, 100);
-                }}
-                placeholder="예: 곰돌이 캐릭터를 추가해줘, 분홍색 리본을 달아줘"
-                style={styles.textInput}
-                multiline
-                numberOfLines={3}
-              />
+              <View style={styles.inputRow}>
+                <TextInput
+                  value={command}
+                  onChangeText={setCommand}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                    }, 100);
+                  }}
+                  placeholder="예: 곰돌이 캐릭터 추가해줘"
+                  style={[styles.textInput, { flex: 1 }]}
+                  multiline
+                  numberOfLines={3}
+                />
+                <TouchableOpacity 
+                  onPress={handlePickReferenceImage} 
+                  style={styles.referenceImageButton}
+                >
+                  {referenceImage ? (
+                    <RNImage 
+                      source={{ uri: referenceImage }} 
+                      style={styles.referenceImagePreview} 
+                    />
+                  ) : (
+                    <ImageIcon size={24} color="#666" />
+                  )}
+                  {!referenceImage && <Text style={styles.referenceImageText}>참고</Text>}
+                </TouchableOpacity>
+              </View>
               <TouchableOpacity
                 onPress={handleGenerate}
                 disabled={isGenerating || !command.trim()}
@@ -572,21 +608,53 @@ const styles = StyleSheet.create({
   },
   aiPanel: {
     marginTop: 24,
+    padding: 16,
+    backgroundColor: "#F9F9F9",
+    borderTopWidth: 1,
+    borderTopColor: "#EAEAEA",
+    borderRadius: 16,
   },
   panelTitle: {
     fontSize: 14,
     color: "#333",
     marginBottom: 8,
   },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  referenceImageButton: {
+    width: 64,
+    height: 64,
+    backgroundColor: "white",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#DDD",
+    borderStyle: "dashed",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  referenceImagePreview: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 8,
+  },
+  referenceImageText: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 4,
+  },
   textInput: {
-    backgroundColor: "#F8F8F8",
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: "white",
+    borderRadius: 8,
+    padding: 12,
     fontSize: 14,
     color: "#333",
     borderWidth: 1,
-    borderColor: "#EEE",
+    borderColor: "#DDD",
     textAlignVertical: "top",
+    minHeight: 64,
   },
   generateButton: {
     flexDirection: "row",
