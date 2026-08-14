@@ -131,6 +131,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
   const [portfolios, setPortfolios] = useState<StorePortfolio[]>([]);
   const [reviewList, setReviewList] = useState<StoreReview[]>([]);
   const [activeChip, setActiveChip] = useState('전체');
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
   const [isLoadingDetail, setIsLoadingDetail] = useState(true);
 
   useEffect(() => {
@@ -344,7 +345,21 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
             </View>
           </View>
 
-          <Text style={styles.description}>{shop.description}</Text>
+          <View style={styles.descContainer}>
+            <Text 
+              style={styles.description} 
+              numberOfLines={isDescExpanded ? undefined : 2}
+            >
+              {shop.description}
+            </Text>
+            {shop.description && shop.description.length > 60 && (
+              <TouchableOpacity onPress={() => setIsDescExpanded(!isDescExpanded)} style={styles.descMoreBtn}>
+                <Text style={styles.descMoreText}>
+                  {isDescExpanded ? '접기' : '더보기'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
           <View style={styles.contactInfo}>
             <View style={styles.contactItem}>
@@ -542,11 +557,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.primary,
   },
+  descContainer: {
+    marginBottom: 20,
+  },
   description: {
     fontSize: 14,
     color: '#666',
     lineHeight: 22,
-    marginBottom: 20,
+  },
+  descMoreBtn: {
+    marginTop: 4,
+  },
+  descMoreText: {
+    fontSize: 14,
+    color: '#999',
+    textDecorationLine: 'underline',
   },
   contactInfo: {
     gap: 12,
