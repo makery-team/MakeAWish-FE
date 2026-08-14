@@ -67,7 +67,13 @@ export function CakeCard({
     setShowActions(false);
     router.push({
       pathname: '/editor/[id]',
-      params: { id: id.toString(), image, shopName }
+      params: { 
+        id: id.toString(), 
+        image, 
+        shopName,
+        storeId: storeId?.toString(),
+        productId: productId?.toString()
+      }
     });
   };
 

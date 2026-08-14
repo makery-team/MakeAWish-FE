@@ -219,10 +219,16 @@ export default function HomeScreen() {
             <CakeGrid
               cakes={cakes}
               onEndReached={handleLoadMore}
-              onCakeSelect={(image, shopName) => {
+              onCakeSelect={(image, shopName, portfolioId, storeId, productId) => {
                 router.push({
                   pathname: "/editor/[id]",
-                  params: { id: "grid", image, shopName },
+                  params: { 
+                    id: portfolioId ? portfolioId.toString() : "grid", 
+                    image, 
+                    shopName,
+                    storeId: storeId?.toString(),
+                    productId: productId?.toString()
+                  },
                 });
               }}
               onCakeInquiry={handleCakeInquiry}
