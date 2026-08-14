@@ -4,16 +4,20 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 
 export default function EditorScreen() {
-  const { id, image, shopName } = useLocalSearchParams<{
+  const { id, image, shopName, storeId, productId } = useLocalSearchParams<{
     id?: string;
     image?: string;
     shopName?: string;
+    storeId?: string;
+    productId?: string;
   }>();
   const router = useRouter();
   const { startInquiry, conversationHistory } = useInquiry();
 
   const safeImage = typeof image === "string" ? image : "";
   const safeShopName = typeof shopName === "string" ? shopName : "";
+  const parsedStoreId = storeId ? parseInt(storeId, 10) : undefined;
+  const parsedProductId = productId ? parseInt(productId, 10) : undefined;
 
   React.useEffect(() => {
     if (safeImage && safeShopName) return;
@@ -34,6 +38,9 @@ export default function EditorScreen() {
     startInquiry({
       image: editedImage || safeImage,
       shopName: safeShopName,
+      storeId: parsedStoreId,
+      productId: parsedProductId,
+      portfolioId: id && !isNaN(parseInt(id, 10)) ? parseInt(id, 10) : undefined,
       design: conversationHistory.design || "에디터에서 수정된 디자인",
       customizedImageUrl: editedImage || safeImage,
     });

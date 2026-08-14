@@ -385,7 +385,19 @@ export function AISearchBar({
               <ImageSlider
                 images={item.images}
                 cakeDetails={item.cakeDetails}
-                onCakeSelect={onCakeSelect}
+                onCakeSelect={(image, shopName, portfolioId, storeId, productId) => {
+                  minimizeChat();
+                  router.push({
+                    pathname: "/editor/[id]",
+                    params: { 
+                      id: portfolioId?.toString() || "ai", 
+                      image, 
+                      shopName,
+                      storeId: storeId?.toString(),
+                      productId: productId?.toString()
+                    },
+                  });
+                }}
                 onInquiry={(image, shopName, portfolioId, storeId, productId, tags) => {
                   // 대화 중 슬라이더에서 문의하기 클릭 시, 챗봇 대화방 안에서 이어가도록 처리
                   updateConversation({ 
