@@ -118,7 +118,7 @@ interface ShopDetailProps {
   shopId: number;
   onBack: () => void;
   onCakeSelect?: (image: string, shopName: string) => void;
-  onCakeInquiry?: (image: string, shopName: string) => void;
+  onCakeInquiry?: (image: string, shopName: string, productId?: number) => void;
 }
 
 export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: ShopDetailProps) {
@@ -225,6 +225,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
             : (localLikes[cakeId] !== undefined ? localLikes[cakeId] : baseLikes);
           return {
             id: cakeId,
+            productId: p.productId || selectedCategory?.id,
             imageUrl: p.imageUrl,
             likes: currentLikes,
             isFav,
@@ -253,7 +254,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
       else rightCol.push(item);
     });
 
-    const renderItem = (item: { id: number; imageUrl: string; likes: number; isFav: boolean }, idx: number, side: 'left' | 'right') => (
+    const renderItem = (item: { id: number; productId?: number; imageUrl: string; likes: number; isFav: boolean }, idx: number, side: 'left' | 'right') => (
       <View key={`${side}-${idx}`} style={styles.galleryItemWrapper}>
         <Image
           source={{ uri: item.imageUrl }}
@@ -291,7 +292,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.imageActionFill}
-            onPress={() => onCakeInquiry?.(item.imageUrl, shop.name)}
+            onPress={() => onCakeInquiry?.(item.imageUrl, shop.name, item.productId)}
             activeOpacity={0.85}
           >
             <Text style={styles.imageActionFillText}>이 시안 그대로 주문하기</Text>
