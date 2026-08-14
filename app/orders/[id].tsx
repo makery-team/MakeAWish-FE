@@ -111,7 +111,8 @@ export default function OrderDetailScreen() {
 
   const IGNORED_ORDER_DATA_KEYS = [
     'storeId', 'productId', 'portfolioId', 'cakeImage', 'selectedCakeImage', 'photoUrl', 'shopName', 'tags',
-    '픽업 희망 날짜', '픽업 희망 시간', '픽업 날짜', '픽업 시간', 'pickupDate', 'pickupTime'
+    '픽업 희망 날짜', '픽업 희망 시간', '픽업 날짜', '픽업 시간', 'pickupDate', 'pickupTime',
+    'customizedImageUrl', 'customized_image_url'
   ];
 
   const getDisplayPickupTime = () => {
