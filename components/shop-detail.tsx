@@ -144,7 +144,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
         const data = detailResult.value;
         setStoreData(data);
         if (data.categories && data.categories.length > 0) {
-          setActiveChip(data.categories[0].name);
+          setActiveChip('전체');
         }
       }
       if (portfoliosResult.status === 'fulfilled') setPortfolios(portfoliosResult.value.content);
@@ -205,16 +205,13 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
   };
 
   const renderGallery = () => {
-    // API 포트폴리오가 있으면 우선 사용, 없으면 기존 mock 데이터
     const selectedCategory = storeData.categories?.find(c => c.name === activeChip);
-    const validCatPortfolios = selectedCategory?.portfolios && selectedCategory.portfolios.some(p => (p.id && p.id > 0) || (p.portfolioId && p.portfolioId > 0))
-      ? selectedCategory.portfolios
-      : [];
-    const categoryPortfolios = portfolios && portfolios.length > 0
-      ? portfolios
-      : validCatPortfolios.length > 0
-      ? validCatPortfolios
-      : [];
+    let categoryPortfolios = [];
+    if (activeChip === '전체') {
+      categoryPortfolios = portfolios && portfolios.length > 0 ? portfolios : [];
+    } else {
+      categoryPortfolios = selectedCategory?.portfolios || [];
+    }
 
     const items = categoryPortfolios.length > 0
       ? categoryPortfolios.map((p, idx) => {
@@ -400,7 +397,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
           >
             {(() => {
               const chips = storeData.categories && storeData.categories.length > 0 
-                ? storeData.categories.map(c => c.name) 
+                ? ['전체', ...storeData.categories.map(c => c.name)] 
                 : ['전체'];
               return chips.map((chip) => (
                 <TouchableOpacity

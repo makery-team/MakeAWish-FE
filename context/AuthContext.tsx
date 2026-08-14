@@ -65,9 +65,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // 세션 만료 글로벌 이벤트 리스너 등록
     const { DeviceEventEmitter, Alert } = require('react-native');
+    
+    let isAlertShown = false;
     const subscription = DeviceEventEmitter.addListener('EXPIRED_SESSION', () => {
       signOut();
-      Alert.alert('로그아웃', '세션이 만료되었습니다. 다시 로그인해주세요.');
+      if (!isAlertShown) {
+        isAlertShown = true;
+        Alert.alert('로그아웃', '세션이 만료되었습니다. 다시 로그인해주세요.', [
+          { text: '확인', onPress: () => { isAlertShown = false; } }
+        ]);
+      }
     });
 
     return () => {
