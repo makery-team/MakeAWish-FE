@@ -23,10 +23,11 @@ export default function ShopDetailScreen() {
     });
   };
 
-  const handleCakeInquiry = (image: string, shopName: string) => {
+  const handleCakeInquiry = (image: string, shopName: string, productId?: number) => {
     startInquiry({
       image,
       shopName,
+      productId,
       design: '디자인 상세 선택',
     });
     // The AISearchBar should handle the inquiry mode automatically
