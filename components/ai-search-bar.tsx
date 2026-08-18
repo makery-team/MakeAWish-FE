@@ -26,6 +26,7 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
+import { useRouter } from "expo-router";
 import { INITIAL_AI_MESSAGE } from "@/constants/mock-data";
 import { theme } from "@/constants/theme";
 import { useInquiry } from "@/hooks/use-inquiry";
@@ -52,6 +53,7 @@ export function AISearchBar({
   inquiryMode,
   onInquiryComplete,
 }: AISearchBarProps) {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const keyboard = useAnimatedKeyboard();
   const { conversationHistory, updateConversation, resetConversation } = useInquiry();
