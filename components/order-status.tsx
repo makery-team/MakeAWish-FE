@@ -43,7 +43,7 @@ const statusSteps = [
   { key: 'PENDING_QUOTE', label: '견적 대기', icon: Clock },
   { key: 'APPROVED', label: '입금 대기', icon: CheckCircle },
   { key: 'IN_PROGRESS', label: '제작 중', icon: Package },
-  { key: 'COMPLETED', label: '픽업 완료', icon: Gift },
+  { key: 'COMPLETED', label: '제작 완료', icon: Gift },
 ];
 
 const getStepIndex = (status: BackendOrderStatus | string) => {
