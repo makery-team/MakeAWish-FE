@@ -575,7 +575,7 @@ function RegionBottomSheet({
               {/* Dong list (accordion) */}
               {expandedGu === gu.name && (
                 <View style={sheetStyles.dongList}>
-                  {gu.dongs.map((dong) => (
+                  {gu.dongs.map((dong: any) => (
                     <TouchableOpacity
                       key={dong.name}
                       style={sheetStyles.dongRow}

@@ -4,21 +4,23 @@ import {
   Text, 
   StyleSheet, 
   ScrollView, 
-  TouchableOpacity,
-  ActivityIndicator,
-  Platform,
-  StatusBar as RNStatusBar,
-  Alert
+  TouchableOpacity, 
+  ActivityIndicator, 
+  Platform, 
+  StatusBar as RNStatusBar, 
+  Alert 
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { ArrowLeft, MapPin, Calendar, CreditCard, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, MapPin, Calendar, CreditCard, ChevronRight, CheckCircle2 } from 'lucide-react-native';
 import { orderService } from '@/services/order';
+import { paymentService } from '@/services/payment';
 import { mapService } from '@/services/map';
 import { OrderDetail } from '@/types';
 import { theme } from '@/constants/theme';
-import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
+import TossPaymentModal from '@/components/TossPaymentModal';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -28,19 +30,22 @@ export default function OrderDetailScreen() {
   
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  const fetchOrderDetail = async () => {
+    try {
+      if (!id) return;
+      const data = await orderService.getOrderDetail(Number(id));
+      setOrder(data);
+    } catch (error) {
+      console.error('Failed to fetch order detail:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchOrderDetail = async () => {
-      try {
-        if (!id) return;
-        const data = await orderService.getOrderDetail(Number(id));
-        setOrder(data);
-      } catch (error) {
-        console.error('Failed to fetch order detail:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchOrderDetail();
   }, [id]);
 
@@ -64,6 +69,36 @@ export default function OrderDetailScreen() {
     }
   };
 
+  const handlePaymentSuccess = async (data: { paymentKey: string; orderNumber: string; amount: number }) => {
+    setIsPaymentModalVisible(false);
+    setIsProcessingPayment(true);
+    try {
+      await paymentService.confirmTossPayment({
+        paymentKey: data.paymentKey,
+        orderNumber: data.orderNumber,
+        amount: data.amount,
+      });
+
+      Alert.alert(
+        '결제 완료 🎉',
+        '토스 결제가 안전하게 완료되었습니다!\n사장님께 결제 내역이 전달되어 제작이 시작됩니다.'
+      );
+
+      // 주문 정보 최신화
+      await fetchOrderDetail();
+    } catch (err: any) {
+      console.error('Payment confirmation error:', err);
+      Alert.alert('결제 승인 오류', err.message || '결제 승인 처리 중 오류가 발생했습니다.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handlePaymentFail = (errorMessage: string) => {
+    setIsPaymentModalVisible(false);
+    Alert.alert('결제 실패', errorMessage || '결제가 취소되었거나 처리되지 않았습니다.');
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(amount);
   };
@@ -71,8 +106,11 @@ export default function OrderDetailScreen() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'PENDING_QUOTE': return '견적 대기중';
+      case 'QUOTED':
       case 'APPROVED': return '입금 대기중';
+      case 'PAID': return '결제 완료';
       case 'IN_PROGRESS': return '제작 진행중';
+      case 'PICKUP_READY': return '픽업 대기중';
       case 'COMPLETED': return '픽업 완료';
       case 'CANCELED': return '주문 취소됨';
       default: return status;
@@ -82,8 +120,11 @@ export default function OrderDetailScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'PENDING_QUOTE': return '#3B82F6';
+      case 'QUOTED':
       case 'APPROVED': return '#F59E0B';
+      case 'PAID':
       case 'IN_PROGRESS': return '#10B981';
+      case 'PICKUP_READY': return '#8B5CF6';
       case 'COMPLETED': return '#EC4899';
       case 'CANCELED': return '#EF4444';
       default: return '#6B7280';
@@ -136,6 +177,8 @@ export default function OrderDetailScreen() {
 
   const statusColor = getStatusColor(order.status);
   const orderItem = order.items?.[0]; // 명세서상 1개의 케이크로 가정
+  const isPayable = order.status === 'QUOTED' || order.status === 'APPROVED';
+  const isPaid = order.status === 'PAID' || order.status === 'IN_PROGRESS' || order.status === 'PICKUP_READY' || order.status === 'COMPLETED';
 
   return (
     <View style={styles.container}>
@@ -147,7 +190,13 @@ export default function OrderDetailScreen() {
         <Text style={styles.headerTitle}>주문 상세</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={[
+          styles.scrollContent, 
+          isPayable ? { paddingBottom: insets.bottom + 90 } : { paddingBottom: 40 }
+        ]} 
+        showsVerticalScrollIndicator={false}
+      >
         <Animated.View entering={FadeInUp.delay(100)} style={styles.topSection}>
           <Text style={styles.orderDateLabel}>
             주문일시: {new Date(order.createdAt).toLocaleString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -206,6 +255,7 @@ export default function OrderDetailScreen() {
           </Animated.View>
         )}
 
+        {/* Reservation Card */}
         <Animated.View entering={FadeInUp.delay(300)} style={styles.card}>
           <Text style={styles.sectionTitle}>예약 정보</Text>
           <View style={styles.infoRow}>
@@ -228,10 +278,20 @@ export default function OrderDetailScreen() {
           </View>
         </Animated.View>
 
+        {/* Payment Card */}
         <Animated.View entering={FadeInUp.delay(400)} style={styles.card}>
-          <Text style={styles.sectionTitle}>결제 정보</Text>
+          <View style={styles.paymentCardHeader}>
+            <Text style={styles.sectionTitle}>결제 정보</Text>
+            {isPaid && (
+              <View style={styles.paidBadge}>
+                <CheckCircle2 size={14} color="#10B981" />
+                <Text style={styles.paidBadgeText}>결제 완료</Text>
+              </View>
+            )}
+          </View>
+
           <View style={styles.paymentRow}>
-            <Text style={styles.paymentLabel}>상품 금액</Text>
+            <Text style={styles.paymentLabel}>주문 상품 금액</Text>
             <Text style={styles.paymentValue}>{formatCurrency(order.totalPrice)}</Text>
           </View>
           <View style={styles.divider} />
@@ -240,8 +300,41 @@ export default function OrderDetailScreen() {
             <Text style={styles.totalValue}>{formatCurrency(order.totalPrice)}</Text>
           </View>
         </Animated.View>
-
       </ScrollView>
+
+      {/* 입금 대기 중일 때 하단 고정 토스 결제 버튼 */}
+      {isPayable && (
+        <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 12) + 8 }]}>
+          <TouchableOpacity
+            style={styles.payButton}
+            onPress={() => setIsPaymentModalVisible(true)}
+            disabled={isProcessingPayment}
+            activeOpacity={0.85}
+          >
+            {isProcessingPayment ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <View style={styles.payButtonContent}>
+                <CreditCard size={20} color="#ffffff" />
+                <Text style={styles.payButtonText}>
+                  {formatCurrency(order.totalPrice)} 토스 결제하기
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* 토스페이먼츠 결제 모달 */}
+      <TossPaymentModal
+        visible={isPaymentModalVisible}
+        onClose={() => setIsPaymentModalVisible(false)}
+        orderNumber={order.orderNumber}
+        orderName={orderItem?.name ? `${order.storeName} - ${orderItem.name}` : `${order.storeName} 케이크 주문`}
+        amount={order.totalPrice}
+        onSuccess={handlePaymentSuccess}
+        onFail={handlePaymentFail}
+      />
     </View>
   );
 }
@@ -270,7 +363,8 @@ const styles = StyleSheet.create({
   },
   backToHomeText: {
     color: 'white',
-    },
+    fontWeight: '600',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -286,12 +380,12 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
+    fontWeight: '700',
     color: '#111827',
     marginLeft: 8,
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 40,
   },
   topSection: {
     marginBottom: 16,
@@ -322,10 +416,12 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 14,
-    },
+    fontWeight: '600',
+  },
   orderNumberText: {
     fontSize: 14,
     color: '#4B5563',
+    fontWeight: '500',
   },
   card: {
     backgroundColor: 'white',
@@ -349,6 +445,7 @@ const styles = StyleSheet.create({
   },
   storeNameText: {
     fontSize: 16,
+    fontWeight: '700',
     color: '#111827',
   },
   itemRow: {
@@ -379,6 +476,7 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 15,
+    fontWeight: '600',
     color: '#111827',
     marginBottom: 4,
   },
@@ -389,6 +487,7 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     fontSize: 15,
+    fontWeight: '700',
     color: '#DB2777',
   },
   optionsContainer: {
@@ -399,6 +498,7 @@ const styles = StyleSheet.create({
   },
   optionsTitle: {
     fontSize: 13,
+    fontWeight: '600',
     color: '#4B5563',
     marginBottom: 12,
   },
@@ -413,12 +513,34 @@ const styles = StyleSheet.create({
   },
   optionValue: {
     fontSize: 13,
+    fontWeight: '500',
     color: '#111827',
   },
   sectionTitle: {
     fontSize: 16,
+    fontWeight: '700',
     color: '#111827',
     marginBottom: 16,
+  },
+  paymentCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  paidBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  paidBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#10B981',
   },
   infoRow: {
     flexDirection: 'row',
@@ -446,6 +568,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 14,
+    fontWeight: '500',
     color: '#111827',
   },
   paymentRow: {
@@ -460,6 +583,7 @@ const styles = StyleSheet.create({
   },
   paymentValue: {
     fontSize: 14,
+    fontWeight: '500',
     color: '#111827',
   },
   divider: {
@@ -469,10 +593,45 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 15,
+    fontWeight: '600',
     color: '#111827',
   },
   totalValue: {
     fontSize: 18,
+    fontWeight: '700',
     color: '#DB2777',
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'white',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  payButton: {
+    backgroundColor: '#3182F6', // 토스 블루 컬러
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  payButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  payButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

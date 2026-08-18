@@ -310,7 +310,32 @@ export interface NotificationResponse {
 }
 
 // --- Order History Types ---
-export type BackendOrderStatus = "PENDING_QUOTE" | "APPROVED" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
+export type BackendOrderStatus = 
+  | "PENDING_QUOTE" 
+  | "QUOTED" 
+  | "APPROVED" 
+  | "PAID" 
+  | "IN_PROGRESS" 
+  | "PICKUP_READY" 
+  | "COMPLETED" 
+  | "CANCELED";
+
+export interface TossPaymentConfirmRequest {
+  paymentKey: string;
+  orderNumber: string;
+  amount: number;
+}
+
+export interface PaymentDetailResponse {
+  paymentId: number;
+  orderNumber: string;
+  amount: number;
+  methodType: string;
+  pgTid: string;
+  status: string;
+  createdAt: string;
+  modifiedAt: string;
+}
 
 export interface OrderListItem {
   id: number;
