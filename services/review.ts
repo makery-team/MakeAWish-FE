@@ -84,6 +84,42 @@ export const reviewService = {
   },
 
   /**
+   * 리뷰 사진을 업로드합니다.
+   * @param imageUri 로컬 이미지 URI
+   */
+  async uploadImage(imageUri: string): Promise<string> {
+    try {
+      const formData = new FormData();
+      const filename = imageUri.split('/').pop() || 'review_image.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      // @ts-ignore - React Native FormData support
+      formData.append('file', {
+        uri: imageUri,
+        name: filename,
+        type,
+      });
+
+      const response = await fetchWithAuth('/api/images/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Image Upload Error: ${response.status} - ${errorText}`);
+      }
+
+      const res = await response.json();
+      return res.imageUrl;
+    } catch (error) {
+      console.error('uploadImage error:', error);
+      throw error;
+    }
+  },
+
+  /**
    * 리뷰를 삭제합니다.
    * @param reviewId 리뷰 ID
    */

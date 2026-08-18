@@ -13,7 +13,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { ArrowLeft, MapPin, Calendar, CreditCard, ChevronRight, CheckCircle2 } from 'lucide-react-native';
+import { ArrowLeft, MapPin, Calendar, CreditCard, ChevronRight, CheckCircle2, Star } from 'lucide-react-native';
 import { orderService } from '@/services/order';
 import { paymentService } from '@/services/payment';
 import { mapService } from '@/services/map';
@@ -179,6 +179,7 @@ export default function OrderDetailScreen() {
   const orderItem = order.items?.[0]; // 명세서상 1개의 케이크로 가정
   const isPayable = order.status === 'QUOTED' || order.status === 'APPROVED';
   const isPaid = order.status === 'PAID' || order.status === 'IN_PROGRESS' || order.status === 'PICKUP_READY' || order.status === 'COMPLETED';
+  const isCompleted = order.status === 'COMPLETED';
 
   return (
     <View style={styles.container}>
@@ -193,7 +194,7 @@ export default function OrderDetailScreen() {
       <ScrollView 
         contentContainerStyle={[
           styles.scrollContent, 
-          isPayable ? { paddingBottom: insets.bottom + 90 } : { paddingBottom: 40 }
+          (isPayable || isCompleted) ? { paddingBottom: insets.bottom + 90 } : { paddingBottom: 40 }
         ]} 
         showsVerticalScrollIndicator={false}
       >
@@ -321,6 +322,34 @@ export default function OrderDetailScreen() {
                 </Text>
               </View>
             )}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* 픽업 완료(COMPLETED) 시 하단 고정 리뷰 작성 버튼 */}
+      {isCompleted && (
+        <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 12) + 8 }]}>
+          <TouchableOpacity
+            style={styles.reviewButton}
+            onPress={() => {
+              router.push({
+                pathname: '/reviews/write',
+                params: {
+                  orderId: String(order.id),
+                  storeName: order.storeName,
+                  cakeName: orderItem?.name || '커스텀 케이크',
+                  cakeImage: orderItem?.customizedImageUrl || order.orderData?.cakeImage || order.orderData?.selectedCakeImage || '',
+                },
+              });
+            }}
+            activeOpacity={0.85}
+          >
+            <View style={styles.payButtonContent}>
+              <Star size={20} color="#ffffff" fill="#ffffff" />
+              <Text style={styles.payButtonText}>
+                소중한 후기(리뷰) 작성하기
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
       )}
@@ -619,6 +648,13 @@ const styles = StyleSheet.create({
   },
   payButton: {
     backgroundColor: '#3182F6', // 토스 블루 컬러
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewButton: {
+    backgroundColor: '#EC4899', // 핑크 테마 컬러
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
