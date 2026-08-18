@@ -12,7 +12,7 @@ import {
   Linking,
 } from 'react-native';
 import { WebView, WebViewNavigation } from 'react-native-webview';
-import { X, Lock } from 'lucide-react-native';
+import { X, Lock, Zap } from 'lucide-react-native';
 import { theme } from '@/constants/theme';
 
 interface TossPaymentModalProps {
@@ -268,6 +268,24 @@ export default function TossPaymentModal({
           </View>
         </View>
 
+        {/* 개발 및 테스트용 원클릭 바이패스 버튼 */}
+        <TouchableOpacity
+          style={styles.testBypassButton}
+          onPress={() => {
+            onSuccess({
+              paymentKey: `test_bypass_${Date.now()}`,
+              orderNumber,
+              amount,
+            });
+          }}
+          activeOpacity={0.85}
+        >
+          <Zap size={14} color="#D97706" fill="#D97706" />
+          <Text style={styles.testBypassText}>
+            ⚡ 테스트 환경: 원클릭 결제 승인하기 (인증 생략)
+          </Text>
+        </TouchableOpacity>
+
         {/* WebView */}
         <View style={styles.webViewContainer}>
           <WebView
@@ -351,6 +369,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: theme.colors.primary,
+  },
+  testBypassButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#FDE68A',
+    gap: 6,
+  },
+  testBypassText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#92400E',
   },
   webViewContainer: {
     flex: 1,
