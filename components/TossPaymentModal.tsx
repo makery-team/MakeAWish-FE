@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Platform,
   Alert,
+  Linking,
 } from 'react-native';
 import { WebView, WebViewNavigation } from 'react-native-webview';
 import { X, Lock } from 'lucide-react-native';
@@ -169,6 +170,65 @@ export default function TossPaymentModal({
     }
   };
 
+  const handleShouldStartLoadWithRequest = (request: { url: string }) => {
+    const { url } = request;
+
+    // 1. 일반 웹 URL 및 빈 페이지는 WebView 내부에서 정상 로드
+    if (
+      url.startsWith('http://') ||
+      url.startsWith('https://') ||
+      url.startsWith('about:blank') ||
+      url.startsWith('data:')
+    ) {
+      return true;
+    }
+
+    // 2. 외부 결제 앱 커스텀 스킴 (kakaotalk://, kakaopay://, intent://, ispmobile://, shinhan-sr-ansimclick:// 등)
+    (async () => {
+      try {
+        if (Platform.OS === 'android' && url.startsWith('intent:')) {
+          try {
+            await Linking.openURL(url);
+            return;
+          } catch (intentErr) {
+            // 인텐트 실행 실패 시 fallback URL 또는 마켓 URL 추출
+            const packageMatch = url.match(/package=([a-zA-Z0-9._]+)/);
+            const fallbackMatch = url.match(/browser_fallback_url=([^;]+)/);
+
+            if (fallbackMatch && fallbackMatch[1]) {
+              const fallbackUrl = decodeURIComponent(fallbackMatch[1]);
+              if (webViewRef.current) {
+                webViewRef.current.injectJavaScript(`window.location.href = '${fallbackUrl}';`);
+              }
+              return;
+            }
+
+            if (packageMatch && packageMatch[1]) {
+              const marketUrl = `market://details?id=${packageMatch[1]}`;
+              await Linking.openURL(marketUrl);
+              return;
+            }
+          }
+        }
+
+        // 일반 커스텀 앱 스킴 호출
+        const canOpen = await Linking.canOpenURL(url).catch(() => false);
+        if (canOpen) {
+          await Linking.openURL(url);
+        } else {
+          await Linking.openURL(url).catch((e) => {
+            console.warn('Cannot open external app scheme:', url, e);
+          });
+        }
+      } catch (error) {
+        console.error('Failed to handle external scheme URL:', url, error);
+      }
+    })();
+
+    // WebView 내부에서는 페이지 로드를 중단하여 ERR_UNKNOWN_URL_SCHEME 에러 방지
+    return false;
+  };
+
   const handleMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
@@ -214,6 +274,7 @@ export default function TossPaymentModal({
             ref={webViewRef}
             originWhitelist={['*']}
             source={{ html: paymentHtml }}
+            onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
             onNavigationStateChange={handleNavigationStateChange}
             onMessage={handleMessage}
             onLoadEnd={() => setLoading(false)}
