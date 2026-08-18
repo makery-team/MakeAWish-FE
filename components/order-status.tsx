@@ -46,6 +46,24 @@ const statusSteps = [
   { key: 'COMPLETED', label: '픽업 완료', icon: Gift },
 ];
 
+const getStepIndex = (status: BackendOrderStatus | string) => {
+  switch (status) {
+    case 'PENDING_QUOTE':
+      return 0;
+    case 'QUOTED':
+    case 'APPROVED':
+      return 1;
+    case 'PAID':
+    case 'IN_PROGRESS':
+      return 2;
+    case 'PICKUP_READY':
+    case 'COMPLETED':
+      return 3;
+    default:
+      return 0;
+  }
+};
+
 function OrderCard({ order, onPress, onReviewPress }: { order: OrderListItem, onPress: () => void, onReviewPress?: (orderId: number) => void }) {
   const router = useRouter();
 
@@ -64,11 +82,66 @@ function OrderCard({ order, onPress, onReviewPress }: { order: OrderListItem, on
     }
   };
 
-  const currentStepIndex = statusSteps.findIndex(step => step.key === order.status);
+  const currentStepIndex = getStepIndex(order.status);
+
+  const getStatusInfo = (status: BackendOrderStatus | string) => {
+    switch (status) {
+      case 'PENDING_QUOTE':
+        return {
+          cardStyle: styles.statusBlue,
+          textStyle: styles.textBlue,
+          message: '✨ 매장에서 견적을 확인 중이에요',
+        };
+      case 'QUOTED':
+      case 'APPROVED':
+        return {
+          cardStyle: styles.statusOrange,
+          textStyle: styles.textOrange,
+          message: '💳 주문 수락 완료! 입금(결제)을 진행해주세요',
+        };
+      case 'PAID':
+        return {
+          cardStyle: styles.statusBlue,
+          textStyle: styles.textBlue,
+          message: '💰 결제 완료! 곧 사장님이 제작을 시작해요',
+        };
+      case 'IN_PROGRESS':
+        return {
+          cardStyle: styles.statusGreen,
+          textStyle: styles.textGreen,
+          message: '👩‍🍳 케이크를 열심히 제작 중이에요',
+        };
+      case 'PICKUP_READY':
+        return {
+          cardStyle: styles.statusGreen,
+          textStyle: styles.textGreen,
+          message: '📦 케이크 완성! 매장에서 픽업해주세요',
+        };
+      case 'COMPLETED':
+        return {
+          cardStyle: styles.statusPink,
+          textStyle: styles.textPink,
+          message: '🎉 픽업이 완료되었습니다',
+        };
+      case 'CANCELED':
+        return {
+          cardStyle: styles.statusRed,
+          textStyle: styles.textRed,
+          message: '❌ 주문이 취소되었습니다',
+        };
+      default:
+        return {
+          cardStyle: styles.statusBlue,
+          textStyle: styles.textBlue,
+          message: '주문이 접수되었습니다',
+        };
+    }
+  };
+
+  const statusInfo = getStatusInfo(order.status);
 
   const progressWidth = useMemo(() => {
     if (order.status === 'CANCELED') return 100;
-    if (currentStepIndex === -1) return 0;
     return (currentStepIndex / (statusSteps.length - 1)) * 100;
   }, [currentStepIndex, order.status]);
 
@@ -168,27 +241,9 @@ function OrderCard({ order, onPress, onReviewPress }: { order: OrderListItem, on
           </View>
 
           {/* Current Status Message */}
-          <View style={[
-            styles.statusMessageCard,
-            order.status === 'PENDING_QUOTE' ? styles.statusBlue :
-            order.status === 'APPROVED' ? styles.statusOrange :
-            order.status === 'IN_PROGRESS' ? styles.statusGreen :
-            order.status === 'COMPLETED' ? styles.statusPink :
-            styles.statusRed
-          ]}>
-            <Text style={[
-              styles.statusMessageTitle,
-              order.status === 'PENDING_QUOTE' ? styles.textBlue :
-              order.status === 'APPROVED' ? styles.textOrange :
-              order.status === 'IN_PROGRESS' ? styles.textGreen :
-              order.status === 'COMPLETED' ? styles.textPink :
-              styles.textRed
-            ]}>
-              {order.status === 'PENDING_QUOTE' && '✨ 매장에서 견적을 확인 중이에요'}
-              {order.status === 'APPROVED' && '💳 주문 수락 완료! 입금을 진행해주세요'}
-              {order.status === 'IN_PROGRESS' && '👩‍🍳 케이크를 열심히 제작 중이에요'}
-              {order.status === 'COMPLETED' && '🎉 픽업이 완료되었습니다'}
-              {order.status === 'CANCELED' && '❌ 주문이 취소되었습니다'}
+          <View style={[styles.statusMessageCard, statusInfo.cardStyle]}>
+            <Text style={[styles.statusMessageTitle, statusInfo.textStyle]}>
+              {statusInfo.message}
             </Text>
           </View>
         </View>
