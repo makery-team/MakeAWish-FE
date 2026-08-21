@@ -61,82 +61,87 @@ export function WriteReviewModal({ visible, orderId, onClose, onSubmit }: WriteR
       animationType="slide"
       onRequestClose={handleClose}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.keyboardView}
+      >
         <View style={styles.overlay}>
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.keyboardView}
-          >
-            <View style={styles.container}>
-              <View style={styles.header}>
-                <Text style={styles.title}>리뷰 작성</Text>
-                <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-                  <Text style={styles.closeText}>✕</Text>
-                </TouchableOpacity>
-              </View>
+          <TouchableWithoutFeedback onPress={handleClose}>
+            <View style={styles.backdrop} />
+          </TouchableWithoutFeedback>
 
-              <Text style={styles.subtitle}>이 케이크는 어떠셨나요?</Text>
-              
-              <View style={styles.starsContainer}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <TouchableOpacity
-                    key={star}
-                    onPress={() => setRating(star)}
-                    style={styles.starButton}
-                  >
-                    <Star
-                      size={32}
-                      color={star <= rating ? "#FFD700" : "#E0E0E0"}
-                      fill={star <= rating ? "#FFD700" : "transparent"}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <TextInput
-                style={styles.input}
-                placeholder="어떤 점이 좋았나요? (사진 첨부 기능은 곧 추가될 예정입니다!)"
-                placeholderTextColor="#999"
-                value={content}
-                onChangeText={setContent}
-                multiline
-                textAlignVertical="top"
-              />
-
-              <TouchableOpacity 
-                style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
-                onPress={handleSubmit}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.submitButtonText}>리뷰 등록하기</Text>
-                )}
+          <View style={styles.container}>
+            <View style={styles.header}>
+              <Text style={styles.title}>리뷰 작성</Text>
+              <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+                <Text style={styles.closeText}>✕</Text>
               </TouchableOpacity>
             </View>
-          </KeyboardAvoidingView>
+
+            <Text style={styles.subtitle}>이 케이크는 어떠셨나요?</Text>
+            
+            <View style={styles.starsContainer}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity
+                  key={star}
+                  onPress={() => setRating(star)}
+                  style={styles.starButton}
+                >
+                  <Star
+                    size={32}
+                    color={star <= rating ? "#FFD700" : "#E0E0E0"}
+                    fill={star <= rating ? "#FFD700" : "transparent"}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TextInput
+              style={styles.input}
+              placeholder="어떤 점이 좋았나요? (사진 첨부 기능은 곧 추가될 예정입니다!)"
+              placeholderTextColor="#999"
+              value={content}
+              onChangeText={setContent}
+              multiline
+              textAlignVertical="top"
+            />
+
+            <TouchableOpacity 
+              style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.submitButtonText}>리뷰 등록하기</Text>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
-      </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
-  keyboardView: {
-    width: '100%',
+  backdrop: {
+    flex: 1,
   },
   container: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
-    minHeight: 400,
+    minHeight: 380,
   },
   header: {
     flexDirection: 'row',
