@@ -66,7 +66,8 @@ export default function ExploreScreen() {
   };
 
   const renderStoreItem = (store: MapStore) => {
-    const imageUrl = store.thumbnailUrl 
+    const imageUrl = store.imageUrl
+      || store.thumbnailUrl 
       || (store.categories && store.categories.length > 0 && store.categories[0].imageUrl)
       || 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80';
 

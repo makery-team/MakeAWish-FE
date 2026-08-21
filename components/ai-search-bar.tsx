@@ -387,6 +387,7 @@ export function AISearchBar({
               <ImageSlider
                 images={item.images}
                 cakeDetails={item.cakeDetails}
+                onRefresh={() => handleSend("다른 디자인 시안 더 보여줘")}
                 onCakeSelect={(image, shopName, portfolioId, storeId, productId) => {
                   minimizeChat();
                   router.push({

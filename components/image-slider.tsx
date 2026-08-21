@@ -9,7 +9,7 @@ import {
   ViewToken
 } from 'react-native';
 import { Image } from 'expo-image';
-import { ChevronRight, ChevronLeft, Sparkles, MessageCircle } from 'lucide-react-native';
+import { ChevronRight, ChevronLeft, Sparkles, MessageCircle, RefreshCw } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 
@@ -21,6 +21,7 @@ interface ImageSliderProps {
   onCakeSelect?: (image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number) => void;
   onInquiry?: (image: string, shopName?: string, portfolioId?: number, storeId?: number, productId?: number, tags?: string[]) => void;
   onMinimize?: () => void;
+  onRefresh?: () => void;
 }
 
 export const ImageSlider: React.FC<ImageSliderProps> = ({
@@ -28,7 +29,8 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
   cakeDetails,
   onCakeSelect,
   onInquiry,
-  onMinimize
+  onMinimize,
+  onRefresh
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
@@ -136,25 +138,39 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
         </View>
       </View>
 
-      {/* Dots Indicator */}
-      {images.length > 1 && (
-        <View style={styles.dotsContainer}>
-          {images.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.dot,
-                index === currentIndex ? styles.activeDot : styles.inactiveDot
-              ]}
-            />
-          ))}
-        </View>
-      )}
+      {/* Footer: Dots, Counter, and More Designs button */}
+      <View style={styles.footerContainer}>
+        {images.length > 1 && (
+          <View style={styles.dotsContainer}>
+            {images.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.dot,
+                  index === currentIndex ? styles.activeDot : styles.inactiveDot
+                ]}
+              />
+            ))}
+          </View>
+        )}
 
-      {/* Counter */}
-      <Text style={styles.counterText}>
-        {currentIndex + 1} / {images.length}
-      </Text>
+        <View style={styles.footerRow}>
+          <Text style={styles.counterText}>
+            {currentIndex + 1} / {images.length}
+          </Text>
+
+          {onRefresh && (
+            <TouchableOpacity 
+              style={styles.moreButton} 
+              onPress={onRefresh}
+              activeOpacity={0.7}
+            >
+              <RefreshCw size={12} color={theme.colors.primary} />
+              <Text style={styles.moreButtonText}>다른 시안 더보기</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
     </View>
   );
 };
@@ -178,7 +194,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   imageWrapper: {
-    width: width - 64, // Adjusted for typical padding in parent
+    width: width - 64,
     height: 300,
   },
   image: {
@@ -188,35 +204,31 @@ const styles = StyleSheet.create({
   navButton: {
     position: 'absolute',
     top: '50%',
-    marginTop: -20,
-    width: 40,
-    height: 40,
+    transform: [{ translateY: -18 }],
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 20,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
-    zIndex: 10,
   },
   leftButton: {
-    left: 8,
+    left: 12,
   },
   rightButton: {
-    right: 8,
+    right: 12,
   },
   overlay: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 16,
-    paddingTop: 40,
-    gap: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    bottom: 12,
+    left: 12,
+    right: 12,
+    gap: 8,
   },
   actionButtonPrimary: {
     flexDirection: 'row',
@@ -224,17 +236,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     backgroundColor: theme.colors.primary,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 24,
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
   actionButtonTextPrimary: {
     color: 'white',
-    fontSize: 14,
-    letterSpacing: -0.5,
+    fontSize: 13,
+    fontWeight: 'bold',
+    letterSpacing: -0.3,
   },
   actionButtonSecondary: {
     flexDirection: 'row',
@@ -250,11 +259,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     letterSpacing: -0.3,
   },
+  footerContainer: {
+    marginTop: 12,
+    alignItems: 'center',
+  },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
+    marginBottom: 8,
     gap: 8,
   },
   dot: {
@@ -269,10 +282,28 @@ const styles = StyleSheet.create({
     width: 6,
     backgroundColor: theme.colors.border,
   },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
   counterText: {
-    textAlign: 'center',
     fontSize: 12,
     color: '#9CA3AF',
-    marginTop: 8,
+  },
+  moreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFF1F2',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  moreButtonText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
   },
 });

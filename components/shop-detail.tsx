@@ -192,6 +192,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
     phone: storeData.phone || '전화번호 정보 없음',
     hours: storeData.hours || '영업시간 문의',
     description: storeData.description || '매장 소개가 없습니다.',
+    imageUrl: storeData.imageUrl,
     gallery: apiGallery.length > 0 ? apiGallery : (SHOP_DETAIL_OVERRIDES[Number(shopId)]?.gallery || [SAMPLE_CAKE_IMAGES[0]]),
   };
 
@@ -330,7 +331,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
         {/* Shop Profile */}
         <View style={styles.shopInfo}>
           <View style={styles.shopHeader}>
-            <Image source={{ uri: shop.gallery[0] }} style={styles.shopLogo} />
+            <Image source={{ uri: shop.imageUrl || shop.gallery[0] }} style={styles.shopLogo} />
             <View style={styles.shopHeaderRight}>
               <Text style={styles.shopName}>@{shop.name}</Text>
               <View style={styles.statsRow}>
