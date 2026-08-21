@@ -179,6 +179,16 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
     ? storeData.categories.flatMap(c => c.portfolios || []).reduce((sum, p) => sum + (p.likeCount || 0), 0)
     : 0;
 
+  // 매장 핵심 키워드(keywords)와 카테고리(categories)를 통합하여 중복 없는 태그 배열 생성
+  const tagsFromKeywords = storeData.keywords
+    ? storeData.keywords.split(',').map((k) => k.trim()).filter(Boolean)
+    : [];
+  const tagsFromCategories = storeData.categories
+    ? storeData.categories.map((c) => c.name).filter(Boolean)
+    : [];
+  const mergedTags = Array.from(new Set([...tagsFromKeywords, ...tagsFromCategories]));
+  const finalTags = mergedTags.length > 0 ? mergedTags : ['커스텀 케이크'];
+
   // TODO(BACKEND): 매장 평점(rating)과 리뷰 수(reviewCount)가 현재 DB stores 테이블의 초기 고정값으로 전달됨.
   // 추후 백엔드에서 리뷰 작성/수정/삭제 시 실시간 집계(AVG/COUNT) 로직이 구현되면 동적 반영 테스트 필요!
   const shop = {
@@ -187,7 +197,8 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
     rating: storeData.rating || 0,
     reviews: storeData.reviewCount || 0,
     likes: totalLikes || (SHOP_DETAIL_OVERRIDES[Number(shopId)]?.likes ?? 0),
-    specialty: storeData.categories && storeData.categories.length > 0 ? storeData.categories[0].name : '커스텀 케이크',
+    tags: finalTags,
+    specialty: finalTags.join(', '),
     address: storeData.address || '주소 정보 없음',
     phone: storeData.phone || '전화번호 정보 없음',
     hours: storeData.hours || '영업시간 문의',
@@ -341,8 +352,12 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
                   <Text style={styles.statCount}>({shop.reviews})</Text>
                 </View>
               </View>
-              <View style={styles.specialtyTag}>
-                <Text style={styles.specialtyText}>{shop.specialty}</Text>
+              <View style={styles.shopTagsContainer}>
+                {shop.tags.map((tag, idx) => (
+                  <View key={idx} style={styles.specialtyTag}>
+                    <Text style={styles.specialtyText}>#{tag}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           </View>
@@ -559,15 +574,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#999',
   },
+  shopTagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+    marginTop: 2,
+  },
   specialtyTag: {
-    alignSelf: 'flex-start',
     backgroundColor: '#FFF0F5',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   specialtyText: {
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '600',
     color: theme.colors.primary,
   },
   descContainer: {
