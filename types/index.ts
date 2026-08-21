@@ -43,6 +43,8 @@ export interface Review {
   images?: string[];
   date: string;
   orderInfo?: string;
+  replyContent?: string | null;
+  replyCreatedAt?: string | null;
 }
 
 // Cake data interface
@@ -226,6 +228,7 @@ export interface Store {
   address?: string;
   phone?: string;
   thumbnailUrl?: string;
+  imageUrl?: string;
   categories: StoreCategory[];
 }
 
@@ -236,6 +239,7 @@ export interface MapStore {
   latitude: number;
   longitude: number;
   thumbnailUrl?: string;
+  imageUrl?: string;
   rating: number;
   categories?: any[];
   reviewCount: number;
@@ -249,6 +253,8 @@ export interface StoreReview {
   content: string;
   imageUrl?: string;
   createdAt: string;
+  replyContent?: string | null;
+  replyCreatedAt?: string | null;
 }
 
 export interface PageResponse<T> {

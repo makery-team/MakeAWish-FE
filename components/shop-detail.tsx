@@ -192,6 +192,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
     phone: storeData.phone || '전화번호 정보 없음',
     hours: storeData.hours || '영업시간 문의',
     description: storeData.description || '매장 소개가 없습니다.',
+    imageUrl: storeData.imageUrl,
     gallery: apiGallery.length > 0 ? apiGallery : (SHOP_DETAIL_OVERRIDES[Number(shopId)]?.gallery || [SAMPLE_CAKE_IMAGES[0]]),
   };
 
@@ -330,7 +331,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
         {/* Shop Profile */}
         <View style={styles.shopInfo}>
           <View style={styles.shopHeader}>
-            <Image source={{ uri: shop.gallery[0] }} style={styles.shopLogo} />
+            <Image source={{ uri: shop.imageUrl || shop.gallery[0] }} style={styles.shopLogo} />
             <View style={styles.shopHeaderRight}>
               <Text style={styles.shopName}>@{shop.name}</Text>
               <View style={styles.statsRow}>
@@ -468,6 +469,17 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
                       style={reviewStyles.reviewImage}
                       contentFit="cover"
                     />
+                  </View>
+                )}
+                {review.replyContent && (
+                  <View style={reviewStyles.replyContainer}>
+                    <View style={reviewStyles.replyHeader}>
+                      <Text style={reviewStyles.replyTitle}>사장님 답글</Text>
+                      {review.replyCreatedAt && (
+                        <Text style={reviewStyles.replyDate}>{review.replyCreatedAt.slice(0, 10)}</Text>
+                      )}
+                    </View>
+                    <Text style={reviewStyles.replyContent}>{review.replyContent}</Text>
                   </View>
                 )}
               </View>
@@ -832,5 +844,33 @@ const reviewStyles = StyleSheet.create({
     borderRadius: 10,
     marginRight: 8,
     backgroundColor: '#F0F0F0',
+  },
+  replyContainer: {
+    marginTop: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 10,
+    padding: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.primary,
+  },
+  replyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  replyTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+  },
+  replyDate: {
+    fontSize: 10,
+    color: '#9CA3AF',
+  },
+  replyContent: {
+    fontSize: 12,
+    color: '#4B5563',
+    lineHeight: 18,
   },
 });

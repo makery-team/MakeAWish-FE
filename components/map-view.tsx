@@ -45,11 +45,12 @@ function mapStoreToCakeShop(store: any): CakeShop {
   // 백엔드의 StoreResponse 구조 파싱
   const categories = store.categories || [];
   
-  // 첫 번째 카테고리의 첫 번째 포트폴리오 이미지를 썸네일로 사용
-  let thumbnailUrl = 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&q=80'; // fallback
+  // 1순위: 사장님이 등록한 매장 대표 프로필 이미지(imageUrl/thumbnailUrl)
+  // 2순위: 카테고리의 첫 번째 포트폴리오 이미지
+  let thumbnailUrl = store.imageUrl || store.thumbnailUrl || 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&q=80';
   let tags = ['커스텀 케이크'];
   
-  if (categories.length > 0) {
+  if (!store.imageUrl && !store.thumbnailUrl && categories.length > 0) {
     const firstCategory = categories[0];
     if (firstCategory.portfolios && firstCategory.portfolios.length > 0) {
       thumbnailUrl = firstCategory.portfolios[0].imageUrl || thumbnailUrl;

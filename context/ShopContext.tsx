@@ -69,6 +69,8 @@ export function ShopProvider({ children }: { children: ReactNode }) {
           comment: res.content || '',
           date: res.createdAt ? new Date(res.createdAt).toLocaleDateString() : '',
           images: res.imageUrl ? [res.imageUrl] : [],
+          replyContent: res.replyContent || null,
+          replyCreatedAt: res.replyCreatedAt ? new Date(res.replyCreatedAt).toLocaleDateString() : null,
         }));
 
       setReviews(mappedReviews);
