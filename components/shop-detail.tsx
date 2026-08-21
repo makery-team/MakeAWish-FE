@@ -10,8 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { ArrowLeft, Star, MapPin, Clock, Phone, Share2, MessageCircle, Heart } from 'lucide-react-native';
-import { SAMPLE_CAKE_IMAGES } from '@/constants/mock-data';
+import { ArrowLeft, Star, MapPin, Clock, Phone, Share2, MessageCircle, Heart, Sparkles, Cake } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { mapService } from '@/services/map';
@@ -20,29 +19,24 @@ import { useShop } from '@/context/ShopContext';
 import { useAuth } from '@/context/AuthContext';
 import { chatService } from '@/services/chat';
 
-// Mock 데이터 상수들 삭제됨
-
 // 상세 정보 오버라이드 (일부 샵만 별도 정보 설정)
 const SHOP_DETAIL_OVERRIDES: Record<number, {
-  phone: string;
-  hours: string;
-  description: string;
-  likes: number;
-  gallery: string[];
+  phone?: string;
+  hours?: string;
+  description?: string;
+  likes?: number;
 }> = {
   1: {
     phone: '02-1234-5678',
     hours: '매일 10:00 - 20:00 (월요일 휴무)',
     description: '심플한 Y2K 감성부터 화려한 캐릭터 케이크까지! 원하는 디자인을 말씀해주세요. AI 이미지 편집기로 나만의 케이크를 미리 만들어보고 주문할 수 있습니다.',
     likes: 342,
-    gallery: SAMPLE_CAKE_IMAGES,
   },
   2: {
     phone: '02-2345-6789',
     hours: '월-토 09:00 - 21:00',
     description: '특별한 날을 더 특별하게! 정성 가득한 레터링 케이크 전문점입니다. 천연 색소와 동물성 생크림만을 사용하여 맛과 건강을 모두 생각합니다.',
     likes: 521,
-    gallery: [...SAMPLE_CAKE_IMAGES].reverse(),
   },
 };
 
@@ -204,7 +198,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
     hours: storeData.hours || '영업시간 문의',
     description: storeData.description || '매장 소개가 없습니다.',
     imageUrl: storeData.imageUrl,
-    gallery: apiGallery.length > 0 ? apiGallery : (SHOP_DETAIL_OVERRIDES[Number(shopId)]?.gallery || [SAMPLE_CAKE_IMAGES[0]]),
+    gallery: apiGallery,
   };
 
   const handleShare = async () => {
@@ -219,48 +213,47 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
 
   const renderGallery = () => {
     const selectedCategory = storeData.categories?.find(c => c.name === activeChip);
-    let categoryPortfolios = [];
+    let categoryPortfolios: StorePortfolio[] = [];
     if (activeChip === '전체') {
       categoryPortfolios = portfolios && portfolios.length > 0 ? portfolios : [];
     } else {
       categoryPortfolios = selectedCategory?.portfolios || [];
     }
 
-    const items = categoryPortfolios.length > 0
-      ? categoryPortfolios.map((p, idx) => {
-          const cakeId = p.id || p.portfolioId || (Number(shopId) * 1000 + idx);
-          const isFav = isFavorited(cakeId);
-          const baseLikes = p.likeCount ?? (38 + (idx * 23) % 120);
-          const globalLikes = likeCounts[cakeId.toString()];
-          const currentLikes = globalLikes !== undefined
-            ? globalLikes
-            : (localLikes[cakeId] !== undefined ? localLikes[cakeId] : baseLikes);
-          return {
-            id: cakeId,
-            productId: p.productId || selectedCategory?.id,
-            imageUrl: p.imageUrl,
-            likes: currentLikes,
-            isFav,
-          };
-        })
-      : shop.gallery.map((img, idx) => {
-          const cakeId = Number(shopId) * 1000 + idx;
-          const isFav = isFavorited(cakeId);
-          const baseLikes = 38 + (idx * 23) % 120;
-          const globalLikes = likeCounts[cakeId.toString()];
-          const currentLikes = globalLikes !== undefined
-            ? globalLikes
-            : (localLikes[cakeId] !== undefined ? localLikes[cakeId] : baseLikes);
-          return {
-            id: cakeId,
-            imageUrl: img,
-            likes: currentLikes,
-            isFav,
-          };
-        });
+    if (!categoryPortfolios || categoryPortfolios.length === 0) {
+      return (
+        <View style={styles.emptyGalleryContainer}>
+          <View style={styles.emptyGalleryIconWrapper}>
+            <Sparkles size={28} color="#FF69B4" />
+          </View>
+          <Text style={styles.emptyGalleryTitle}>아직 등록된 디자인이 없습니다 🎂</Text>
+          <Text style={styles.emptyGallerySub}>
+            사장님이 곧 멋진 케이크 포트폴리오를 등록할 예정이에요!{'\n'}
+            1:1 채팅 문의를 통해 원하시는 케이크 디자인을 상담해보세요.
+          </Text>
+        </View>
+      );
+    }
 
-    const leftCol: { id: number; imageUrl: string; likes: number; isFav: boolean }[] = [];
-    const rightCol: { id: number; imageUrl: string; likes: number; isFav: boolean }[] = [];
+    const items = categoryPortfolios.map((p, idx) => {
+      const cakeId = p.id || p.portfolioId || (Number(shopId) * 1000 + idx);
+      const isFav = isFavorited(cakeId);
+      const baseLikes = p.likeCount ?? (38 + (idx * 23) % 120);
+      const globalLikes = likeCounts[cakeId.toString()];
+      const currentLikes = globalLikes !== undefined
+        ? globalLikes
+        : (localLikes[cakeId] !== undefined ? localLikes[cakeId] : baseLikes);
+      return {
+        id: cakeId,
+        productId: p.productId || selectedCategory?.id,
+        imageUrl: p.imageUrl,
+        likes: currentLikes,
+        isFav,
+      };
+    });
+
+    const leftCol: { id: number; productId?: number; imageUrl: string; likes: number; isFav: boolean }[] = [];
+    const rightCol: { id: number; productId?: number; imageUrl: string; likes: number; isFav: boolean }[] = [];
     items.forEach((item, i) => {
       if (i % 2 === 0) leftCol.push(item);
       else rightCol.push(item);
@@ -342,7 +335,13 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
         {/* Shop Profile */}
         <View style={styles.shopInfo}>
           <View style={styles.shopHeader}>
-            <Image source={{ uri: shop.imageUrl || shop.gallery[0] }} style={styles.shopLogo} />
+            {shop.imageUrl ? (
+              <Image source={{ uri: shop.imageUrl }} style={styles.shopLogo} />
+            ) : (
+              <View style={[styles.shopLogo, styles.shopLogoPlaceholder]}>
+                <Text style={styles.shopLogoInitial}>{shop.name.slice(0, 1) || '🍰'}</Text>
+              </View>
+            )}
             <View style={styles.shopHeaderRight}>
               <Text style={styles.shopName}>@{shop.name}</Text>
               <View style={styles.statsRow}>
@@ -812,6 +811,46 @@ const styles = StyleSheet.create({
   },
   chipTextActive: {
     color: 'white',
+  },
+  emptyGalleryContainer: {
+    paddingVertical: 50,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyGalleryIconWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFF0F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#FFE4E1',
+  },
+  emptyGalleryTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#374151',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyGallerySub: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  shopLogoPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFE4E1',
+  },
+  shopLogoInitial: {
+    fontSize: 28,
+    color: '#FF69B4',
+    fontWeight: '700',
   },
 });
 
