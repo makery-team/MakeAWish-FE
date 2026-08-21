@@ -117,8 +117,8 @@ function renderOperatingHours(hoursStr: string) {
 interface ShopDetailProps {
   shopId: number;
   onBack: () => void;
-  onCakeSelect?: (image: string, shopName: string) => void;
-  onCakeInquiry?: (image: string, shopName: string, productId?: number) => void;
+  onCakeSelect?: (image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number) => void;
+  onCakeInquiry?: (image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number) => void;
 }
 
 export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: ShopDetailProps) {
@@ -286,14 +286,14 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
         <View style={styles.imageOverlay}>
           <TouchableOpacity
             style={styles.imageActionOutline}
-            onPress={() => onCakeSelect?.(item.imageUrl, shop.name)}
+            onPress={() => onCakeSelect?.(item.imageUrl, shop.name, item.id, shop.id, item.productId)}
             activeOpacity={0.85}
           >
             <Text style={styles.imageActionOutlineText}>이 시안 수정해보기</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.imageActionFill}
-            onPress={() => onCakeInquiry?.(item.imageUrl, shop.name, item.productId)}
+            onPress={() => onCakeInquiry?.(item.imageUrl, shop.name, item.id, shop.id, item.productId)}
             activeOpacity={0.85}
           >
             <Text style={styles.imageActionFillText}>이 시안 그대로 주문하기</Text>

@@ -38,7 +38,7 @@ export default function HomeScreen() {
   const navigation = useNavigation();
   const { addOrder } = useOrders();
   const { favorites, toggleFavorite } = useFavorites();
-  const { inquiryMode, startInquiry, completeInquiry } = useInquiry();
+  const { inquiryMode, conversationHistory, startInquiry, completeInquiry } = useInquiry();
   const { selectedCategory, handleTagSelect } = useFilter();
 
   const [cakes, setCakes] = useState<FeedItem[]>([]);
@@ -115,10 +115,10 @@ export default function HomeScreen() {
     if (orderData) {
       try {
         // 백엔드로 실제 주문 생성 API 호출
-        // 임시로 없으면 1로 fallback (추후 완벽 연동 전까지 앱이 죽지 않도록 방어)
-        const storeId = orderData.storeId || 1; 
-        const productId = orderData.productId || 1;
-        const portfolioId = orderData.portfolioId;
+        // conversationHistory에 보존된 storeId/productId 우선 사용, 없으면 1로 fallback
+        const storeId = orderData.storeId || conversationHistory.storeId || 1; 
+        const productId = orderData.productId || conversationHistory.productId || 1;
+        const portfolioId = orderData.portfolioId || conversationHistory.portfolioId;
         
         // 날짜/시간 동적 추출 로직 (AI가 뱉은 한국어 키 파싱)
         let formattedDate = new Date().toISOString().split('.')[0]; // 기본값: 현재 시간
@@ -261,10 +261,16 @@ export default function HomeScreen() {
 
       {/* AI Search Bar - Bottom Sheet */}
       <AISearchBar
-        onCakeSelect={(image: string, shopName: string, portfolioId?: number) => {
+        onCakeSelect={(image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number) => {
           router.push({
             pathname: "/editor/[id]",
-            params: { id: portfolioId ? portfolioId.toString() : "ai", image, shopName },
+            params: { 
+              id: portfolioId ? portfolioId.toString() : "ai", 
+              image, 
+              shopName,
+              storeId: storeId?.toString(),
+              productId: productId?.toString(),
+            },
           });
         }}
         inquiryMode={inquiryMode || undefined}

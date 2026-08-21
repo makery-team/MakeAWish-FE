@@ -16,17 +16,25 @@ export default function ShopDetailScreen() {
     }
   };
 
-  const handleCakeSelect = (image: string, shopName: string) => {
+  const handleCakeSelect = (image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number) => {
     router.push({
       pathname: '/editor/[id]',
-      params: { id, image, shopName }
+      params: { 
+        id: portfolioId ? portfolioId.toString() : (id || '1'), 
+        image, 
+        shopName,
+        storeId: (storeId || id)?.toString(),
+        productId: productId?.toString(),
+      }
     });
   };
 
-  const handleCakeInquiry = (image: string, shopName: string, productId?: number) => {
+  const handleCakeInquiry = (image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number) => {
     startInquiry({
       image,
       shopName,
+      storeId: storeId || (id ? parseInt(id, 10) : undefined),
+      portfolioId,
       productId,
       design: '디자인 상세 선택',
     });
