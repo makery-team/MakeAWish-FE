@@ -188,6 +188,18 @@ function OrderCard({ order, onPress, onReviewPress }: { order: OrderListItem, on
                 <Text style={styles.pickupInfoText}>픽업일: {new Date(order.pickupDate).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
               </View>
             )}
+
+            {order.extraFee !== undefined && order.extraFee > 0 && (
+              <View style={styles.extraFeeRow}>
+                <View style={styles.extraFeeMiniBadge}>
+                  <Text style={styles.extraFeeMiniBadgeText}>추가금</Text>
+                </View>
+                <Text style={styles.extraFeeRowText}>
+                  +{formatCurrency(order.extraFee)}
+                  {order.extraFeeReason ? ` (${order.extraFeeReason})` : ''}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -473,6 +485,35 @@ const styles = StyleSheet.create({
   pickupInfoText: {
     fontSize: 12,
     color: '#DB2777',
+  },
+  extraFeeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF1F2',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#FFE4E6',
+  },
+  extraFeeMiniBadge: {
+    backgroundColor: '#FF69B4',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  extraFeeMiniBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  extraFeeRowText: {
+    fontSize: 11,
+    color: '#BE185D',
+    fontWeight: '600',
   },
   progressSection: {
     padding: 24,

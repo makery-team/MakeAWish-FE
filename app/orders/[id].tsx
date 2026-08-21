@@ -292,9 +292,30 @@ export default function OrderDetailScreen() {
           </View>
 
           <View style={styles.paymentRow}>
-            <Text style={styles.paymentLabel}>주문 상품 금액</Text>
-            <Text style={styles.paymentValue}>{formatCurrency(order.totalPrice)}</Text>
+            <Text style={styles.paymentLabel}>기본 상품 금액</Text>
+            <Text style={styles.paymentValue}>
+              {formatCurrency((order.totalPrice || 0) - (order.extraFee || 0))}
+            </Text>
           </View>
+
+          {order.extraFee !== undefined && order.extraFee > 0 && (
+            <View style={styles.extraFeeContainer}>
+              <View style={styles.paymentRow}>
+                <View style={styles.extraFeeLabelContainer}>
+                  <View style={styles.extraFeeBadge}>
+                    <Text style={styles.extraFeeBadgeText}>추가금</Text>
+                  </View>
+                  <Text style={styles.extraFeeReason}>
+                    {order.extraFeeReason || '특수 옵션/장식 추가'}
+                  </Text>
+                </View>
+                <Text style={styles.extraFeeValue}>
+                  +{formatCurrency(order.extraFee)}
+                </Text>
+              </View>
+            </View>
+          )}
+
           <View style={styles.divider} />
           <View style={styles.paymentRow}>
             <Text style={styles.totalLabel}>최종 결제 금액</Text>
@@ -614,6 +635,43 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#111827',
+  },
+  extraFeeContainer: {
+    backgroundColor: '#FFF1F2',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginVertical: 4,
+    borderWidth: 1,
+    borderColor: '#FFE4E6',
+  },
+  extraFeeLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  extraFeeBadge: {
+    backgroundColor: '#FF69B4',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  extraFeeBadgeText: {
+    color: 'white',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  extraFeeReason: {
+    fontSize: 13,
+    color: '#BE185D',
+    fontWeight: '500',
+    flexShrink: 1,
+  },
+  extraFeeValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#DB2777',
   },
   divider: {
     height: 1,

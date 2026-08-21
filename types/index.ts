@@ -351,6 +351,8 @@ export interface OrderListItem {
   storeName: string;
   status: BackendOrderStatus;
   totalPrice: number;
+  extraFee?: number;
+  extraFeeReason?: string;
   pickupDate: string;
   createdAt: string;
   hasReview?: boolean;
