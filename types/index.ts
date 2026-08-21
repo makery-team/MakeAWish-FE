@@ -229,6 +229,7 @@ export interface Store {
   phone?: string;
   thumbnailUrl?: string;
   imageUrl?: string;
+  keywords?: string | null;
   categories: StoreCategory[];
 }
 
@@ -240,6 +241,7 @@ export interface MapStore {
   longitude: number;
   thumbnailUrl?: string;
   imageUrl?: string;
+  keywords?: string | null;
   rating: number;
   categories?: any[];
   reviewCount: number;
