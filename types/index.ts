@@ -43,6 +43,8 @@ export interface Review {
   images?: string[];
   date: string;
   orderInfo?: string;
+  replyContent?: string | null;
+  replyCreatedAt?: string | null;
 }
 
 // Cake data interface
@@ -251,6 +253,8 @@ export interface StoreReview {
   content: string;
   imageUrl?: string;
   createdAt: string;
+  replyContent?: string | null;
+  replyCreatedAt?: string | null;
 }
 
 export interface PageResponse<T> {

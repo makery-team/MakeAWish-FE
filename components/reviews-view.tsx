@@ -119,6 +119,19 @@ export const ReviewsView: React.FC<ReviewsViewProps> = ({
             ))}
           </ScrollView>
         )}
+
+        {/* 사장님 답글 영역 */}
+        {item.replyContent && (
+          <View style={styles.replyBox}>
+            <View style={styles.replyHeader}>
+              <Text style={styles.replyTitle}>사장님 답글</Text>
+              {item.replyCreatedAt && (
+                <Text style={styles.replyDate}>{item.replyCreatedAt}</Text>
+              )}
+            </View>
+            <Text style={styles.replyText}>{item.replyContent}</Text>
+          </View>
+        )}
       </View>
     </Animated.View>
   );
@@ -325,5 +338,33 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     paddingHorizontal: 40,
+  },
+  replyBox: {
+    marginTop: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#F43F5E',
+  },
+  replyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  replyTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#F43F5E',
+  },
+  replyDate: {
+    fontSize: 10,
+    color: '#9CA3AF',
+  },
+  replyText: {
+    fontSize: 13,
+    color: '#4B5563',
+    lineHeight: 18,
   },
 });

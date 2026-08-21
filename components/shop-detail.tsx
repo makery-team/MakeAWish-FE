@@ -471,6 +471,17 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
                     />
                   </View>
                 )}
+                {review.replyContent && (
+                  <View style={reviewStyles.replyContainer}>
+                    <View style={reviewStyles.replyHeader}>
+                      <Text style={reviewStyles.replyTitle}>사장님 답글</Text>
+                      {review.replyCreatedAt && (
+                        <Text style={reviewStyles.replyDate}>{review.replyCreatedAt.slice(0, 10)}</Text>
+                      )}
+                    </View>
+                    <Text style={reviewStyles.replyContent}>{review.replyContent}</Text>
+                  </View>
+                )}
               </View>
             ))}
           </View>
@@ -833,5 +844,33 @@ const reviewStyles = StyleSheet.create({
     borderRadius: 10,
     marginRight: 8,
     backgroundColor: '#F0F0F0',
+  },
+  replyContainer: {
+    marginTop: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 10,
+    padding: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.primary,
+  },
+  replyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  replyTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+  },
+  replyDate: {
+    fontSize: 10,
+    color: '#9CA3AF',
+  },
+  replyContent: {
+    fontSize: 12,
+    color: '#4B5563',
+    lineHeight: 18,
   },
 });
