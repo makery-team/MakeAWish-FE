@@ -353,6 +353,7 @@ export interface OrderListItem {
   totalPrice: number;
   pickupDate: string;
   createdAt: string;
+  hasReview?: boolean;
 }
 
 export interface OrderItemDetail {

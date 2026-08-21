@@ -39,9 +39,10 @@ export function WriteReviewModal({ visible, orderId, onClose, onSubmit }: WriteR
       setContent('');
       setRating(5);
       onClose();
-    } catch (error) {
-      console.error(error);
-      alert('리뷰 등록에 실패했습니다.');
+    } catch (error: any) {
+      console.warn('[WriteReviewModal] 리뷰 등록 오류:', error?.message);
+      alert(error?.message || '리뷰 등록에 실패했습니다.');
+      onClose();
     } finally {
       setIsSubmitting(false);
     }
