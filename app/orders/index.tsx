@@ -62,9 +62,15 @@ export default function OrdersScreen() {
 
   const handleReviewSubmit = async (rating: number, content: string) => {
     if (!selectedOrderId) return;
-    await reviewService.createReview(selectedOrderId, { rating, content });
-    alert('리뷰가 성공적으로 등록되었습니다!');
-    await fetchOrders(true);
+    try {
+      await reviewService.createReview(selectedOrderId, { rating, content });
+      alert('리뷰가 성공적으로 등록되었습니다! ⭐');
+      await fetchOrders(true);
+    } catch (error: any) {
+      console.warn('[OrdersScreen] 리뷰 등록 처리:', error?.message);
+      await fetchOrders(true);
+      throw error; // Modal의 catch에서 alert 및 modal 닫기 수행
+    }
   };
 
   if (loading && !refreshing) {

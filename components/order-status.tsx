@@ -251,10 +251,19 @@ function OrderCard({ order, onPress, onReviewPress }: { order: OrderListItem, on
 
       {order.status === 'COMPLETED' && (
         <TouchableOpacity 
-          style={styles.reviewButton}
-          onPress={() => onReviewPress?.(order.id)}
+          style={[styles.reviewButton, order.hasReview && styles.reviewButtonDisabled]}
+          onPress={() => {
+            if (order.hasReview) {
+              Alert.alert('안내', '이미 리뷰를 작성하신 주문입니다.');
+              return;
+            }
+            onReviewPress?.(order.id);
+          }}
+          disabled={order.hasReview}
         >
-          <Text style={styles.reviewButtonText}>⭐ 리뷰 작성하기</Text>
+          <Text style={[styles.reviewButtonText, order.hasReview && styles.reviewButtonTextDisabled]}>
+            {order.hasReview ? '✓ 리뷰 작성 완료' : '⭐ 리뷰 작성하기'}
+          </Text>
         </TouchableOpacity>
       )}
     </Animated.View>
@@ -370,10 +379,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FFE4E1',
   },
+  reviewButtonDisabled: {
+    backgroundColor: '#F3F4F6',
+    borderColor: '#E5E7EB',
+  },
   reviewButtonText: {
     color: '#FF6B6B',
     fontSize: 14,
-    },
+  },
+  reviewButtonTextDisabled: {
+    color: '#9CA3AF',
+  },
   orderCard: {
     backgroundColor: 'white',
     borderRadius: 24,

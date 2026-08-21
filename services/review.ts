@@ -19,12 +19,17 @@ export const reviewService = {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Review API Error: ${response.status} - ${errorText}`);
+        let message = errorText;
+        try {
+          const parsed = JSON.parse(errorText);
+          message = parsed.message || parsed.error || errorText;
+        } catch (e) {}
+        throw new Error(message);
       }
 
       return await response.json();
     } catch (error) {
-      console.error('createReview error:', error);
+      console.warn('createReview warning:', error);
       throw error;
     }
   },
