@@ -17,8 +17,8 @@ const { width } = Dimensions.get('window');
 
 interface ImageSliderProps {
   images: string[];
-  cakeDetails?: { image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number }[];
-  onCakeSelect?: (image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number) => void;
+  cakeDetails?: { image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number, tags?: string[] }[];
+  onCakeSelect?: (image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number, tags?: string[]) => void;
   onInquiry?: (image: string, shopName?: string, portfolioId?: number, storeId?: number, productId?: number, tags?: string[]) => void;
   onMinimize?: () => void;
   onRefresh?: () => void;
@@ -116,7 +116,7 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
               if (onCakeSelect) {
                 const details = cakeDetails?.[currentIndex];
                 const shopName = details ? details.shopName : '지니 AI';
-                onCakeSelect(images[currentIndex], shopName, details?.portfolioId, details?.storeId, details?.productId);
+                onCakeSelect(images[currentIndex], shopName, details?.portfolioId, details?.storeId, details?.productId, details?.tags);
                 onMinimize && onMinimize();
               }
             }}
@@ -129,7 +129,7 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
             style={styles.actionButtonPrimary}
             onPress={() => {
               const details = cakeDetails?.[currentIndex];
-              onInquiry && onInquiry(images[currentIndex], details?.shopName, details?.portfolioId, details?.storeId, details?.productId);
+              onInquiry && onInquiry(images[currentIndex], details?.shopName, details?.portfolioId, details?.storeId, details?.productId, details?.tags);
             }}
           >
             <MessageCircle size={14} color="white" strokeWidth={1.5} />

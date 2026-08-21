@@ -109,8 +109,8 @@ export const OrderReminderCard: React.FC<OrderReminderCardProps> = ({
             <Text style={styles.detailLabel}>포함된 태그:</Text>
             <Text style={styles.detailValue}>
               {conversationState.tags && conversationState.tags.length > 0 
-                ? conversationState.tags.slice(0, 2).join(', ') 
-                : '기본 디자인'}
+                ? `#${conversationState.tags[0].replace('#', '')}` 
+                : '커스텀 디자인'}
             </Text>
           </View>
         </View>
