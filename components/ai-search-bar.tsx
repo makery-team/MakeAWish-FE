@@ -217,7 +217,7 @@ export function AISearchBar({
       const response = await aiService.chat(textToSend, productId);
       
       let recommendedImages: string[] | undefined = undefined;
-      let recommendedCakeDetails: { image: string, shopName: string }[] | undefined = undefined;
+      let recommendedCakeDetails: { image: string, shopName: string, portfolioId?: number, storeId?: number, productId?: number, tags?: string[] }[] | undefined = undefined;
       
       // 백엔드가 포트폴리오 리스트를 내려주는 경우 매핑
       if (response.actionType === 'PORTFOLIO_LIST' && Array.isArray(response.data)) {
@@ -226,7 +226,8 @@ export function AISearchBar({
           shopName: p.storeName || '지니 추천',
           portfolioId: p.id,
           storeId: p.storeId,
-          productId: p.productId
+          productId: p.productId,
+          tags: p.tags || []
         }));
         recommendedImages = recommendedCakeDetails.map(c => c.image);
       }
@@ -265,9 +266,13 @@ export function AISearchBar({
           clearChat();
         }, 1500);
       }
-    } catch (error) {
-      console.error("Chat API error:", error);
-      setMessages((prev) => [...prev, { type: "ai", text: "죄송합니다. 백엔드 통신 중 오류가 발생했습니다." } as Message]);
+    } catch (error: any) {
+      console.error("AI Chat Error:", error);
+      const errorMsg: Message = {
+        type: "ai",
+        text: "앗, 일시적인 오류가 발생했어요. 다시 한번 말씀해주시겠어요? 🥲",
+      };
+      setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsAiTyping(false);
       setTimeout(() => { flatListRef.current?.scrollToEnd({ animated: true }); }, 100);
@@ -286,13 +291,23 @@ export function AISearchBar({
             <OrderReminderCard 
               conversationState={{
                 ...conversationHistory,
-                shopName: item.cakeDetails[0].shopName,
-                tags: item.cakeDetails[0].tags
+                storeId: item.cakeDetails[0].storeId || conversationHistory.storeId,
+                productId: item.cakeDetails[0].productId || conversationHistory.productId,
+                portfolioId: item.cakeDetails[0].portfolioId || conversationHistory.portfolioId,
+                shopName: item.cakeDetails[0].shopName || conversationHistory.shopName,
+                tags: item.cakeDetails[0].tags || conversationHistory.tags
               }}
               selectedImage={item.cakeDetails[0].image}
               onConfirm={() => {
-                const shopName = item.cakeDetails![0].shopName;
-                handleSend(`이 시안(${shopName || '지니 추천'})으로 주문 문의할게요!`);
+                const details = item.cakeDetails![0];
+                updateConversation({
+                  shopName: details.shopName,
+                  storeId: details.storeId || conversationHistory.storeId,
+                  productId: details.productId || conversationHistory.productId,
+                  portfolioId: details.portfolioId || conversationHistory.portfolioId,
+                  tags: details.tags || conversationHistory.tags
+                });
+                handleSend(`이 시안(${details.shopName || '지니 추천'})으로 주문 문의할게요!`);
               }}
               onCancel={() => {
                 setMessages(prev => prev.filter(m => m !== item));
@@ -388,8 +403,17 @@ export function AISearchBar({
                 images={item.images}
                 cakeDetails={item.cakeDetails}
                 onRefresh={() => handleSend("다른 디자인 시안 더 보여줘")}
-                onCakeSelect={(image, shopName, portfolioId, storeId, productId) => {
+                onCakeSelect={(image, shopName, portfolioId, storeId, productId, tags) => {
                   minimizeChat();
+                  updateConversation({
+                    selectedCakeImage: image,
+                    customizedImageUrl: image,
+                    shopName: shopName || '지니 추천',
+                    portfolioId,
+                    storeId,
+                    productId,
+                    tags
+                  });
                   router.push({
                     pathname: "/editor/[id]",
                     params: { 
@@ -397,7 +421,8 @@ export function AISearchBar({
                       image, 
                       shopName,
                       storeId: storeId?.toString(),
-                      productId: productId?.toString()
+                      productId: productId?.toString(),
+                      tags: tags ? tags.join(',') : ''
                     },
                   });
                 }}

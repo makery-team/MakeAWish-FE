@@ -4,20 +4,22 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 
 export default function EditorScreen() {
-  const { id, image, shopName, storeId, productId } = useLocalSearchParams<{
+  const { id, image, shopName, storeId, productId, tags } = useLocalSearchParams<{
     id?: string;
     image?: string;
     shopName?: string;
     storeId?: string;
     productId?: string;
+    tags?: string;
   }>();
   const router = useRouter();
   const { startInquiry, conversationHistory } = useInquiry();
 
   const safeImage = typeof image === "string" ? image : "";
   const safeShopName = typeof shopName === "string" ? shopName : "";
-  const parsedStoreId = storeId ? parseInt(storeId, 10) : undefined;
-  const parsedProductId = productId ? parseInt(productId, 10) : undefined;
+  const parsedStoreId = storeId ? parseInt(storeId, 10) : conversationHistory.storeId;
+  const parsedProductId = productId ? parseInt(productId, 10) : conversationHistory.productId;
+  const parsedTags = tags ? tags.split(',').filter(Boolean) : conversationHistory.tags;
 
   React.useEffect(() => {
     if (safeImage && safeShopName) return;
@@ -40,7 +42,8 @@ export default function EditorScreen() {
       shopName: safeShopName,
       storeId: parsedStoreId,
       productId: parsedProductId,
-      portfolioId: id && !isNaN(parseInt(id, 10)) ? parseInt(id, 10) : undefined,
+      portfolioId: id && !isNaN(parseInt(id, 10)) ? parseInt(id, 10) : conversationHistory.portfolioId,
+      tags: parsedTags,
       design: conversationHistory.design || "에디터에서 수정된 디자인",
       customizedImageUrl: editedImage || safeImage,
     });

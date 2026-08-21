@@ -72,7 +72,8 @@ export function CakeCard({
         image, 
         shopName,
         storeId: storeId?.toString(),
-        productId: productId?.toString()
+        productId: productId?.toString(),
+        tags: tags ? tags.join(',') : (tag || '')
       }
     });
   };
