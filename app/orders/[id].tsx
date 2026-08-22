@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -10,7 +10,7 @@ import {
   StatusBar as RNStatusBar, 
   Alert 
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { ArrowLeft, MapPin, Calendar, CreditCard, ChevronRight, CheckCircle2, Star } from 'lucide-react-native';
@@ -33,7 +33,7 @@ export default function OrderDetailScreen() {
   const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  const fetchOrderDetail = async () => {
+  const fetchOrderDetail = useCallback(async () => {
     try {
       if (!id) return;
       const data = await orderService.getOrderDetail(Number(id));
@@ -43,11 +43,17 @@ export default function OrderDetailScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchOrderDetail();
-  }, [id]);
+  }, [fetchOrderDetail]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrderDetail();
+    }, [fetchOrderDetail])
+  );
 
   const handleBack = () => {
     router.back();
@@ -358,28 +364,39 @@ export default function OrderDetailScreen() {
       {/* 픽업 완료(COMPLETED) 시 하단 고정 리뷰 작성 버튼 */}
       {isCompleted && (
         <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 12) + 8 }]}>
-          <TouchableOpacity
-            style={styles.reviewButton}
-            onPress={() => {
-              router.push({
-                pathname: '/reviews/write',
-                params: {
-                  orderId: String(order.id),
-                  storeName: order.storeName,
-                  cakeName: orderItem?.name || '커스텀 케이크',
-                  cakeImage: orderItem?.customizedImageUrl || order.orderData?.cakeImage || order.orderData?.selectedCakeImage || '',
-                },
-              });
-            }}
-            activeOpacity={0.85}
-          >
-            <View style={styles.payButtonContent}>
-              <Star size={20} color="#ffffff" fill="#ffffff" />
-              <Text style={styles.payButtonText}>
-                소중한 후기(리뷰) 작성하기
-              </Text>
+          {order.hasReview ? (
+            <View style={[styles.reviewButton, styles.reviewButtonDisabled]}>
+              <View style={styles.payButtonContent}>
+                <CheckCircle2 size={20} color="#9CA3AF" />
+                <Text style={styles.reviewButtonDisabledText}>
+                  ✓ 후기 작성이 완료되었습니다
+                </Text>
+              </View>
             </View>
-          </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.reviewButton}
+              onPress={() => {
+                router.push({
+                  pathname: '/reviews/write',
+                  params: {
+                    orderId: String(order.id),
+                    storeName: order.storeName,
+                    cakeName: orderItem?.name || '커스텀 케이크',
+                    cakeImage: orderItem?.customizedImageUrl || order.orderData?.cakeImage || order.orderData?.selectedCakeImage || '',
+                  },
+                });
+              }}
+              activeOpacity={0.85}
+            >
+              <View style={styles.payButtonContent}>
+                <Star size={20} color="#ffffff" fill="#ffffff" />
+                <Text style={styles.payButtonText}>
+                  소중한 후기(리뷰) 작성하기
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
@@ -725,6 +742,20 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  reviewButtonDisabled: {
+    backgroundColor: '#E5E7EB', // 비활성화 회색
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  reviewButtonDisabledText: {
+    color: '#9CA3AF',
+    fontSize: 15,
+    fontWeight: '600',
   },
   payButtonContent: {
     flexDirection: 'row',
