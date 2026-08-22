@@ -125,7 +125,7 @@ export function EditorView({
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      quality: 0.8,
+      quality: 0.5, // 고화질 사진 용량 최적화 (Base64 전송 페이로드 경량화)
       base64: true, // 백엔드 전송을 위해 Base64로 받기
     });
 
@@ -200,9 +200,9 @@ export function EditorView({
       setCommand("");
       setReferenceImage(null); // 레퍼런스 이미지 초기화
       Alert.alert("성공", "디자인이 수정되었습니다!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Generation failed:", error);
-      Alert.alert("오류", "이미지 생성에 실패했습니다. 다시 시도해주세요.");
+      Alert.alert("오류", error?.message ? `[이미지 생성 실패] ${error.message}` : "이미지 생성에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setIsGenerating(false);
     }

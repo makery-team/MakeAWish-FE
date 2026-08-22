@@ -67,6 +67,14 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.106131390766-vmcvo280rnguao23e9bkmo76d4fnd850"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
       ]
     ],
     "experiments": {
