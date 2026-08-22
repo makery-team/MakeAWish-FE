@@ -1,9 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { OrderStatus } from '@/components/order-status';
-import { WriteReviewModal } from '@/components/WriteReviewModal';
 import { orderService } from '@/services/order';
-import { reviewService } from '@/services/review';
 import { OrderListItem } from '@/types';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
@@ -12,8 +10,6 @@ export default function OrdersScreen() {
   const [orders, setOrders] = useState<OrderListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [reviewModalVisible, setReviewModalVisible] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   
   const router = useRouter();
 
@@ -56,21 +52,15 @@ export default function OrdersScreen() {
   };
 
   const handleReviewPress = (orderId: number) => {
-    setSelectedOrderId(orderId);
-    setReviewModalVisible(true);
-  };
-
-  const handleReviewSubmit = async (rating: number, content: string) => {
-    if (!selectedOrderId) return;
-    try {
-      await reviewService.createReview(selectedOrderId, { rating, content });
-      alert('리뷰가 성공적으로 등록되었습니다! ⭐');
-      await fetchOrders(true);
-    } catch (error: any) {
-      console.warn('[OrdersScreen] 리뷰 등록 처리:', error?.message);
-      await fetchOrders(true);
-      throw error; // Modal의 catch에서 alert 및 modal 닫기 수행
-    }
+    const targetOrder = orders.find((o) => o.id === orderId);
+    router.push({
+      pathname: '/reviews/write',
+      params: {
+        orderId: String(orderId),
+        storeName: targetOrder?.storeName || '매장',
+        cakeName: '커스텀 케이크',
+      },
+    });
   };
 
   if (loading && !refreshing) {
@@ -82,23 +72,14 @@ export default function OrdersScreen() {
   }
 
   return (
-    <>
-      <OrderStatus 
-        orders={orders} 
-        onBack={handleBack} 
-        onOrderPress={handleOrderPress} 
-        onReviewPress={handleReviewPress}
-        refreshing={refreshing}
-        onRefresh={handleRefresh}
-      />
-      
-      <WriteReviewModal 
-        visible={reviewModalVisible}
-        orderId={selectedOrderId}
-        onClose={() => setReviewModalVisible(false)}
-        onSubmit={handleReviewSubmit}
-      />
-    </>
+    <OrderStatus 
+      orders={orders} 
+      onBack={handleBack} 
+      onOrderPress={handleOrderPress} 
+      onReviewPress={handleReviewPress}
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
+    />
   );
 }
 
