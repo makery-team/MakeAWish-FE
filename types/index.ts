@@ -322,6 +322,12 @@ export interface NotificationResponse {
   hasNext: boolean;
 }
 
+export interface NotificationSettings {
+  orderPushEnabled: boolean;
+  chatPushEnabled: boolean;
+  marketingPushEnabled: boolean;
+}
+
 // --- Order History Types ---
 export type BackendOrderStatus = 
   | "PENDING_QUOTE" 

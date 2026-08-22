@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, SafeAreaView, Alert, RefreshControl } from 'react-native';
 import { useAuth } from '@/hooks/use-auth';
 import { theme } from '@/constants/theme';
-import { Settings, Heart, Clock, MessageSquare, ChevronRight, LogOut, Info } from 'lucide-react-native';
+import { Settings, Heart, Clock, MessageSquare, ChevronRight, LogOut, Info, Bell } from 'lucide-react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { authService } from '@/services/auth';
 import { orderService } from '@/services/order';
@@ -147,6 +147,7 @@ export default function MyPageScreen() {
 
         <View style={styles.menuSection}>
           <Text style={styles.sectionTitle}>앱 설정</Text>
+          {renderMenuItem(<Bell size={20} color={theme.colors.primary} />, "알림 설정", "주문, 채팅 및 혜택 알림 설정", () => router.push('/settings/notifications' as any))}
           {renderMenuItem(<Settings size={20} color={theme.colors.gray} />, "설정", "앱 환경설정 및 계정 관리")}
         </View>
 
