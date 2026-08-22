@@ -107,8 +107,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       
-      // v16 라이브러리는 userInfo.data 안에 idToken이 들어있습니다.
-      const idToken = userInfo.data?.idToken || userInfo.idToken;
+      // v16 라이브러리 지원 및 getTokens() 보조 호출
+      let idToken = userInfo.data?.idToken || userInfo.idToken;
+      if (!idToken) {
+        try {
+          const tokens = await GoogleSignin.getTokens();
+          idToken = tokens?.idToken;
+        } catch (tokenErr) {
+          console.warn("getTokens fallback failed:", tokenErr);
+        }
+      }
 
       if (idToken) {
         // 발급받은 idToken을 백엔드로 바로 전송
@@ -116,10 +124,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (newToken) {
           setToken(newToken);
           const userData = await authService.getCurrentUser();
-          setUser(userData);
+          if (userData) {
+            setUser(userData);
+          } else {
+            // 신규 회원인 경우 온보딩 페이지로 라우팅되도록 기본 유저 객체 설정
+            setUser({
+              id: 0,
+              email: userInfo.data?.user?.email || userInfo.user?.email || "",
+              name: userInfo.data?.user?.name || userInfo.user?.name || "사용자",
+              nickname: "",
+              phoneNumber: "",
+            } as any);
+          }
         }
       } else {
-        throw new Error("No ID token returned from Google Sign In");
+        throw new Error("Google ID 토큰을 발급받지 못했습니다.");
       }
     } catch (error: any) {
       if (error.code === statusCodes?.SIGN_IN_CANCELLED) {
@@ -131,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Google Play 서비스를 사용할 수 없습니다.");
       } else {
         console.error("Login Failed:", error);
-        throw error;
+        throw new Error(error.message || `로그인 실패 (코드: ${error.code || 'UNKNOWN'})`);
       }
     } finally {
       setIsLoading(false);
