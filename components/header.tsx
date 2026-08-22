@@ -13,6 +13,7 @@ import {
 import { Bell, X, Map as MapIcon, List as ListIcon } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { useRouter } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { Logo } from './logo';
 import { AppNotification } from '@/types';
@@ -31,26 +32,66 @@ export function Header({
   viewMode = 'list',
   onToggleView,
 }: HeaderProps) {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const statusBarHeight = Platform.OS === 'android' ? (RNStatusBar.currentHeight || 0) : insets.top;
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const { token } = useAuth();
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!token) return;
-      try {
-        const response = await notificationService.getNotifications(0, 10);
-        if (response && response.content) {
-          setNotifications(response.content);
-        }
-      } catch (error) {
-        console.error('Failed to load notifications', error);
+  const fetchNotifications = async () => {
+    if (!token) return;
+    try {
+      const response = await notificationService.getNotifications(0, 15);
+      if (response && response.content) {
+        setNotifications(response.content);
       }
-    };
+    } catch (error) {
+      console.warn('Failed to load notifications', error);
+    }
+  };
+
+  useEffect(() => {
     fetchNotifications();
+    const interval = setInterval(fetchNotifications, 6000);
+    return () => clearInterval(interval);
   }, [token]);
+
+  const handleOpenPanel = () => {
+    setIsNotificationOpen(true);
+    fetchNotifications();
+  };
+
+  const handleNotificationPress = async (notification: AppNotification) => {
+    try {
+      if (!notification.isRead) {
+        await notificationService.markAsRead(notification.id);
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
+        );
+      }
+      setIsNotificationOpen(false);
+
+      if (notification.targetId) {
+        if (notification.type === 'ORDER' || notification.type === 'PAYMENT') {
+          router.push({ pathname: '/orders/[id]', params: { id: String(notification.targetId) } });
+        } else if (notification.type === 'CHAT') {
+          router.push('/chat');
+        }
+      }
+    } catch (err) {
+      console.warn('알림 클릭 처리 실패:', err);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.warn('전체 알림 읽음 처리 실패:', err);
+    }
+  };
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -85,7 +126,7 @@ export function Header({
         <View style={styles.rightIcons}>
           <View style={styles.iconWrapper}>
             <TouchableOpacity
-              onPress={() => setIsNotificationOpen(!isNotificationOpen)}
+              onPress={() => (isNotificationOpen ? setIsNotificationOpen(false) : handleOpenPanel())}
               style={styles.iconButton}
               activeOpacity={0.7}
             >
@@ -106,7 +147,7 @@ export function Header({
                   style={styles.notificationPanel}
                 >
                   <View style={styles.notificationHeader}>
-                    <Text style={styles.notificationHeaderTitle}>알림</Text>
+                    <Text style={styles.notificationHeaderTitle}>알림 {unreadCount > 0 && `(${unreadCount})`}</Text>
                     <TouchableOpacity onPress={() => setIsNotificationOpen(false)}>
                       <X size={18} color={theme.colors.gray} />
                     </TouchableOpacity>
@@ -115,8 +156,10 @@ export function Header({
                   <ScrollView style={styles.notificationList} bounces={false}>
                     {notifications.length > 0 ? (
                       notifications.map((notification) => (
-                        <View
+                        <TouchableOpacity
                           key={notification.id}
+                          activeOpacity={0.7}
+                          onPress={() => handleNotificationPress(notification)}
                           style={[
                             styles.notificationItem,
                             !notification.isRead && styles.unreadNotification,
@@ -124,7 +167,7 @@ export function Header({
                         >
                           <View style={styles.notificationItemHeader}>
                             <Text style={styles.notificationTitle}>
-                              {notification.message.includes('주문') ? '주문 알림' : '시스템 알림'}
+                              {notification.title || (notification.type === 'ORDER' ? '주문 알림' : (notification.type === 'PAYMENT' ? '결제 알림' : (notification.type === 'CHAT' ? '채팅 알림' : '시스템 알림')))}
                             </Text>
                             <Text style={styles.notificationTime}>
                               {new Date(notification.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -133,7 +176,7 @@ export function Header({
                           <Text style={styles.notificationMessage}>
                             {notification.message}
                           </Text>
-                        </View>
+                        </TouchableOpacity>
                       ))
                     ) : (
                       <View style={styles.emptyNotifications}>
@@ -143,7 +186,7 @@ export function Header({
                   </ScrollView>
 
                   {notifications.length > 0 && (
-                    <TouchableOpacity style={styles.notificationFooter}>
+                    <TouchableOpacity style={styles.notificationFooter} onPress={handleMarkAllAsRead}>
                       <Text style={styles.footerText}>모든 알림 읽음 처리</Text>
                     </TouchableOpacity>
                   )}
