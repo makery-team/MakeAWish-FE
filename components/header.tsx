@@ -19,6 +19,7 @@ import { Logo } from './logo';
 import { AppNotification } from '@/types';
 import { notificationService } from '@/services/notification';
 import { useAuth } from '@/context/AuthContext';
+import { showLocalNotification } from '@/services/pushNotification';
 
 const { width: WINDOW_WIDTH } = Dimensions.get('window');
 
@@ -38,13 +39,33 @@ export function Header({
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const { token } = useAuth();
+  const lastKnownNotificationIdRef = React.useRef<number | null>(null);
+  const isInitialFetchRef = React.useRef(true);
 
   const fetchNotifications = async () => {
     if (!token) return;
     try {
       const response = await notificationService.getNotifications(0, 15);
       if (response && response.content) {
-        setNotifications(response.content);
+        const list = response.content;
+
+        // 📱 실시간으로 새로 도착한 안 읽은 알림이 있을 경우 OS 상단 푸시 배너 즉시 발송
+        if (!isInitialFetchRef.current && list.length > 0) {
+          const newest = list[0];
+          if (!newest.isRead && (!lastKnownNotificationIdRef.current || newest.id > lastKnownNotificationIdRef.current)) {
+            showLocalNotification(
+              newest.title || 'MakeAWish 새 알림',
+              newest.message,
+              { targetId: newest.targetId, type: newest.type }
+            );
+          }
+        }
+
+        if (list.length > 0) {
+          lastKnownNotificationIdRef.current = list[0].id;
+        }
+        isInitialFetchRef.current = false;
+        setNotifications(list);
       }
     } catch (error) {
       console.warn('Failed to load notifications', error);
@@ -53,7 +74,7 @@ export function Header({
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 6000);
+    const interval = setInterval(fetchNotifications, 5000);
     return () => clearInterval(interval);
   }, [token]);
 

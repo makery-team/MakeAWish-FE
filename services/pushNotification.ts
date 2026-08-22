@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchWithAuth } from '@/utils/api';
 
@@ -18,7 +19,33 @@ Notifications.setNotificationHandler({
 });
 
 /**
- * 1. OS 푸시 권한 요청 및 백엔드 토큰 등록
+ * 1. 스마트폰 OS 로컬 알림 즉시 팝업 트리거
+ */
+export async function showLocalNotification(
+  title: string,
+  body: string,
+  data?: Record<string, any>
+): Promise<void> {
+  if (Platform.OS === 'web') return;
+
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        data: data || {},
+        sound: 'default',
+        priority: Notifications.AndroidNotificationPriority.MAX,
+      },
+      trigger: null, // 즉시 표시
+    });
+  } catch (err) {
+    console.warn('📱 [PushNotification] 로컬 알림 트리거 실패:', err);
+  }
+}
+
+/**
+ * 2. OS 푸시 권한 요청 및 백엔드 토큰 등록
  */
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
   if (Platform.OS === 'web') {
@@ -41,27 +68,31 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
       });
     }
 
-    if (Device.isDevice) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
 
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
 
-      if (finalStatus !== 'granted') {
-        console.info('📱 [PushNotification] 사용자가 푸시 알림 권한을 허용하지 않았습니다.');
-        return null;
-      }
+    if (finalStatus !== 'granted') {
+      console.info('📱 [PushNotification] 사용자가 푸시 알림 권한을 허용하지 않았습니다.');
+      return null;
+    }
 
-      // Expo Push Token 발급
-      const tokenData = await Notifications.getExpoPushTokenAsync({
-        projectId: undefined, // Expo SDK auto-detects from app.json
-      });
+    // Expo Push Token 발급 시도
+    try {
+      const projectId =
+        Constants.expoConfig?.extra?.eas?.projectId ||
+        Constants.easConfig?.projectId;
+
+      const tokenData = await Notifications.getExpoPushTokenAsync(
+        projectId ? { projectId } : undefined
+      );
       token = tokenData.data;
-    } else {
-      console.info('📱 [PushNotification] 시뮬레이터에서는 원격 푸시 토큰이 제한될 수 있습니다.');
+    } catch (tokenErr) {
+      console.info('📱 [PushNotification] Expo Push Token 발급 건너뜀 (로컬 개발 빌드):', tokenErr);
     }
 
     if (token) {
