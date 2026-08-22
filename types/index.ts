@@ -299,9 +299,14 @@ export interface DirectChatRoom {
 }
 
 // --- Notification Types ---
+export type NotificationType = 'ORDER' | 'PAYMENT' | 'CHAT' | 'AI_SKETCH' | 'SYSTEM';
+
 export interface AppNotification {
   id: number;
+  title?: string;
   message: string;
+  type?: NotificationType;
+  targetId?: number;
   isRead: boolean;
   createdAt: string;
 }
