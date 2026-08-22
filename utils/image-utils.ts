@@ -41,12 +41,12 @@ export const captureViewToBase64 = async (viewRef: any): Promise<string> => {
   try {
     const uri = await captureRef(viewRef, {
       format: 'png',
-      quality: 1,
+      quality: 0.8,
       result: 'base64',
     });
     return uri;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error capturing view:', error);
-    throw error;
+    throw new Error(`마스크 캡처 오류: ${error?.message || String(error)}`);
   }
 };
