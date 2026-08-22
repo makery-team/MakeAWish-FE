@@ -77,4 +77,43 @@ export const notificationService = {
       console.error('markAllAsRead error:', error);
     }
   },
+
+  /**
+   * 알림 수신 설정 조회
+   */
+  async getSettings(): Promise<import('@/types').NotificationSettings> {
+    try {
+      const response = await fetchWithAuth('/api/notifications/settings', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) {
+        return { orderPushEnabled: true, chatPushEnabled: true, marketingPushEnabled: false };
+      }
+      return await response.json();
+    } catch (error) {
+      console.warn('getSettings error:', error);
+      return { orderPushEnabled: true, chatPushEnabled: true, marketingPushEnabled: false };
+    }
+  },
+
+  /**
+   * 알림 수신 설정 변경
+   */
+  async updateSettings(settings: Partial<import('@/types').NotificationSettings>): Promise<import('@/types').NotificationSettings> {
+    try {
+      const response = await fetchWithAuth('/api/notifications/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+      if (!response.ok) {
+        throw new Error('설정 저장 실패');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('updateSettings error:', error);
+      throw error;
+    }
+  },
 };

@@ -32,6 +32,9 @@ export const unstable_settings = {
   anchor: "(tabs)",
 };
 
+import * as Notifications from 'expo-notifications';
+import { registerForPushNotificationsAsync } from '@/services/pushNotification';
+
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { user, isLoading } = useAuth();
@@ -56,6 +59,32 @@ function RootLayoutNav() {
       }
     }
   }, [user, isLoading, segments, router]);
+
+  // 📱 유저 로그인 시 푸시 토큰 등록 및 OS 알림 클릭 딥링크 연동
+  useEffect(() => {
+    if (!user) return;
+
+    registerForPushNotificationsAsync();
+
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      try {
+        const data = response.notification.request.content.data;
+        if (data?.targetId) {
+          if (data.type === 'ORDER' || data.type === 'PAYMENT') {
+            router.push({ pathname: '/orders/[id]', params: { id: String(data.targetId) } });
+          } else if (data.type === 'CHAT') {
+            router.push('/chat');
+          }
+        }
+      } catch (err) {
+        console.warn('푸시 탭 네비게이션 실패:', err);
+      }
+    });
+
+    return () => {
+      responseListener.remove();
+    };
+  }, [user]);
 
   useEffect(() => {
     if (!isLoading) {
