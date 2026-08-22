@@ -67,8 +67,8 @@ export default function LoginScreen() {
     try {
       setIsGoogleLoading(true);
       await signInWithGoogle();
-    } catch (error) {
-      Alert.alert("로그인 오류", "Google 로그인을 완료할 수 없습니다.");
+    } catch (error: any) {
+      Alert.alert("로그인 오류", error?.message || "Google 로그인을 완료할 수 없습니다.");
       console.error(error);
     } finally {
       setIsGoogleLoading(false);

@@ -28,7 +28,7 @@ export const authService = {
           `🚨 [구글 토큰 백엔드 전송 실패] 상태 코드: ${response.status}`,
         );
         console.error(`🚨 상세 내용: ${errorText}`);
-        throw new Error("백엔드 인증 실패");
+        throw new Error(`백엔드 인증 실패 (${response.status}): ${errorText}`);
       }
 
       const tokenResponse = await response.json();
