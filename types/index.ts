@@ -326,7 +326,8 @@ export type BackendOrderStatus =
   | "IN_PROGRESS" 
   | "PICKUP_READY" 
   | "COMPLETED" 
-  | "CANCELED";
+  | "CANCELED"
+  | "REJECTED";
 
 export interface TossPaymentConfirmRequest {
   paymentKey: string;
@@ -353,6 +354,7 @@ export interface OrderListItem {
   totalPrice: number;
   extraFee?: number;
   extraFeeReason?: string;
+  rejectReason?: string;
   pickupDate: string;
   createdAt: string;
   hasReview?: boolean;

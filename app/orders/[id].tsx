@@ -113,6 +113,7 @@ export default function OrderDetailScreen() {
       case 'PICKUP_READY': return '픽업 대기중';
       case 'COMPLETED': return '픽업 완료';
       case 'CANCELED': return '주문 취소됨';
+      case 'REJECTED': return '주문 거절됨';
       default: return status;
     }
   };
@@ -126,7 +127,8 @@ export default function OrderDetailScreen() {
       case 'IN_PROGRESS': return '#10B981';
       case 'PICKUP_READY': return '#8B5CF6';
       case 'COMPLETED': return '#EC4899';
-      case 'CANCELED': return '#EF4444';
+      case 'CANCELED':
+      case 'REJECTED': return '#EF4444';
       default: return '#6B7280';
     }
   };
@@ -211,6 +213,12 @@ export default function OrderDetailScreen() {
             </View>
             <Text style={styles.orderNumberText}>NO. {order.orderNumber}</Text>
           </View>
+          {(order.status === 'REJECTED' || order.status === 'CANCELED') && order.rejectReason && (
+            <View style={styles.rejectReasonBox}>
+              <Text style={styles.rejectReasonTitle}>❌ 거절 / 취소 사유</Text>
+              <Text style={styles.rejectReasonText}>{order.rejectReason}</Text>
+            </View>
+          )}
         </Animated.View>
 
         {/* Item Card */}
@@ -727,5 +735,24 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '700',
+  },
+  rejectReasonBox: {
+    marginTop: 12,
+    backgroundColor: '#FEF2F2',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+  },
+  rejectReasonTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#DC2626',
+    marginBottom: 4,
+  },
+  rejectReasonText: {
+    fontSize: 13,
+    color: '#991B1B',
+    lineHeight: 18,
   },
 });

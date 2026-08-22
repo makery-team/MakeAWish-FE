@@ -123,11 +123,17 @@ function OrderCard({ order, onPress, onReviewPress }: { order: OrderListItem, on
           textStyle: styles.textPink,
           message: '🎉 픽업이 완료되었습니다',
         };
+      case 'REJECTED':
+        return {
+          cardStyle: styles.statusRed,
+          textStyle: styles.textRed,
+          message: order.rejectReason ? `❌ 주문이 거절되었습니다 (${order.rejectReason})` : '❌ 주문이 거절되었습니다',
+        };
       case 'CANCELED':
         return {
           cardStyle: styles.statusRed,
           textStyle: styles.textRed,
-          message: '❌ 주문이 취소되었습니다',
+          message: order.rejectReason ? `❌ 주문이 취소되었습니다 (${order.rejectReason})` : '❌ 주문이 취소되었습니다',
         };
       default:
         return {
@@ -141,11 +147,11 @@ function OrderCard({ order, onPress, onReviewPress }: { order: OrderListItem, on
   const statusInfo = getStatusInfo(order.status);
 
   const progressWidth = useMemo(() => {
-    if (order.status === 'CANCELED') return 100;
+    if (order.status === 'CANCELED' || order.status === 'REJECTED') return 100;
     return (currentStepIndex / (statusSteps.length - 1)) * 100;
   }, [currentStepIndex, order.status]);
 
-  const isCanceled = order.status === 'CANCELED';
+  const isCanceled = order.status === 'CANCELED' || order.status === 'REJECTED';
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(amount);
