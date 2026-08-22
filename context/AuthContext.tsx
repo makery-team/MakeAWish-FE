@@ -26,6 +26,11 @@ if (!isExpoGo) {
   statusCodes = gs.statusCodes;
 }
 
+const DEFAULT_GOOGLE_WEB_CLIENT_ID =
+  "106131390766-mnqk6vkbs4n33s2tt63om1860e6cgaau.apps.googleusercontent.com";
+const DEFAULT_GOOGLE_IOS_CLIENT_ID =
+  "106131390766-vmcvo280rnguao23e9bkmo76d4fnd850.apps.googleusercontent.com";
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -35,9 +40,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Expo Go 환경에서는 네이티브 설정을 건너뜁니다.
     if (!isExpoGo) {
+      const webClientId =
+        process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+        DEFAULT_GOOGLE_WEB_CLIENT_ID;
+      const iosClientId =
+        process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ||
+        DEFAULT_GOOGLE_IOS_CLIENT_ID;
+
       GoogleSignin.configure({
-        webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-        iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+        webClientId,
+        iosClientId,
         offlineAccess: false,
       });
     }
