@@ -2,7 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { fetchWithAuth } from "@/utils/api";
 
 const API_BASE_URL =
-  "http://Make-a-wish-env.eba-dvjn7a8x.ap-northeast-2.elasticbeanstalk.com";
+  process.env.EXPO_PUBLIC_API_URL ||
+  "http://make-a-wish-env.eba-dvjn7a8x.ap-northeast-2.elasticbeanstalk.com";
 
 export const authService = {
   /**

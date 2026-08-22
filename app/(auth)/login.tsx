@@ -39,8 +39,6 @@ const GoogleGLogo = ({ size = 18 }: { size?: number }) => (
   </Svg>
 );
 
-const IS_MOCK = false;
-
 const OwnerSplashGraphic = () => (
   <View style={styles.graphicContainer}>
     <View style={styles.graphicCircle}>
@@ -68,13 +66,6 @@ export default function LoginScreen() {
   const handleGoogleLogin = async () => {
     try {
       setIsGoogleLoading(true);
-      if (IS_MOCK) {
-        setTimeout(() => {
-          Alert.alert("알림", "모의 로그인은 작동하지 않습니다.");
-          setIsGoogleLoading(false);
-        }, 1000);
-        return;
-      }
       await signInWithGoogle();
     } catch (error) {
       Alert.alert("로그인 오류", "Google 로그인을 완료할 수 없습니다.");
