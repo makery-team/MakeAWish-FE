@@ -110,14 +110,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("No ID token returned from Google Sign In");
       }
     } catch (error: any) {
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+      if (error.code === statusCodes?.SIGN_IN_CANCELLED) {
         console.log("User cancelled the login flow");
-      } else if (error.code === statusCodes.IN_PROGRESS) {
+      } else if (error.code === statusCodes?.IN_PROGRESS) {
         console.log("Sign in is in progress already");
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+      } else if (error.code === statusCodes?.PLAY_SERVICES_NOT_AVAILABLE) {
         console.error("Play services not available or outdated");
+        throw new Error("Google Play 서비스를 사용할 수 없습니다.");
       } else {
         console.error("Login Failed:", error);
+        throw error;
       }
     } finally {
       setIsLoading(false);
