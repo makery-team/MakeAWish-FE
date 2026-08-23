@@ -11,8 +11,9 @@ export const portfolioService = {
    */
   async searchPortfolios(tags: string): Promise<FeedItem[]> {
     try {
-      const endpoint = tags 
-        ? `${API_BASE_URL}/api/portfolios/feeds?tags=${encodeURIComponent(tags)}&sortType=popular&page=0&size=20`
+      const cleanTag = tags ? tags.trim().replace(/^#+/, '') : '';
+      const endpoint = cleanTag 
+        ? `${API_BASE_URL}/api/portfolios/feeds?tags=${encodeURIComponent(cleanTag)}&sortType=popular&page=0&size=20`
         : `${API_BASE_URL}/api/portfolios/feeds?sortType=popular&page=0&size=20`;
       const response = await fetch(endpoint);
       if (!response.ok) {
