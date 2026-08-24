@@ -35,7 +35,7 @@ export const orderService = {
    */
   async getMyOrders(): Promise<OrderListItem[]> {
     try {
-      const response = await fetchWithAuth('/api/orders', {
+      const response = await fetchWithAuth('/api/orders?role=consumer', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
