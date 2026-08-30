@@ -580,16 +580,21 @@ const styles = StyleSheet.create({
   optionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 10,
   },
   optionKey: {
     fontSize: 13,
     color: '#6B7280',
+    flex: 1,
   },
   optionValue: {
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#111827',
+    flex: 1,
+    textAlign: 'right',
   },
   sectionTitle: {
     fontSize: 16,

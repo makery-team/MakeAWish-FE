@@ -307,6 +307,7 @@ export function AISearchBar({
                   portfolioId: details.portfolioId || conversationHistory.portfolioId,
                   tags: details.tags || conversationHistory.tags
                 });
+                setMessages(prev => prev.filter(m => m !== item));
                 handleSend(`이 시안(${details.shopName || '지니 추천'})으로 주문 문의할게요!`);
               }}
               onCancel={() => {
@@ -528,26 +529,43 @@ export function AISearchBar({
                 ) : null}
               />
 
-              <View style={[styles.inputArea, { paddingBottom: tabBarHeight + (Platform.OS === "ios" ? 8 : 16) }]}>
-                <LinearGradient
-                  colors={[theme.colors.surface, theme.colors.lightGray]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.inputContainerGradient}
-                >
-                  <TextInput
-                    style={styles.input}
-                    placeholder="답변을 입력하세요..."
-                    value={inputValue}
-                    onChangeText={setInputValue}
-                    onSubmitEditing={() => handleSend()}
-                    placeholderTextColor={theme.colors.textMuted}
-                  />
-                  <TouchableOpacity onPress={() => handleSend()} style={styles.sendBtnGradient}>
-                    <Send size={18} color="white" strokeWidth={1.5} />
-                  </TouchableOpacity>
-                </LinearGradient>
-              </View>
+              {(() => {
+                const hasPendingReminder = messages.some(m => m.actionType === 'LOCAL_ORDER_REMINDER');
+                const isInputDisabled = hasPendingReminder || isAiTyping;
+                const dynamicPlaceholder = hasPendingReminder
+                  ? "👆 위의 [문의하기] 버튼을 선택해주세요"
+                  : isAiTyping
+                  ? "AI가 생각 중입니다..."
+                  : "답변을 입력하세요...";
+
+                return (
+                  <View style={[styles.inputArea, { paddingBottom: tabBarHeight + (Platform.OS === "ios" ? 8 : 16) }]}>
+                    <LinearGradient
+                      colors={[theme.colors.surface, theme.colors.lightGray]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.inputContainerGradient, isInputDisabled && { opacity: 0.7 }]}
+                    >
+                      <TextInput
+                        style={[styles.input, hasPendingReminder && { color: theme.colors.textMuted }]}
+                        placeholder={dynamicPlaceholder}
+                        value={inputValue}
+                        editable={!isInputDisabled}
+                        onChangeText={setInputValue}
+                        onSubmitEditing={() => !isInputDisabled && handleSend()}
+                        placeholderTextColor={theme.colors.textMuted}
+                      />
+                      <TouchableOpacity 
+                        onPress={() => !isInputDisabled && handleSend()} 
+                        disabled={isInputDisabled}
+                        style={[styles.sendBtnGradient, isInputDisabled && { opacity: 0.35 }]}
+                      >
+                        <Send size={18} color="white" strokeWidth={1.5} />
+                      </TouchableOpacity>
+                    </LinearGradient>
+                  </View>
+                );
+              })()}
             </Animated.View>
 
             {/* 3. Collapsed Bar (닫힌 상태) */}
