@@ -1,7 +1,7 @@
 import { FeedItem } from '@/types';
 
 // TODO: 환경 변수에서 API URL 가져오도록 수정
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://make-a-wish-env.eba-dvjn7a8x.ap-northeast-2.elasticbeanstalk.com';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://Makery-env.eba-scsmpye9.ap-northeast-2.elasticbeanstalk.com';
 
 export const portfolioService = {
   /**

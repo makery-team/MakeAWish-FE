@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DeviceEventEmitter } from "react-native";
 
 // TODO: 환경 변수 연동
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://make-a-wish-env.eba-dvjn7a8x.ap-northeast-2.elasticbeanstalk.com";
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://Makery-env.eba-scsmpye9.ap-northeast-2.elasticbeanstalk.com";
 
 /**
  * 엑세스 토큰이 만료(401)되었을 때 리프레시 토큰을 통해 새로운 토큰을 발급받습니다.

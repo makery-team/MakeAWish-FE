@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DirectChatMessage } from '../types';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://make-a-wish-env.eba-dvjn7a8x.ap-northeast-2.elasticbeanstalk.com";
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://Makery-env.eba-scsmpye9.ap-northeast-2.elasticbeanstalk.com";
 
 export function useChatSocket(roomNumber?: number, myUserId?: number) {
   const [messages, setMessages] = useState<DirectChatMessage[]>([]);
