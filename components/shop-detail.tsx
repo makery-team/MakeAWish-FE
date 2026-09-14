@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { ArrowLeft, Star, MapPin, Clock, Phone, Share2, MessageCircle, Heart } from 'lucide-react-native';
-import { SAMPLE_CAKE_IMAGES } from '@/constants/mock-data';
 import { useRouter } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { mapService } from '@/services/map';
@@ -19,32 +18,6 @@ import { Store, StorePortfolio, StoreReview } from '@/types';
 import { useShop } from '@/context/ShopContext';
 import { useAuth } from '@/context/AuthContext';
 import { chatService } from '@/services/chat';
-
-// Mock 데이터 상수들 삭제됨
-
-// 상세 정보 오버라이드 (일부 샵만 별도 정보 설정)
-const SHOP_DETAIL_OVERRIDES: Record<number, {
-  phone: string;
-  hours: string;
-  description: string;
-  likes: number;
-  gallery: string[];
-}> = {
-  1: {
-    phone: '02-1234-5678',
-    hours: '매일 10:00 - 20:00 (월요일 휴무)',
-    description: '심플한 Y2K 감성부터 화려한 캐릭터 케이크까지! 원하는 디자인을 말씀해주세요. AI 이미지 편집기로 나만의 케이크를 미리 만들어보고 주문할 수 있습니다.',
-    likes: 342,
-    gallery: SAMPLE_CAKE_IMAGES,
-  },
-  2: {
-    phone: '02-2345-6789',
-    hours: '월-토 09:00 - 21:00',
-    description: '특별한 날을 더 특별하게! 정성 가득한 레터링 케이크 전문점입니다. 천연 색소와 동물성 생크림만을 사용하여 맛과 건강을 모두 생각합니다.',
-    likes: 521,
-    gallery: [...SAMPLE_CAKE_IMAGES].reverse(),
-  },
-};
 
 // [Option A 규격화] 요일별 운영시간 JSON 문자열 또는 일반 텍스트를 파싱하여 렌더링하는 헬퍼 함수
 function renderOperatingHours(hoursStr: string) {
@@ -196,7 +169,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
     name: storeData.name || '이름 없음',
     rating: storeData.rating || 0,
     reviews: storeData.reviewCount || 0,
-    likes: totalLikes || (SHOP_DETAIL_OVERRIDES[Number(shopId)]?.likes ?? 0),
+    likes: totalLikes || 0,
     tags: finalTags,
     specialty: finalTags.join(', '),
     address: storeData.address || '주소 정보 없음',
@@ -204,7 +177,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
     hours: storeData.hours || '영업시간 문의',
     description: storeData.description || '매장 소개가 없습니다.',
     imageUrl: storeData.imageUrl,
-    gallery: apiGallery.length > 0 ? apiGallery : (SHOP_DETAIL_OVERRIDES[Number(shopId)]?.gallery || [SAMPLE_CAKE_IMAGES[0]]),
+    gallery: apiGallery,
   };
 
   const handleShare = async () => {
@@ -226,38 +199,36 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
       categoryPortfolios = selectedCategory?.portfolios || [];
     }
 
-    const items = categoryPortfolios.length > 0
-      ? categoryPortfolios.map((p, idx) => {
-          const cakeId = p.id || p.portfolioId || (Number(shopId) * 1000 + idx);
-          const isFav = isFavorited(cakeId);
-          const baseLikes = p.likeCount ?? (38 + (idx * 23) % 120);
-          const globalLikes = likeCounts[cakeId.toString()];
-          const currentLikes = globalLikes !== undefined
-            ? globalLikes
-            : (localLikes[cakeId] !== undefined ? localLikes[cakeId] : baseLikes);
-          return {
-            id: cakeId,
-            productId: p.productId || selectedCategory?.id,
-            imageUrl: p.imageUrl,
-            likes: currentLikes,
-            isFav,
-          };
-        })
-      : shop.gallery.map((img, idx) => {
-          const cakeId = Number(shopId) * 1000 + idx;
-          const isFav = isFavorited(cakeId);
-          const baseLikes = 38 + (idx * 23) % 120;
-          const globalLikes = likeCounts[cakeId.toString()];
-          const currentLikes = globalLikes !== undefined
-            ? globalLikes
-            : (localLikes[cakeId] !== undefined ? localLikes[cakeId] : baseLikes);
-          return {
-            id: cakeId,
-            imageUrl: img,
-            likes: currentLikes,
-            isFav,
-          };
-        });
+    if (categoryPortfolios.length === 0) {
+      return (
+        <View style={styles.emptyGalleryContainer}>
+          <Text style={styles.emptyGalleryIcon}>🎂</Text>
+          <Text style={styles.emptyGalleryTitle}>아직 등록된 작품이 없어요</Text>
+          <Text style={styles.emptyGallerySubtitle}>
+            {activeChip === '전체'
+              ? '사장님이 새로운 케이크 디자인을 준비 중입니다.'
+              : `'${activeChip}' 카테고리의 작품이 아직 없습니다.`}
+          </Text>
+        </View>
+      );
+    }
+
+    const items = categoryPortfolios.map((p, idx) => {
+      const cakeId = p.id || p.portfolioId || (Number(shopId) * 1000 + idx);
+      const isFav = isFavorited(cakeId);
+      const baseLikes = p.likeCount ?? (38 + (idx * 23) % 120);
+      const globalLikes = likeCounts[cakeId.toString()];
+      const currentLikes = globalLikes !== undefined
+        ? globalLikes
+        : (localLikes[cakeId] !== undefined ? localLikes[cakeId] : baseLikes);
+      return {
+        id: cakeId,
+        productId: p.productId || selectedCategory?.id,
+        imageUrl: p.imageUrl,
+        likes: currentLikes,
+        isFav,
+      };
+    });
 
     const leftCol: { id: number; imageUrl: string; likes: number; isFav: boolean }[] = [];
     const rightCol: { id: number; imageUrl: string; likes: number; isFav: boolean }[] = [];
@@ -342,7 +313,7 @@ export function ShopDetail({ shopId, onBack, onCakeSelect, onCakeInquiry }: Shop
         {/* Shop Profile */}
         <View style={styles.shopInfo}>
           <View style={styles.shopHeader}>
-            <Image source={{ uri: shop.imageUrl || shop.gallery[0] }} style={styles.shopLogo} />
+            <Image source={{ uri: shop.imageUrl || (apiGallery.length > 0 ? apiGallery[0] : 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&q=80') }} style={styles.shopLogo} />
             <View style={styles.shopHeaderRight}>
               <Text style={styles.shopName}>@{shop.name}</Text>
               <View style={styles.statsRow}>
@@ -812,6 +783,34 @@ const styles = StyleSheet.create({
   },
   chipTextActive: {
     color: 'white',
+  },
+  emptyGalleryContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+    paddingHorizontal: 20,
+    backgroundColor: '#FAFAFA',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    borderStyle: 'dashed',
+    marginTop: 8,
+  },
+  emptyGalleryIcon: {
+    fontSize: 36,
+    marginBottom: 10,
+  },
+  emptyGalleryTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 6,
+  },
+  emptyGallerySubtitle: {
+    fontSize: 13,
+    color: '#888',
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });
 
