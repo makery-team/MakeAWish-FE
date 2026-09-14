@@ -16,7 +16,7 @@ export interface AiAgentResponse {
 }
 
 // TODO: 환경 변수에서 가져오도록 설정
-const BACKEND_API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://make-a-wish-env.eba-dvjn7a8x.ap-northeast-2.elasticbeanstalk.com';
+const BACKEND_API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://Makery-env.eba-scsmpye9.ap-northeast-2.elasticbeanstalk.com';
 
 /**
  * 백엔드 서버(Spring Boot)와 채팅 통신을 처리하는 서비스

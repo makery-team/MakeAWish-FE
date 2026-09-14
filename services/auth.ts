@@ -3,7 +3,7 @@ import { fetchWithAuth } from "@/utils/api";
 
 const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ||
-  "http://make-a-wish-env.eba-dvjn7a8x.ap-northeast-2.elasticbeanstalk.com";
+  "http://Makery-env.eba-scsmpye9.ap-northeast-2.elasticbeanstalk.com";
 
 export const authService = {
   /**

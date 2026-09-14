@@ -1,7 +1,6 @@
 import { FeedItem, PaginatedResponse } from '@/types';
 
-// TODO: Replace with environment variable if needed
-const API_BASE_URL = 'http://make-a-wish-env.eba-dvjn7a8x.ap-northeast-2.elasticbeanstalk.com';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://Makery-env.eba-scsmpye9.ap-northeast-2.elasticbeanstalk.com';
 
 export const feedService = {
   /**
