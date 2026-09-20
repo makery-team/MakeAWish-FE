@@ -160,25 +160,44 @@ export default function OrderDetailScreen() {
 
   const IGNORED_ORDER_DATA_KEYS = [
     'storeId', 'productId', 'portfolioId', 'cakeImage', 'selectedCakeImage', 'photoUrl', 'shopName', 'tags',
-    '픽업 희망 날짜', '픽업 희망 시간', '픽업 날짜', '픽업 시간', 'pickupDate', 'pickupTime',
-    'customizedImageUrl', 'customized_image_url'
+    'customizedImageUrl', 'customized_image_url', 'design'
   ];
 
+  const isOptionVisibleKey = (key: string) => {
+    if (IGNORED_ORDER_DATA_KEYS.includes(key)) return false;
+    const lower = key.toLowerCase();
+    if (key.includes('픽업') || lower.includes('pickup')) return false;
+    return true;
+  };
+
   const getDisplayPickupTime = () => {
+    // 1. order.orderData에서 픽업 관련 값 우선 탐색
     if (order.orderData) {
-      const dateVal = order.orderData['픽업 희망 날짜'] || order.orderData['픽업 날짜'] || order.orderData['pickupDate'];
-      const timeVal = order.orderData['픽업 희망 시간'] || order.orderData['픽업 시간'] || order.orderData['pickupTime'];
-      if (dateVal && timeVal) {
-        return `${dateVal} ${timeVal}`;
-      }
-      if (dateVal) {
-        return `${dateVal}`;
+      for (const [k, v] of Object.entries(order.orderData)) {
+        if ((k.includes('픽업') || k.toLowerCase().includes('pickup')) && typeof v === 'string' && v.trim()) {
+          const val = v.trim();
+          const match = val.match(/(\d{4})[./-](\d{2})[./-](\d{2})[ T](\d{2}):(\d{2})/);
+          if (match) {
+            const m = parseInt(match[2], 10);
+            const d = parseInt(match[3], 10);
+            const h = parseInt(match[4], 10);
+            const min = match[5];
+            const period = h < 12 ? '오전' : '오후';
+            const displayH = h % 12 === 0 ? 12 : h % 12;
+            return `${m}월 ${d}일 ${period} ${displayH}:${min}`;
+          }
+          return val;
+        }
       }
     }
+    // 2. 서버 order.pickupDate 확인
     if (order.pickupDate) {
-      return new Date(order.pickupDate).toLocaleString('ko-KR', {
-        month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-      });
+      const date = new Date(order.pickupDate);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleString('ko-KR', {
+          month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+      }
     }
     return '미정';
   };
@@ -254,11 +273,11 @@ export default function OrderDetailScreen() {
             </View>
 
             {/* Custom Options (orderData) */}
-            {order.orderData && Object.entries(order.orderData).filter(([key]) => !IGNORED_ORDER_DATA_KEYS.includes(key)).length > 0 && (
+            {order.orderData && Object.entries(order.orderData).filter(([key]) => isOptionVisibleKey(key)).length > 0 && (
               <View style={styles.optionsContainer}>
                 <Text style={styles.optionsTitle}>요청 사항 및 옵션</Text>
                 {Object.entries(order.orderData)
-                  .filter(([key]) => !IGNORED_ORDER_DATA_KEYS.includes(key))
+                  .filter(([key]) => isOptionVisibleKey(key))
                   .map(([key, value]) => (
                   <View key={key} style={styles.optionRow}>
                     <Text style={styles.optionKey}>{key}</Text>

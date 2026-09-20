@@ -166,9 +166,9 @@ export function EditorView({
         throw new Error("서버에서 인페인팅 ID를 발급받지 못했습니다.");
       }
 
-      // 3. 폴링 로직 (3초 간격으로 계속 확인)
+      // 3. 폴링 로직 (3초 간격으로 최대 180초 대기)
       let finalImageUrl = null;
-      for (let i = 0; i < 20; i++) { // 최대 60초 대기
+      for (let i = 0; i < 60; i++) { // 최대 180초(3분) 대기
         await new Promise(resolve => setTimeout(resolve, 3000));
         
         const detailResponse = await aiService.getInpaintingDetail(pId, inpaintingId);
@@ -179,7 +179,7 @@ export function EditorView({
       }
 
       if (!finalImageUrl) {
-        throw new Error("이미지 생성 시간이 초과되었습니다.");
+        throw new Error("이미지 생성 시간이 초과되었습니다. 잠시 후 다시 확인해주세요.");
       }
 
       // 4. 결과 적용 (캐시 무효화 우회)

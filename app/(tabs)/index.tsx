@@ -122,21 +122,62 @@ export default function HomeScreen() {
         
         // 날짜/시간 동적 추출 로직 (AI가 뱉은 한국어 키 파싱)
         let formattedDate = new Date().toISOString().split('.')[0]; // 기본값: 현재 시간
-        const dateKey = Object.keys(orderData).find(k => k.includes('날짜') || k.includes('일') || k.includes('date'));
-        const timeKey = Object.keys(orderData).find(k => k.includes('시간') || k.includes('시') || k.includes('time'));
         
         try {
-          if (dateKey && timeKey) {
-             const d = orderData[dateKey];
-             const t = orderData[timeKey];
-             formattedDate = `${d}T${t}:00`;
-          } else if (dateKey) {
-             const d = orderData[dateKey];
-             if (d.includes(' ')) {
-                formattedDate = d.replace(' ', 'T') + ':00';
-             } else {
-                formattedDate = `${d}T00:00:00`;
-             }
+          // 1. 단일 키에 날짜와 시간이 함께 있는 경우 탐색 (예: "픽업 희망 일시 (날짜 및 시간)", "픽업 일시", "pickupDateTime")
+          let extracted = '';
+          for (const [k, v] of Object.entries(orderData)) {
+            if ((k.includes('픽업') || k.toLowerCase().includes('pickup')) && typeof v === 'string') {
+              const trimmed = v.trim();
+              const match = trimmed.match(/(\d{4})[./-](\d{2})[./-](\d{2})[ T](\d{2}:\d{2})(?::\d{2})?/);
+              if (match) {
+                extracted = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:00`;
+                break;
+              }
+            }
+          }
+
+          // 2. 단일 키에서 매칭되지 않은 경우, 분리된 날짜키/시간키 탐색
+          if (!extracted) {
+            const dateKey = Object.keys(orderData).find(k => 
+              (k.includes('날짜') || k.includes('픽업일') || k.toLowerCase().includes('date')) &&
+              !k.includes('시간') && !k.toLowerCase().includes('time')
+            );
+            const timeKey = Object.keys(orderData).find(k => 
+              (k.includes('시간') || k.toLowerCase().includes('time')) &&
+              !k.includes('날짜') && !k.toLowerCase().includes('date')
+            );
+
+            if (dateKey && timeKey) {
+              const d = String(orderData[dateKey]).trim();
+              let t = String(orderData[timeKey]).trim();
+              if (t.length === 5) t += ':00';
+              extracted = `${d}T${t}`;
+            } else if (dateKey) {
+              const d = String(orderData[dateKey]).trim();
+              if (d.includes(' ')) {
+                extracted = d.replace(' ', 'T') + ':00';
+              } else {
+                extracted = `${d}T00:00:00`;
+              }
+            }
+          }
+
+          // 3. 임의의 필드 값 중 날짜 형식 정규식 탐색
+          if (!extracted) {
+            for (const v of Object.values(orderData)) {
+              if (typeof v === 'string') {
+                const match = v.match(/(\d{4})[./-](\d{2})[./-](\d{2})[ T](\d{2}:\d{2})(?::\d{2})?/);
+                if (match) {
+                  extracted = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:00`;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (extracted) {
+            formattedDate = extracted;
           }
         } catch (e) {
           console.warn("Date parsing fallback:", e);
