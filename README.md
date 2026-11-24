@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/Toss%20Payments-v1%20SDK-0064FF?style=for-the-badge" />
 </p>
 
-MakeAWish 모바일 애플리케이션 프론트엔드 저장소입니다. React Native(Expo SDK 54)와 Expo Router v3 기반으로 구축되었으며, AI 대화형 주문서 작성, 캔버스 기반 도안 수정, 네이버 지도 기반 매장 탐색, STOMP 1:1 실시간 상담 채팅, 토스페이먼츠 간편결제 기능을 제공합니다.
+MakeAWish 모바일 애플리케이션 프론트엔드 저장소입니다. React Native(Expo SDK 54)와 Expo Router 기반으로 구축되었으며, AI 대화형 주문서 작성, 캔버스 기반 도안 수정, 네이버 지도 기반 매장 탐색, WebSocket 기반 1:1 실시간 상담 채팅, 토스페이먼츠 간편결제 기능을 제공합니다.
 
 ---
 
@@ -41,7 +41,7 @@ MakeAWish 모바일 애플리케이션 프론트엔드 저장소입니다. React
 | **소셜 로그인** | `app/(auth)/login.tsx` | Google Sign-in OAuth 연동 및 비회원 둘러보기 게스트 모드 지원 |
 | **홈 & AI 검색** | `app/(tabs)/index.tsx` | 상단 AI 대화형 검색바, 동적 옵션 칩 UI Guarding, 테마별 추천 케이크 그리드 |
 | **네이버 지도 탐색** | `app/(tabs)/explore.tsx` | 네이버 벡터 맵, 1~5km 반경 필터, 매장 핀 마커 및 하단 프리뷰 카드 연동 |
-| **1:1 상담 채팅** | `app/chat/[roomId].tsx` | STOMP 웹소켓 실시간 양방향 메시지, 인앱 주문서 요약 카드, 견적 승인 연동 |
+| **1:1 상담 채팅** | `app/chat/[roomId].tsx` | WebSocket 실시간 양방향 메시지, 인앱 주문서 요약 카드, 견적 승인 연동 |
 | **AI 캔버스 에디터** | `app/editor/[id].tsx` | PanResponder 기반 핑거 마스킹 브러시, 프롬프트 입력, Inpainting 시안 비교 |
 | **주문 내역 및 결제** | `app/orders/[id].tsx` | 사장님 추가금 명세서 확인, 토스페이먼츠 웹뷰 결제 팝업 트리거, 4단계 주문 상태 머신 |
 | **포토 리뷰 작성** | `app/reviews/write.tsx` | 별점 평가, 갤러리 다중 이미지 선택, S3 Presigned URL 다이렉트 업로드 |
@@ -62,7 +62,7 @@ MakeAWish 모바일 애플리케이션 프론트엔드 저장소입니다. React
 
 ### 3.3 상태 관리 및 네트워크
 - **Context API & AsyncStorage**: 도메인별 상태 분리(`AuthContext`, `InquiryContext`, `ShopContext`) 및 세션 영속화.
-- **STOMP over WebSocket (`hooks/useChatSocket.ts`)**: Spring Boot STOMP 브로커와 실시간 전이중 1:1 상담 채팅 구현.
+- **WebSocket (`hooks/useChatSocket.ts`)**: 백엔드 웹소켓 엔드포인트(`/chats`)와 실시간 전이중 1:1 상담 채팅 구현.
 - **네이티브 웹뷰 브릿지 (`react-native-webview`)**: 토스페이먼츠 Javascript v1 SDK 모바일 웹뷰 렌더링 및 커스텀 앱 스킴 브릿지.
 
 ---
@@ -76,7 +76,7 @@ MakeAWish-FE/
 │   ├── modal.tsx                       # 공통 모달 컨테이너
 │   ├── (auth)/                         # 인증 관련 라우트 그룹 (로그인, 회원가입)
 │   ├── (tabs)/                         # 하단 4대 메인 탭 그룹 (홈, 지도, 채팅, 마이페이지)
-│   ├── chat/[roomId].tsx               # 1:1 실시간 상담 채팅 상세 (STOMP 소켓)
+│   ├── chat/[roomId].tsx               # 1:1 실시간 상담 채팅 상세 (WebSocket)
 │   ├── editor/[id].tsx                 # AI 캔버스 핑거 브러시 인페인팅 에디터
 │   ├── orders/                         # 주문 내역 목록 및 상세/결제 화면
 │   ├── reviews/write.tsx               # 수제 케이크 포토 리뷰 작성
@@ -168,7 +168,7 @@ const isInputDisabled = hasPendingReminder || isAiTyping;
 />
 ```
 
-### 5.4 1:1 STOMP 실시간 채팅 소켓 클라이언트 (`hooks/useChatSocket.ts`)
+### 5.4 1:1 실시간 상담 WebSocket 클라이언트 (`hooks/useChatSocket.ts`)
 사장님과의 1:1 상담 채팅을 위해 웹소켓 연결 시 인증 토큰을 쿼리 파라미터로 안전하게 전달하고, 수신된 메시지를 역직렬화하여 상태에 반영합니다.
 
 ```typescript
